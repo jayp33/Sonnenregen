@@ -145,6 +145,7 @@ fun WeatherScreen() {
                             if (sunrise != null || sunset != null) {
                                 Text(listOfNotNull(sunrise, sunset).joinToString(" · "))
                             }
+                            HourlyOverview(displayCity(city), forecast.hours)
                         } else {
                             Text(stringResource(R.string.no_forecast))
                         }

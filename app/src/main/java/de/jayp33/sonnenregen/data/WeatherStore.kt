@@ -70,6 +70,7 @@ class WeatherStore(context: Context) {
         fetchedAtMillis = forecast.fetchedAt.toInstant().toEpochMilli(),
         sunriseLabel = forecast.sunrise?.format(CLOCK_TIME),
         sunsetLabel = forecast.sunset?.format(CLOCK_TIME),
+        hours = forecast.hours,
     )
 
     suspend fun isEnabled(): Boolean = dataStore.data.first()[ENABLED] ?: true

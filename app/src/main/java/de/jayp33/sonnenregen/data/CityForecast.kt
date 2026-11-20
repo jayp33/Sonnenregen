@@ -1,5 +1,6 @@
 package de.jayp33.sonnenregen.data
 
+import de.jayp33.sonnenregen.domain.HourCell
 import kotlinx.serialization.Serializable
 
 /** The last good forecast for one city, already formatted in the active locale. */
@@ -12,6 +13,8 @@ data class CityForecast(
     val fetchedAtMillis: Long,
     val sunriseLabel: String? = null,
     val sunsetLabel: String? = null,
+    /** Colour-grid cells for the 48-hour overview; empty in old installs. */
+    val hours: List<HourCell> = emptyList(),
 )
 
 /** Keep successful cities and retain the previous value for failed ones. */

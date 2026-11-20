@@ -24,6 +24,7 @@ class ForecastAnalyzerTest {
         assertFalse(forecast.rain.currently)
         assertEquals("starts", forecast.rain.event!!.name.lowercase())
         assertEquals(OffsetDateTime.parse("2026-11-21T20:00:00+01:00"), forecast.rain.at)
+        assertEquals(48, forecast.hours.size)
     }
 
     @Test

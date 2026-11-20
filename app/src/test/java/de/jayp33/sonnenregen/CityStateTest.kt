@@ -3,6 +3,11 @@ package de.jayp33.sonnenregen
 import de.jayp33.sonnenregen.data.CityForecast
 import de.jayp33.sonnenregen.data.buildStatuses
 import de.jayp33.sonnenregen.data.mergeForecasts
+import de.jayp33.sonnenregen.domain.HourCell
+import de.jayp33.sonnenregen.domain.HourKind
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -52,6 +57,28 @@ class CityStateTest {
         assertEquals("hamburg", statuses[1].city)
         assertEquals(true, statuses[1].stale)
         assertEquals(0L, statuses[1].fetchedAtMillis)
+    }
+
+    @Test
+    fun hourly_cells_survive_json_round_trip() {
+        val original = forecast("berlin", 20L).copy(
+            hours = listOf(HourCell(1_000L, HourKind.HEAVY_RAIN)),
+        )
+
+        val encoded = Json.encodeToString(original)
+
+        assertEquals(original, Json.decodeFromString<CityForecast>(encoded))
+    }
+
+    @Test
+    fun legacy_forecast_without_hours_defaults_to_empty() {
+        val legacy = """
+            {"city":"berlin","compactSummary":"Sun in 2 h, no rain",
+             "sunSummary":"Sunshine starts in 2 h.","rainSummary":"No rain expected.",
+             "fetchedAtMillis":20}
+        """.trimIndent()
+
+        assertEquals(emptyList<HourCell>(), Json.decodeFromString<CityForecast>(legacy).hours)
     }
 
     private fun forecast(city: String, fetchedAtMillis: Long) = CityForecast(

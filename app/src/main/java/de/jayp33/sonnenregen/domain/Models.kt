@@ -59,4 +59,5 @@ data class Forecast(
     val fetchedAt: OffsetDateTime = OffsetDateTime.now(),
     val sunrise: OffsetDateTime? = null,
     val sunset: OffsetDateTime? = null,
+    val hours: List<HourCell> = emptyList(),
 )

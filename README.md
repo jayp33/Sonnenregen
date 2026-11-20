@@ -24,6 +24,9 @@ and German, selected by device locale.
 - **Multiple cities**: add or remove WetterOnline slugs (`berlin`, `hamburg`, …)
   in the app. Slugs stay lowercase for URLs; the app capitalizes the first
   letter for display.
+- **48-hour colour overview**: one padded row per day, with yellow for sun,
+  blue for rain and gray for clouds. No scrolling and no weather icons — just a
+  quick glance at the next two days.
 - **Exact sunrise/sunset** from WetterOnline's own astro data, shown in the app
   UI. Sunshine never starts before sunrise or continues past sunset.
 - **Offline-friendly**: each city keeps its last good forecast. A failed refresh

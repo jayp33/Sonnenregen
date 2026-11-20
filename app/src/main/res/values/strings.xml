@@ -13,6 +13,18 @@
     <string name="rain">Rain: %1$s</string>
     <string name="sunrise">Sunrise: %1$s</string>
     <string name="sunset">Sunset: %1$s</string>
+
+    <string name="hour_description">%1$s, %2$s, %3$s</string>
+    <string name="hourly_legend">Yellow: sun · blue: rain · gray: clouds</string>
+    <string name="hour_sun">sunny</string>
+    <string name="hour_partly_sun">partly sunny</string>
+    <string name="hour_cloudy">cloudy</string>
+    <string name="hour_overcast">overcast</string>
+    <string name="hour_clear_night">clear night</string>
+    <string name="hour_cloudy_night">cloudy night</string>
+    <string name="hour_light_rain">light rain</string>
+    <string name="hour_rain">rain</string>
+    <string name="hour_heavy_rain">heavy rain</string>
     <string name="no_forecast">No forecast yet — tap Refresh now.</string>
     <string name="refresh_now">Refresh now</string>
     <string name="disable_notification">Disable ongoing notification</string>
