@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Sonnenregen</string>
+    <string name="notification_channel_name">Weather forecast</string>
+    <string name="notification_channel_description">Ongoing sun and rain forecast</string>
+    <string name="refresh">Refresh</string>
+    <string name="open_app">Open app</string>
+    <string name="updated">Updated</string>
+    <string name="weather_unavailable">Weather unavailable</string>
+</resources>

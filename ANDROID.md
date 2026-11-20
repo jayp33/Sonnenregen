@@ -45,8 +45,7 @@ Use a normal browser-like `User-Agent` and `Accept-Language: de-DE`.
 Each page is an Angular SSR app. Parse the embedded state with a regex:
 
 ```kotlin
-Regex("""<script[^>]*\bid=["']ng-state["'][^>]*>(.*?)</script>""",
-    RegexOption.IGNORE_CASE or RegexOption.DOTALL)
+Regex("""(?is)<script[^>]*\bid=["']ng-state["'][^>]*>(.*?)</script>""")
 ```
 
 Then:
@@ -113,7 +112,8 @@ manual refreshes.
 
 ## Notification
 
-- Channel `weather`, `IMPORTANCE_LOW`, category `Notification.CATEGORY_WEATHER`.
+- Channel `weather`, `IMPORTANCE_LOW`, category string `weather` (Android does
+  not define a `CATEGORY_WEATHER` constant).
 - `setOngoing(true)`, small icon, title = city.
 - `BigTextStyle` with two lines:
   - `Sun: Sunshine starts in 10 h 30 min (08:00).`
@@ -165,6 +165,26 @@ app/src/main/java/de/jayp33/sonnenregen/
 
 Key dependencies: WorkManager, OkHttp, kotlinx.serialization, DataStore,
 Jetpack Compose, AndroidX Core KTX.
+
+## Build and test
+
+The Gradle wrapper is checked in. Point `local.properties` at your Android SDK
+(it is gitignored):
+
+```properties
+sdk.dir=/path/to/Android/Sdk
+```
+
+Then:
+
+```bash
+./gradlew :app:testDebugUnitTest
+./gradlew :app:assembleDebug
+```
+
+Use a JDK that provides `javac` (Android Studio's bundled JBR works). The unit
+tests reuse the trimmed real payload from `tests/fixtures/shortcast.json` and do
+not hit the network.
 
 ## Open questions / out of scope
 
