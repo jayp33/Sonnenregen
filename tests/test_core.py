@@ -133,6 +133,19 @@ class DaylightTests(unittest.TestCase):
         self.assertEqual([part.daylight for part in result], [False, True, False])
         self.assertEqual([part.sunny for part in result], [False, True, False])
 
+    def test_night_symbol_becomes_day_symbol_at_sunrise(self) -> None:
+        start = datetime.fromisoformat("2026-11-21T07:00:00+01:00")
+        slot = Slot(start, timedelta(hours=1), "mo____", "hourly", night=True)
+        windows = [(start + timedelta(minutes=38), start + timedelta(hours=2))]
+
+        before, after = apply_daylight([slot], windows)
+
+        self.assertEqual(before.symbol, "mo____")
+        self.assertFalse(before.sunny)
+        self.assertEqual(after.symbol, "so____")
+        self.assertTrue(after.sunny)
+        self.assertIsNone(after.night)
+
 
 class AnalyzeTests(unittest.TestCase):
     def test_real_forecast_waits_for_sun_and_rain(self) -> None:
@@ -148,10 +161,10 @@ class AnalyzeTests(unittest.TestCase):
         self.assertIn("Rain starts in", answer.rain.summary)
         self.assertEqual(len(answer.as_dict()["sources"]), 2)
 
-    def test_exact_sunrise_delays_sunshine_in_a_sunny_slot(self) -> None:
+    def test_clear_night_symbol_starts_sunshine_at_exact_sunrise(self) -> None:
         page = make_state(
             hours=[
-                ("2026-11-21T07:00:00+01:00", "so____"),
+                ("2026-11-21T07:00:00+01:00", "mo____"),
                 ("2026-11-21T08:00:00+01:00", "so____"),
                 ("2026-11-21T09:00:00+01:00", "mo____"),
             ],

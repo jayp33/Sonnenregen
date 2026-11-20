@@ -7,13 +7,13 @@ object TestData {
             .use { it.readText() }
     }
 
-    /** A sunny symbol already at 07:00, i.e. before the 07:38 sunrise. */
+    /** A clear night symbol at 07:00, i.e. before the 07:38 sunrise. */
     val sunnyMorningShortcast: String = """
         {
           "current": {"date":"2026-11-21T06:45:00+01:00","symbol":"mo____","solar_elevation":-5.0},
           "nowcast_trend": {"items":[]},
           "hours": [
-            {"date":"2026-11-21T07:00:00+01:00","symbol":"so____"},
+            {"date":"2026-11-21T07:00:00+01:00","symbol":"mo____"},
             {"date":"2026-11-21T08:00:00+01:00","symbol":"so____"},
             {"date":"2026-11-21T09:00:00+01:00","symbol":"mo____"}
           ]

@@ -41,11 +41,26 @@ class ForecastAnalyzerTest {
     }
 
     @Test
-    fun clouds_before_sunrise_still_delay_sunshine() {
+    fun clear_night_slot_starts_sunshine_at_sunrise() {
         val forecast = ForecastAnalyzer.analyze(
             "berlin",
             TestData.page(TestData.astroJson),
             TestData.page(),
+        )
+
+        assertEquals(OffsetDateTime.parse("2026-11-21T07:38:00+01:00"), forecast.sun.at)
+    }
+
+    @Test
+    fun cloudy_night_slot_still_delays_sunshine_until_a_sunny_slot() {
+        val morning = TestData.sunnyMorningShortcast.replace(
+            """"date":"2026-11-21T07:00:00+01:00","symbol":"mo____"""",
+            """"date":"2026-11-21T07:00:00+01:00","symbol":"mw____"""",
+        )
+        val forecast = ForecastAnalyzer.analyze(
+            "berlin",
+            TestData.pageWith(morning, TestData.astroJson),
+            TestData.pageWith(morning),
         )
 
         assertEquals(OffsetDateTime.parse("2026-11-21T08:00:00+01:00"), forecast.sun.at)

@@ -34,9 +34,13 @@ Definitions used:
 
 The same page can also embed an `astro/days` payload with exact sunrise/sunset
 times. When present, the timeline is split at those times so a sunny symbol
-cannot produce "sunshine" before sunrise or after sunset. The next sunrise and
-sunset are returned as `sunrise` and `sunset`; both are `null` when the provider
-has no data (e.g. polar day/night).
+cannot produce "sunshine" before sunrise or after sunset. WetterOnline labels
+the whole hour containing sunrise with a night symbol (e.g. `mo` = *klar*); on
+the daylight side of the cut we use the matching day symbol (`so` = *sonnig*).
+That makes a clear night start sunshine at the exact sunrise time instead of at
+the next hourly grid boundary. The next sunrise and sunset are returned as
+`sunrise` and `sunset`; both are `null` when the provider has no data (e.g.
+polar day/night).
 
 Both pages are cached in memory for 5 minutes (`CACHE_TTL` in `sonnenregen/core.py`)
 to avoid hammering the provider.

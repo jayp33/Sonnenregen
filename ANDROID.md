@@ -108,9 +108,12 @@ Then:
    - **rain**: symbol contains `r`, `s` or `g` after the first two characters,
      but not snow (`n`).
 6. Split the timeline at sunrise/sunset and mark the parts that are in daylight.
-   Weather symbols still decide whether the sun actually shines within daylight,
-   so clouds can end sunshine before sunset, but a sunny slot can never extend
-   past it.
+   WetterOnline labels the whole hour containing sunrise with a night symbol
+   (e.g. `mo` = *klar*); on the daylight side of the cut we use the matching day
+   symbol (`so` = *sonnig*). This makes a clear night start sunshine at the
+   exact sunrise instead of at the next hourly grid boundary. Cloudy night
+   symbols (`mw` → `bw`) still delay sunshine until a genuinely sunny slot, and
+   a sunny slot can never extend past sunset.
 7. Walk forward from the provider's `current.date` to the first slot where each
    condition changes. Produce `currently`, `event` (`starts` / `ends`), `at`,
    `minutes`, and a human-readable summary. The next sunrise and sunset are also

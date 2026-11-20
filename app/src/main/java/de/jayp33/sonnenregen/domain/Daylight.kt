@@ -6,6 +6,21 @@ import java.time.OffsetDateTime
 
 data class Daylight(val rise: OffsetDateTime, val set: OffsetDateTime)
 
+/**
+ * WetterOnline labels an entire hourly slot with a night symbol when the slot
+ * starts before sunrise, even if the sky is already clear at sunrise. On the
+ * daylight side of the cut, use the matching day symbol instead.
+ */
+private val NIGHT_TO_DAY = mapOf(
+    "mo" to "so", // klar -> sonnig
+    "mb" to "wb", // wechselnd bewölkt (night) -> wechselnd bewölkt (day)
+    "mw" to "bw", // bewölkt (night) -> bewölkt (day)
+    "md" to "bd", // stark bewölkt (night) -> stark bewölkt (day)
+)
+
+private fun String.asDaySymbol(): String =
+    NIGHT_TO_DAY[take(2)]?.let { it + drop(2) } ?: this
+
 /** Only days with both rise and set times (polar day/night has neither). */
 fun daylightWindows(astro: AstroDto?): List<Daylight> =
     astro?.days.orEmpty().mapNotNull { day ->
@@ -39,6 +54,15 @@ fun applyDaylight(timeline: List<Slot>, windows: List<Daylight>): List<Slot> {
         val inDaylight = windows.any { window ->
             !slot.start.isBefore(window.rise) && slot.start.isBefore(window.set)
         }
-        slot.copy(daylight = inDaylight)
+        if (inDaylight) {
+            slot.copy(
+                symbol = slot.symbol.asDaySymbol(),
+                daylight = true,
+                night = null,
+                solarElevation = null,
+            )
+        } else {
+            slot.copy(daylight = false)
+        }
     }
 }

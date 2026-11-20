@@ -10,6 +10,7 @@ import de.jayp33.sonnenregen.domain.applyDaylight
 import de.jayp33.sonnenregen.domain.daylightWindows
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Duration
@@ -36,6 +37,21 @@ class DaylightTest {
         assertFalse(result[0].sunny)
         assertTrue(result[1].sunny)
         assertFalse(result[2].sunny)
+    }
+
+    @Test
+    fun night_symbol_becomes_day_symbol_at_sunrise() {
+        val start = OffsetDateTime.parse("2026-11-21T07:00:00+01:00")
+        val slot = Slot(start, Duration.ofHours(1), "mo____", SlotSource.HOURLY, night = true)
+        val windows = listOf(Daylight(start.plusMinutes(38), start.plusHours(2)))
+
+        val (before, after) = applyDaylight(listOf(slot), windows)
+
+        assertEquals("mo____", before.symbol)
+        assertFalse(before.sunny)
+        assertEquals("so____", after.symbol)
+        assertTrue(after.sunny)
+        assertNull(after.night)
     }
 
     @Test

@@ -42,6 +42,16 @@ SUN_SYMBOL_PREFIXES = ("so", "wb")
 # Characters after the base condition that denote rain, showers or thunderstorms.
 RAIN_MARKERS = frozenset("rsg")
 
+# WetterOnline gives an hourly slot a night symbol when it starts before
+# sunrise, even if the sky is clear at sunrise. Use the day equivalent on the
+# daylight side of the cut so sunshine starts at the real sunrise time.
+NIGHT_TO_DAY = {
+    "mo": "so",  # klar -> sonnig
+    "mb": "wb",  # wechselnd bewölkt (night) -> wechselnd bewölkt (day)
+    "mw": "bw",  # bewölkt (night) -> bewölkt (day)
+    "md": "bd",  # stark bewölkt (night) -> stark bewölkt (day)
+}
+
 
 class SourceError(RuntimeError):
     """The weather website could not be fetched."""
@@ -252,7 +262,20 @@ def apply_daylight(
     result: list[Slot] = []
     for slot in split:
         in_daylight = any(rise <= slot.start < set_time for rise, set_time in windows)
-        result.append(replace(slot, daylight=in_daylight))
+        if in_daylight:
+            base = slot.symbol[:2]
+            day_symbol = NIGHT_TO_DAY.get(base, base) + slot.symbol[2:]
+            result.append(
+                replace(
+                    slot,
+                    symbol=day_symbol,
+                    daylight=True,
+                    night=None,
+                    solar_elevation=None,
+                ),
+            )
+        else:
+            result.append(replace(slot, daylight=False))
     return result
 
 
