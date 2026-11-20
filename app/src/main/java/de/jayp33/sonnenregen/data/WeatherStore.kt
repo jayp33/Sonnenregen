@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import de.jayp33.sonnenregen.domain.DEFAULT_CITY
 import de.jayp33.sonnenregen.domain.Forecast
+import de.jayp33.sonnenregen.domain.CLOCK_TIME
 import de.jayp33.sonnenregen.domain.isValidCitySlug
 import de.jayp33.sonnenregen.domain.normalizeCity
 import de.jayp33.sonnenregen.text.ForecastFormatter
@@ -67,6 +68,8 @@ class WeatherStore(context: Context) {
         sunSummary = ForecastFormatter.verbose(forecast.sun, phrases),
         rainSummary = ForecastFormatter.verbose(forecast.rain, phrases),
         fetchedAtMillis = forecast.fetchedAt.toInstant().toEpochMilli(),
+        sunriseLabel = forecast.sunrise?.format(CLOCK_TIME),
+        sunsetLabel = forecast.sunset?.format(CLOCK_TIME),
     )
 
     suspend fun isEnabled(): Boolean = dataStore.data.first()[ENABLED] ?: true

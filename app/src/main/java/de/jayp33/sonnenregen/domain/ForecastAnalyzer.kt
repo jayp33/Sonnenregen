@@ -7,7 +7,6 @@ import de.jayp33.sonnenregen.data.ItemDto
 import de.jayp33.sonnenregen.data.ParseException
 import de.jayp33.sonnenregen.data.ShortcastDto
 import java.time.Duration
-import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import kotlin.math.roundToLong
@@ -25,8 +24,10 @@ object ForecastAnalyzer {
         val normalizedCity = normalizeCity(city)
         require(isValidCitySlug(normalizedCity)) { "Invalid city slug: $normalizedCity" }
 
-        val hourlyShortcast = ForecastParser.parsePage(hourlyHtml)
-        val nowcastShortcast = ForecastParser.parsePage(nowcastHtml)
+        val hourlyPage = ForecastParser.parsePageData(hourlyHtml)
+        val nowcastPage = ForecastParser.parsePageData(nowcastHtml)
+        val hourlyShortcast = hourlyPage.shortcast
+        val nowcastShortcast = nowcastPage.shortcast
 
         val (hours, nearcast, hourlyCurrent) = slotsFrom(hourlyShortcast)
         val (_, nowcastItems, nowcastCurrent) = slotsFrom(nowcastShortcast)
@@ -37,18 +38,22 @@ object ForecastAnalyzer {
 
         val reference = now ?: current?.start ?: OffsetDateTime.now(ZoneId.of(TIMEZONE))
         val timeline = buildTimeline(reference, hours, nowcast, current)
+        val windows = daylightWindows(hourlyPage.astro)
+        val sunTimeline = applyDaylight(timeline, windows)
 
         return Forecast(
             city = normalizedCity,
             now = reference,
             timezone = TIMEZONE,
-            sun = change(reference, timeline, { it.sunny }, Condition.SUN),
+            sun = change(reference, sunTimeline, { it.sunny }, Condition.SUN),
             rain = change(reference, timeline, { it.raining }, Condition.RAIN),
             horizon = timeline.last().end,
             sources = listOf(
                 "$BASE_URL/wettertrend/$normalizedCity",
                 "$BASE_URL/90-minuten-wetter/$normalizedCity",
             ),
+            sunrise = windows.map { it.rise }.firstOrNull { !it.isBefore(reference) },
+            sunset = windows.map { it.set }.firstOrNull { !it.isBefore(reference) },
         )
     }
 
@@ -181,11 +186,5 @@ object ForecastAnalyzer {
             if (!slot.start.isAfter(now) && slot.end.isAfter(now)) return index
         }
         return 0
-    }
-
-    private fun parseTimestamp(value: String): OffsetDateTime = try {
-        OffsetDateTime.parse(value)
-    } catch (_: Exception) {
-        LocalDateTime.parse(value).atZone(ZoneId.of(TIMEZONE)).toOffsetDateTime()
     }
 }

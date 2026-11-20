@@ -136,6 +136,15 @@ fun WeatherScreen() {
                         if (forecast != null) {
                             Text(stringResource(R.string.sun, forecast.sunSummary))
                             Text(stringResource(R.string.rain, forecast.rainSummary))
+                            val sunrise = forecast.sunriseLabel?.let {
+                                stringResource(R.string.sunrise, it)
+                            }
+                            val sunset = forecast.sunsetLabel?.let {
+                                stringResource(R.string.sunset, it)
+                            }
+                            if (sunrise != null || sunset != null) {
+                                Text(listOfNotNull(sunrise, sunset).joinToString(" · "))
+                            }
                         } else {
                             Text(stringResource(R.string.no_forecast))
                         }

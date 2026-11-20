@@ -32,6 +32,12 @@ Definitions used:
   condition, e.g. `mdr1__` (light rain) or `mds1__` (shower). Snow is not counted
   as rain.
 
+The same page can also embed an `astro/days` payload with exact sunrise/sunset
+times. When present, the timeline is split at those times so a sunny symbol
+cannot produce "sunshine" before sunrise or after sunset. The next sunrise and
+sunset are returned as `sunrise` and `sunset`; both are `null` when the provider
+has no data (e.g. polar day/night).
+
 Both pages are cached in memory for 5 minutes (`CACHE_TTL` in `sonnenregen/core.py`)
 to avoid hammering the provider.
 
@@ -71,6 +77,8 @@ Example response (abbreviated):
     "summary": "Rain starts in 22 h 33 min (2026-11-21 20:00 +0100)."
   },
   "horizon": "...",
+  "sunrise": "2026-11-21T07:38:00+01:00",
+  "sunset": "2026-11-21T16:05:00+01:00",
   "sources": [".../wettertrend/berlin", ".../90-minuten-wetter/berlin"]
 }
 ```

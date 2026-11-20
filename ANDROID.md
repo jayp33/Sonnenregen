@@ -94,7 +94,9 @@ Then:
 
 1. JSON-decode the captured script content with `kotlinx.serialization`
    (`ignoreUnknownKeys = true`).
-2. Find the state entry whose key contains `/blending/shortcast/v1?`.
+2. Find the state entries whose keys contain `/blending/shortcast/v1?` and
+   `/astro/days/v1?`. The latter carries exact per-day `sun.rise` / `sun.set`
+   timestamps (and is optional — polar days have neither).
 3. Read `current`, `nowcast_trend.items` (15-minute slots) and `hours`
    (1-hour slots). Each item has an ISO-8601 `date` and a `symbol` code.
 4. Stitch the 15-minute grid to the hourly grid, as in the Python reference:
@@ -105,9 +107,14 @@ Then:
      observation `solarElevation > 0`;
    - **rain**: symbol contains `r`, `s` or `g` after the first two characters,
      but not snow (`n`).
-6. Walk forward from the provider's `current.date` to the first slot where each
+6. Split the timeline at sunrise/sunset and mark the parts that are in daylight.
+   Weather symbols still decide whether the sun actually shines within daylight,
+   so clouds can end sunshine before sunset, but a sunny slot can never extend
+   past it.
+7. Walk forward from the provider's `current.date` to the first slot where each
    condition changes. Produce `currently`, `event` (`starts` / `ends`), `at`,
-   `minutes`, and a human-readable summary.
+   `minutes`, and a human-readable summary. The next sunrise and sunset are also
+   carried on the forecast and shown in the app UI (not in the notification).
 
 City slugs are normalized and validated by the shared helpers in `domain/City.kt`
 before building URLs.
@@ -213,8 +220,10 @@ app/src/main/java/de/jayp33/sonnenregen/
   data/CityStatus.kt
   data/WeatherStore.kt
   domain/City.kt
+  domain/Daylight.kt
   domain/Models.kt
   domain/ForecastAnalyzer.kt
+  domain/Time.kt
   text/ForecastFormatter.kt
   text/ForecastPhrases.kt
   work/WeatherWorker.kt
@@ -253,8 +262,8 @@ not hit the network.
 - Location-based city detection, or very large city lists (each city needs two
   HTTP requests per refresh).
 - Notification icons / small weather images.
-- Exact sunrise/sunset times (the hourly data only gives an approximate "08:00
-  sunshine starts").
+- Computing sunrise/sunset astronomically: the provider's own `astro/days` data
+  is used instead, so the times match WetterOnline.
 - WetterOnline terms of service and attribution requirements for scraping.
 - Making the instant-unlock behaviour exact (would require revisiting the
   foreground-service decision).

@@ -11,6 +11,8 @@
     <string name="city">Ort: %1$s</string>
     <string name="sun">Sonne: %1$s</string>
     <string name="rain">Regen: %1$s</string>
+    <string name="sunrise">Sonnenaufgang: %1$s</string>
+    <string name="sunset">Sonnenuntergang: %1$s</string>
     <string name="no_forecast">Noch keine Vorhersage – tippe auf „Jetzt aktualisieren“.</string>
     <string name="refresh_now">Jetzt aktualisieren</string>
     <string name="disable_notification">Laufende Benachrichtigung deaktivieren</string>

@@ -7,27 +7,46 @@ import kotlinx.serialization.json.JsonObject
 
 class ParseException(message: String, cause: Throwable? = null) : Exception(message, cause)
 
+data class PageData(
+    val shortcast: ShortcastDto,
+    val astro: AstroDto?,
+)
+
 object ForecastParser {
     private val ngStateRegex = Regex(
         """(?is)<script[^>]*\bid=["']ng-state["'][^>]*>(.*?)</script>""",
     )
     private val json = Json { ignoreUnknownKeys = true }
 
-    fun parsePage(html: String): ShortcastDto {
+    fun parsePage(html: String): ShortcastDto = parsePageData(html).shortcast
+
+    fun parsePageData(html: String): PageData {
         val match = ngStateRegex.find(html)
             ?: throw ParseException("No ng-state payload found in the page")
 
         val state = json.parseToJsonElement(match.groupValues[1]) as? JsonObject
             ?: throw ParseException("Unexpected ng-state payload")
 
-        val shortcast = state.entries.firstOrNull { it.key.contains("/blending/shortcast/v1?") }
+        val shortcastEntry = state.entries.firstOrNull { it.key.contains("/blending/shortcast/v1?") }
             ?: throw ParseException("No shortcast data found in the ng-state payload")
-
-        return try {
-            json.decodeFromJsonElement(ShortcastDto.serializer(), shortcast.value)
+        val shortcast = try {
+            json.decodeFromJsonElement(ShortcastDto.serializer(), shortcastEntry.value)
         } catch (exc: Exception) {
             throw ParseException("Invalid shortcast payload: ${exc.message}", exc)
         }
+
+        // Sunrise/sunset is a bonus: a missing or malformed astro payload must
+        // not make an otherwise usable forecast fail.
+        val astroEntry = state.entries.firstOrNull { it.key.contains("/astro/days/v1?") }
+        val astro = astroEntry?.let { entry ->
+            try {
+                json.decodeFromJsonElement(AstroDto.serializer(), entry.value)
+            } catch (_: Exception) {
+                null
+            }
+        }
+
+        return PageData(shortcast, astro)
     }
 }
 
@@ -62,4 +81,22 @@ data class CurrentDto(
     val symbol: String,
     @SerialName("weather_condition_image") val weatherConditionImage: String? = null,
     @SerialName("solar_elevation") val solarElevation: Double? = null,
+)
+
+@Serializable
+data class AstroDto(
+    val days: List<AstroDayDto> = emptyList(),
+)
+
+@Serializable
+data class AstroDayDto(
+    val date: String,
+    val sun: AstroSunDto? = null,
+)
+
+@Serializable
+data class AstroSunDto(
+    @SerialName("course_type") val courseType: String? = null,
+    val rise: String? = null,
+    val set: String? = null,
 )

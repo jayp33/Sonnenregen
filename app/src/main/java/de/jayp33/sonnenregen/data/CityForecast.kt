@@ -10,6 +10,8 @@ data class CityForecast(
     val sunSummary: String,
     val rainSummary: String,
     val fetchedAtMillis: Long,
+    val sunriseLabel: String? = null,
+    val sunsetLabel: String? = null,
 )
 
 /** Keep successful cities and retain the previous value for failed ones. */

@@ -16,11 +16,14 @@ data class Slot(
     val source: SlotSource,
     val solarElevation: Double? = null,
     val night: Boolean? = null,
+    /** Exact sunrise/sunset override; null when no astro data is available. */
+    val daylight: Boolean? = null,
 ) {
     val end: OffsetDateTime get() = start.plus(duration)
 
     val sunny: Boolean
         get() {
+            if (daylight == false) return false
             if (night == true || (solarElevation != null && solarElevation <= 0.0)) return false
             return isSunSymbol(symbol)
         }
@@ -54,4 +57,6 @@ data class Forecast(
     val horizon: OffsetDateTime?,
     val sources: List<String>,
     val fetchedAt: OffsetDateTime = OffsetDateTime.now(),
+    val sunrise: OffsetDateTime? = null,
+    val sunset: OffsetDateTime? = null,
 )

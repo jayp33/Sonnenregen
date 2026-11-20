@@ -27,6 +27,49 @@ class ForecastAnalyzerTest {
     }
 
     @Test
+    fun uses_exact_sunrise_and_reports_next_sun_times() {
+        val morning = TestData.sunnyMorningShortcast
+        val forecast = ForecastAnalyzer.analyze(
+            "berlin",
+            TestData.pageWith(morning, TestData.astroJson),
+            TestData.pageWith(morning),
+        )
+
+        assertEquals(OffsetDateTime.parse("2026-11-21T07:38:00+01:00"), forecast.sun.at)
+        assertEquals(OffsetDateTime.parse("2026-11-21T07:38:00+01:00"), forecast.sunrise)
+        assertEquals(OffsetDateTime.parse("2026-11-21T16:05:00+01:00"), forecast.sunset)
+    }
+
+    @Test
+    fun clouds_before_sunrise_still_delay_sunshine() {
+        val forecast = ForecastAnalyzer.analyze(
+            "berlin",
+            TestData.page(TestData.astroJson),
+            TestData.page(),
+        )
+
+        assertEquals(OffsetDateTime.parse("2026-11-21T08:00:00+01:00"), forecast.sun.at)
+    }
+
+    @Test
+    fun sunset_caps_sunshine_inside_a_sunny_slot() {
+        val astro = TestData.astroJson.replace(
+            "2026-11-21T16:05:00+01:00",
+            "2026-11-21T15:52:00+01:00",
+        )
+        val forecast = ForecastAnalyzer.analyze(
+            "berlin",
+            TestData.page(astro),
+            TestData.page(),
+            now = OffsetDateTime.parse("2026-11-21T15:00:00+01:00"),
+        )
+
+        assertEquals(true, forecast.sun.currently)
+        assertEquals("ends", forecast.sun.event!!.name.lowercase())
+        assertEquals(OffsetDateTime.parse("2026-11-21T15:52:00+01:00"), forecast.sun.at)
+    }
+
+    @Test
     fun timeline_is_continuous() {
         val shortcast = ForecastParser.parsePage(TestData.page())
         val (hours, nowcast, current) = ForecastAnalyzer.slotsFrom(shortcast)

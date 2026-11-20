@@ -34,6 +34,7 @@ NG_STATE_RE = re.compile(
     r"<script[^>]*\bid=[\"']ng-state[\"'][^>]*>(.*?)</script>", re.IGNORECASE | re.DOTALL
 )
 SHORTCAST_KEY = "/blending/shortcast/v1?"
+ASTRO_KEY = "/astro/days/v1?"
 
 # WetterOnline symbol codes: first two characters are the base condition.
 # "so" = sun, "wb" = wechselnd bewölkt (sun and clouds, day only).
@@ -60,6 +61,7 @@ class Slot:
     source: str
     solar_elevation: float | None = None
     night: bool | None = None
+    daylight: bool | None = None
 
     @property
     def end(self) -> datetime:
@@ -67,6 +69,8 @@ class Slot:
 
     @property
     def sunny(self) -> bool:
+        if self.daylight is False:
+            return False
         if self.night is True or (self.solar_elevation is not None and self.solar_elevation <= 0):
             return False
         return is_sun_symbol(self.symbol)
@@ -106,6 +110,8 @@ class Answer:
     rain: Change
     sources: tuple[str, ...]
     horizon: datetime | None
+    sunrise: datetime | None = None
+    sunset: datetime | None = None
 
     def as_dict(self) -> dict:
         return {
@@ -115,6 +121,8 @@ class Answer:
             "sun": self.sun.as_dict(),
             "rain": self.rain.as_dict(),
             "horizon": self.horizon.isoformat() if self.horizon else None,
+            "sunrise": self.sunrise.isoformat() if self.sunrise else None,
+            "sunset": self.sunset.isoformat() if self.sunset else None,
             "sources": list(self.sources),
         }
 
@@ -192,6 +200,60 @@ def extract_shortcast(state: dict) -> dict:
         if SHORTCAST_KEY in key and isinstance(value, dict):
             return value
     raise ParseError("No shortcast data found in the ng-state payload")
+
+
+def extract_astro(state: dict) -> dict | None:
+    """Optional exact sunrise/sunset data from the same embedded payload."""
+    for key, value in state.items():
+        if ASTRO_KEY in key and isinstance(value, dict):
+            return value
+    return None
+
+
+def daylight_windows(astro: dict | None) -> list[tuple[datetime, datetime]]:
+    windows: list[tuple[datetime, datetime]] = []
+    for day in (astro or {}).get("days") or []:
+        sun = day.get("sun") or {}
+        if not sun.get("rise") or not sun.get("set"):
+            continue  # polar day/night
+        try:
+            rise = _parse_timestamp(sun["rise"])
+            set_time = _parse_timestamp(sun["set"])
+        except (TypeError, ValueError):
+            continue
+        if set_time > rise:
+            windows.append((rise, set_time))
+    return sorted(windows)
+
+
+def apply_daylight(
+    timeline: Sequence[Slot],
+    windows: Sequence[tuple[datetime, datetime]],
+) -> list[Slot]:
+    """Split slots at sunrise/sunset and mark which parts are in daylight."""
+    if not windows or not timeline:
+        return list(timeline)
+
+    cuts = [
+        moment
+        for rise, set_time in windows
+        for moment in (rise, set_time)
+        if timeline[0].start < moment < timeline[-1].end
+    ]
+    split: list[Slot] = []
+    for slot in timeline:
+        start = slot.start
+        for cut in cuts:
+            if start < cut < slot.end:
+                split.append(replace(slot, start=start, duration=cut - start))
+                start = cut
+        split.append(replace(slot, start=start, duration=slot.end - start))
+
+    result: list[Slot] = []
+    for slot in split:
+        in_daylight = any(rise <= slot.start < set_time for rise, set_time in windows)
+        result.append(replace(slot, daylight=in_daylight))
+    return result
 
 
 def _slots_from_shortcast(shortcast: dict) -> tuple[list[Slot], list[Slot], Slot | None]:
@@ -354,8 +416,10 @@ def analyze(
         hourly_page = hourly_future.result()
         nowcast_page = nowcast_future.result()
 
-    hourly_shortcast = extract_shortcast(extract_state(hourly_page))
+    hourly_state = extract_state(hourly_page)
+    hourly_shortcast = extract_shortcast(hourly_state)
     nowcast_shortcast = extract_shortcast(extract_state(nowcast_page))
+    windows = daylight_windows(extract_astro(hourly_state))
     hours, nearcast, current = _slots_from_shortcast(hourly_shortcast)
     _, nowcast_items, nowcast_current = _slots_from_shortcast(nowcast_shortcast)
     if not nowcast_items:
@@ -369,13 +433,16 @@ def analyze(
     if reference.tzinfo is None:
         reference = reference.replace(tzinfo=LOCAL_TZ)
     timeline = build_timeline(reference, hours, nowcast_items, current)
+    sun_timeline = apply_daylight(timeline, windows)
 
     return Answer(
         city=city,
         now=reference,
         timezone=str(LOCAL_TZ),
-        sun=_change(reference, timeline, lambda slot: slot.sunny, "Sunshine"),
+        sun=_change(reference, sun_timeline, lambda slot: slot.sunny, "Sunshine"),
         rain=_change(reference, timeline, lambda slot: slot.raining, "Rain"),
         sources=(hourly_url, nowcast_url),
         horizon=timeline[-1].end,
+        sunrise=next((rise for rise, _ in windows if rise >= reference), None),
+        sunset=next((set_time for _, set_time in windows if set_time >= reference), None),
     )

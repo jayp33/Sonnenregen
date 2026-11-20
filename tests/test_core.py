@@ -11,7 +11,10 @@ from sonnenregen.core import (
     NOWCAST_PATH,
     _slots_from_shortcast,
     analyze,
+    apply_daylight,
     build_timeline,
+    daylight_windows,
+    extract_astro,
     extract_shortcast,
     extract_state,
     is_rain_symbol,
@@ -87,6 +90,50 @@ class ParsingTests(unittest.TestCase):
         self.assertEqual(timeline[0].source, "current")
 
 
+ASTRO = {
+    "https://api-web.wo-cloud.com/astro/days/v1?test": {
+        "days": [
+            {
+                "date": "2026-11-21T00:00:00+01:00",
+                "sun": {
+                    "course_type": "sunrise_and_sunset",
+                    "rise": "2026-11-21T07:38:00+01:00",
+                    "set": "2026-11-21T16:05:00+01:00",
+                },
+            },
+            {
+                "date": "2026-11-22T00:00:00+01:00",
+                "sun": {"course_type": "polar_night", "rise": None, "set": None},
+            },
+        ]
+    }
+}
+
+
+class DaylightTests(unittest.TestCase):
+    def test_reads_exact_sun_times(self) -> None:
+        windows = daylight_windows(extract_astro(ASTRO))
+        self.assertEqual(
+            [(rise.isoformat(), end.isoformat()) for rise, end in windows],
+            [("2026-11-21T07:38:00+01:00", "2026-11-21T16:05:00+01:00")],
+        )
+
+    def test_splits_slots_at_sunrise_and_sunset(self) -> None:
+        start = datetime.fromisoformat("2026-11-21T07:00:00+01:00")
+        slot = Slot(start, timedelta(hours=2), "so____", "hourly")
+        windows = [(start + timedelta(minutes=38), start + timedelta(minutes=90))]
+
+        result = apply_daylight([slot], windows)
+
+        self.assertEqual([part.duration for part in result], [
+            timedelta(minutes=38),
+            timedelta(minutes=52),
+            timedelta(minutes=30),
+        ])
+        self.assertEqual([part.daylight for part in result], [False, True, False])
+        self.assertEqual([part.sunny for part in result], [False, True, False])
+
+
 class AnalyzeTests(unittest.TestCase):
     def test_real_forecast_waits_for_sun_and_rain(self) -> None:
         answer = analyze("berlin", fetcher=lambda url: PAGES[url])
@@ -100,6 +147,27 @@ class AnalyzeTests(unittest.TestCase):
         self.assertIn("Sunshine starts in", answer.sun.summary)
         self.assertIn("Rain starts in", answer.rain.summary)
         self.assertEqual(len(answer.as_dict()["sources"]), 2)
+
+    def test_exact_sunrise_delays_sunshine_in_a_sunny_slot(self) -> None:
+        page = make_state(
+            hours=[
+                ("2026-11-21T07:00:00+01:00", "so____"),
+                ("2026-11-21T08:00:00+01:00", "so____"),
+                ("2026-11-21T09:00:00+01:00", "mo____"),
+            ],
+            items=[],
+            current=("2026-11-21T06:45:00+01:00", "mo____"),
+        )
+        combined = {**json.loads(page.split(">", 1)[1].split("</script>", 1)[0]), **ASTRO}
+        astro_page = f'<script id="ng-state" type="application/json">{json.dumps(combined)}</script>'
+        answer = analyze(
+            "berlin",
+            fetcher=lambda url: astro_page if "wettertrend" in url else page,
+        )
+        self.assertEqual(answer.sun.at.isoformat(), "2026-11-21T07:38:00+01:00")
+        self.assertEqual(answer.sunrise.isoformat(), "2026-11-21T07:38:00+01:00")
+        self.assertEqual(answer.sunset.isoformat(), "2026-11-21T16:05:00+01:00")
+        self.assertEqual(answer.as_dict()["sunrise"], "2026-11-21T07:38:00+01:00")
 
     def test_current_sunshine_ends_and_rain_starts(self) -> None:
         page = make_state(
