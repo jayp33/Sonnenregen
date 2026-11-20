@@ -18,7 +18,7 @@ private val NIGHT_TO_DAY = mapOf(
     "md" to "bd", // stark bewölkt (night) -> stark bewölkt (day)
 )
 
-internal fun String.asDaySymbol(): String =
+private fun String.asDaySymbol(): String =
     NIGHT_TO_DAY[take(2)]?.let { it + drop(2) } ?: this
 
 /** Only days with both rise and set times (polar day/night has neither). */

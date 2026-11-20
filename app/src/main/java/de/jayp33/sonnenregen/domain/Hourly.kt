@@ -15,7 +15,9 @@ enum class HourKind {
     PARTLY_SUN,
     CLOUDY,
     OVERCAST,
+    @Deprecated("Legacy stored value; rendered as SUN")
     CLEAR_NIGHT,
+    @Deprecated("Legacy stored value; rendered as CLOUDY")
     CLOUDY_NIGHT,
     LIGHT_RAIN,
     RAIN,
@@ -36,7 +38,6 @@ data class HourCell(
 fun hourlyCells(
     now: OffsetDateTime,
     hours: List<Slot>,
-    windows: List<Daylight>,
     current: Slot? = null,
 ): List<HourCell> {
     val start = now.truncatedTo(ChronoUnit.HOURS)
@@ -54,7 +55,7 @@ fun hourlyCells(
     return slots.take(48).map { slot ->
         HourCell(
             startEpochMillis = slot.start.toInstant().toEpochMilli(),
-            kind = classify(slot, windows),
+            kind = classify(slot),
         )
     }
 }
@@ -72,22 +73,16 @@ fun groupHoursByDay(
     return result
 }
 
-private fun classify(slot: Slot, windows: List<Daylight>): HourKind {
-    // An hour that only partly overlaps daylight still gets the day symbol, so
-    // the 07:00 cell shows sun when sunrise is 07:38.
-    val inDaylight = windows.any { slot.start < it.set && slot.end > it.rise }
-    val symbol = if (inDaylight) slot.symbol.asDaySymbol() else slot.symbol
+private fun classify(slot: Slot): HourKind {
+    // Day and night variants of the same condition share a colour, so the grid
+    // reads purely as weather at a glance. Sunrise/sunset stay in the text line.
+    if (isRainSymbol(slot.symbol)) return rainKind(slot.symbol)
 
-    if (isRainSymbol(symbol)) return rainKind(symbol)
-
-    if (inDaylight && isSunSymbol(symbol)) {
-        return if (symbol.startsWith("so")) HourKind.SUN else HourKind.PARTLY_SUN
-    }
-
-    return if (inDaylight) {
-        if (symbol.startsWith("bw")) HourKind.CLOUDY else HourKind.OVERCAST
-    } else {
-        if (symbol.startsWith("mo")) HourKind.CLEAR_NIGHT else HourKind.CLOUDY_NIGHT
+    return when (slot.symbol.take(2)) {
+        "so", "mo" -> HourKind.SUN // sunny / clear night
+        "wb", "mb" -> HourKind.PARTLY_SUN // partly sunny / partly cloudy night
+        "bw", "mw" -> HourKind.CLOUDY
+        else -> HourKind.OVERCAST // bd, md, fog, ...
     }
 }
 

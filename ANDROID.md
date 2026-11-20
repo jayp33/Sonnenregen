@@ -76,24 +76,26 @@ empty-state line.
 ## 48-hour colour overview
 
 Each city card also shows a colour-only forecast grid: 48 one-hour cells from the
-current hour, padded into one row per calendar day in `Europe/Berlin`. An evening
-start therefore produces three rows (part of today, all of tomorrow, part of the
-day after); exactly midnight produces two. Rows are padded to 24 columns with
-transparent spacers, so hours line up vertically and no scrolling is needed.
+current hour, grouped into four labelled blocks of six per calendar day in
+`Europe/Berlin`. An evening start therefore produces three rows (part of today,
+all of tomorrow, part of the day after); exactly midnight produces two. Each
+block starts with its hour label (`00`, `06`, `12`, `18`) and is separated from
+the next by a small gap, so no scrolling is needed.
 
-Colours come from the same symbol classification as the notification:
+Day and night variants of the same condition share a colour, so the grid reads
+purely as weather at a glance:
 
-- bright/pale yellow — sunny / partly sunny;
-- light/dark gray — cloudy / overcast during the day;
-- dark blue-gray — clear / cloudy night;
+- bright/pale yellow — sunny/clear / partly sunny;
+- light/dark gray — cloudy / overcast;
 - light/medium/dark blue — light rain / rain / heavy rain.
 
-A cell that overlaps daylight uses the day equivalent of WetterOnline's night
-symbol (`mo` → `so`, `mw` → `bw`), so the 07:00 cell is yellow when sunrise is
-07:38. No weather icons are drawn; each cell carries a localized
-`contentDescription` for screen readers. The overview is stored as
-`CityForecast.hours` (defaulting to an empty list), so existing installs simply
-show no grid until their next refresh. The notification is unchanged.
+For example, `mo` and `so` are both bright yellow, `mb` and `wb` both pale yellow.
+Sunrise/sunset stay in the adjacent text line instead of being encoded as glyphs.
+No weather icons are drawn; each cell carries a localized `contentDescription`
+for screen readers. The overview is stored as `CityForecast.hours` (defaulting to
+an empty list), so existing installs simply show no grid until their next refresh.
+Legacy night enum values from the first grid version still decode and render with
+their day colours. The notification is unchanged.
 
 ## Data source and parsing
 

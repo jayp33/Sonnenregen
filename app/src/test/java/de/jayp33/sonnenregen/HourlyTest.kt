@@ -1,6 +1,5 @@
 package de.jayp33.sonnenregen
 
-import de.jayp33.sonnenregen.domain.Daylight
 import de.jayp33.sonnenregen.domain.HourCell
 import de.jayp33.sonnenregen.domain.HourKind
 import de.jayp33.sonnenregen.domain.Slot
@@ -18,7 +17,6 @@ class HourlyTest {
         val cells = hourlyCells(
             now = at("2026-11-20T21:26:00+01:00"),
             hours = hours("2026-11-20T22:00:00+01:00", 49, "mo____"),
-            windows = emptyList(),
             current = Slot(
                 at("2026-11-20T21:26:00+01:00"),
                 Duration.ofMinutes(15),
@@ -33,15 +31,19 @@ class HourlyTest {
     }
 
     @Test
-    fun clear_night_hour_uses_sun_colour_from_exact_sunrise() {
+    fun day_and_night_variants_share_the_same_colour() {
         val cells = hourlyCells(
             now = at("2026-11-21T06:30:00+01:00"),
             hours = listOf(
                 hour("2026-11-21T07:00:00+01:00", "mo____"),
                 hour("2026-11-21T08:00:00+01:00", "so____"),
-                hour("2026-11-21T09:00:00+01:00", "mw____"),
+                hour("2026-11-21T09:00:00+01:00", "mb____"),
+                hour("2026-11-21T10:00:00+01:00", "wb____"),
+                hour("2026-11-21T11:00:00+01:00", "mw____"),
+                hour("2026-11-21T12:00:00+01:00", "bw____"),
+                hour("2026-11-21T13:00:00+01:00", "md____"),
+                hour("2026-11-21T14:00:00+01:00", "bd____"),
             ),
-            windows = listOf(daylight()),
             current = Slot(
                 at("2026-11-21T06:30:00+01:00"),
                 Duration.ofMinutes(15),
@@ -52,10 +54,15 @@ class HourlyTest {
 
         assertEquals(
             listOf(
-                HourKind.CLEAR_NIGHT, // 06:00, before sunrise
-                HourKind.SUN, // 07:00, sunrise at 07:38
-                HourKind.SUN,
-                HourKind.CLOUDY, // mw -> bw in daylight
+                HourKind.SUN, // 06:00 current, clear night
+                HourKind.SUN, // mo
+                HourKind.SUN, // so
+                HourKind.PARTLY_SUN, // mb
+                HourKind.PARTLY_SUN, // wb
+                HourKind.CLOUDY, // mw
+                HourKind.CLOUDY, // bw
+                HourKind.OVERCAST, // md
+                HourKind.OVERCAST, // bd
             ),
             cells.map { it.kind },
         )
@@ -70,7 +77,6 @@ class HourlyTest {
                 hour("2026-11-21T11:00:00+01:00", "bwr2__"),
                 hour("2026-11-21T12:00:00+01:00", "mds3__"),
             ),
-            windows = listOf(daylight()),
         )
 
         assertEquals(
@@ -119,11 +125,6 @@ class HourlyTest {
         duration = Duration.ofHours(1),
         symbol = symbol,
         source = SlotSource.HOURLY,
-    )
-
-    private fun daylight(): Daylight = Daylight(
-        rise = at("2026-11-21T07:38:00+01:00"),
-        set = at("2026-11-21T16:05:00+01:00"),
     )
 
     private fun at(value: String): OffsetDateTime = OffsetDateTime.parse(value)
