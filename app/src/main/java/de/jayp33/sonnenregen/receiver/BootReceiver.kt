@@ -19,13 +19,13 @@ class BootReceiver : BroadcastReceiver() {
             return
         }
 
-        WeatherScheduler.schedule(context)
-
         val pending = goAsync()
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
-                val stored = WeatherStore(context).load()
-                if (stored != null) WeatherNotifier.show(context, stored)
+                val store = WeatherStore(context)
+                if (!store.isEnabled()) return@launch
+                WeatherScheduler.schedule(context)
+                WeatherNotifier.show(context, store.statuses())
             } finally {
                 pending.finish()
             }

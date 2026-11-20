@@ -1,6 +1,7 @@
 package de.jayp33.sonnenregen.data
 
 import android.content.Context
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
@@ -8,55 +9,65 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import de.jayp33.sonnenregen.domain.DEFAULT_CITY
 import de.jayp33.sonnenregen.domain.Forecast
+import de.jayp33.sonnenregen.domain.isValidCitySlug
+import de.jayp33.sonnenregen.domain.normalizeCity
 import de.jayp33.sonnenregen.text.ForecastFormatter
 import de.jayp33.sonnenregen.text.ForecastPhrases
 import kotlinx.coroutines.flow.first
-import java.time.ZoneId
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.Json
 
 private val Context.weatherDataStore by preferencesDataStore(name = "weather")
-
-data class StoredWeather(
-    val city: String,
-    val compactSummary: String,
-    val sunSummary: String,
-    val rainSummary: String,
-    val fetchedAtMillis: Long,
-)
 
 class WeatherStore(context: Context) {
     private val appContext = context.applicationContext
     private val dataStore = appContext.weatherDataStore
     private val phrases = ForecastPhrases.from(appContext)
+    private val json = Json { ignoreUnknownKeys = true }
 
-    suspend fun save(forecast: Forecast): StoredWeather {
-        val compact = ForecastFormatter.compact(forecast, phrases)
-        val sunSummary = ForecastFormatter.verbose(forecast.sun, phrases)
-        val rainSummary = ForecastFormatter.verbose(forecast.rain, phrases)
-        val fetchedAtMillis = forecast.fetchedAt.atZoneSameInstant(ZoneId.of("UTC")).toInstant().toEpochMilli()
+    /** Cities in the order the user added them. */
+    suspend fun cities(): List<String> = dataStore.data.first().let(::citiesFrom)
+
+    /** Returns false for an invalid slug or one that is already configured. */
+    suspend fun addCity(input: String): Boolean {
+        val city = normalizeCity(input)
+        if (!isValidCitySlug(city) || city in cities()) return false
         dataStore.edit { prefs ->
-            prefs[CITY] = forecast.city
-            prefs[COMPACT_SUMMARY] = compact
-            prefs[SUN_SUMMARY] = sunSummary
-            prefs[RAIN_SUMMARY] = rainSummary
-            prefs[FETCHED_AT] = fetchedAtMillis
+            val current = citiesFrom(prefs)
+            if (city !in current) {
+                prefs[CITIES] = json.encodeToString(current + city)
+            }
         }
-        return StoredWeather(
-            city = forecast.city,
-            compactSummary = compact,
-            sunSummary = sunSummary,
-            rainSummary = rainSummary,
-            fetchedAtMillis = fetchedAtMillis,
-        )
+        return true
     }
 
-    suspend fun load(): StoredWeather? = dataStore.data.first().let { prefs ->
-        val city = prefs[CITY] ?: return null
-        val sun = prefs[SUN_SUMMARY] ?: return null
-        val rain = prefs[RAIN_SUMMARY] ?: return null
-        val fetchedAt = prefs[FETCHED_AT] ?: return null
-        val compact = prefs[COMPACT_SUMMARY] ?: sun
-        StoredWeather(city, compact, sun, rain, fetchedAt)
+    suspend fun removeCity(city: String) {
+        dataStore.edit { prefs ->
+            prefs[CITIES] = json.encodeToString(citiesFrom(prefs).filterNot { it == city })
+            prefs[FORECASTS] = json.encodeToString(forecastsFrom(prefs).filterKeys { it != city })
+        }
     }
+
+    suspend fun forecasts(): Map<String, CityForecast> = dataStore.data.first().let(::forecastsFrom)
+
+    /** Replace only the supplied cities; failed cities keep their last good forecast. */
+    suspend fun saveForecasts(updates: List<CityForecast>) {
+        if (updates.isEmpty()) return
+        dataStore.edit { prefs ->
+            prefs[FORECASTS] = json.encodeToString(mergeForecasts(forecastsFrom(prefs), updates))
+        }
+    }
+
+    suspend fun statuses(staleCities: Set<String> = emptySet()): List<CityStatus> =
+        buildStatuses(cities(), forecasts(), staleCities)
+
+    fun format(forecast: Forecast): CityForecast = CityForecast(
+        city = forecast.city,
+        compactSummary = ForecastFormatter.compact(forecast, phrases),
+        sunSummary = ForecastFormatter.verbose(forecast.sun, phrases),
+        rainSummary = ForecastFormatter.verbose(forecast.rain, phrases),
+        fetchedAtMillis = forecast.fetchedAt.toInstant().toEpochMilli(),
+    )
 
     suspend fun isEnabled(): Boolean = dataStore.data.first()[ENABLED] ?: true
 
@@ -64,14 +75,58 @@ class WeatherStore(context: Context) {
         dataStore.edit { prefs -> prefs[ENABLED] = enabled }
     }
 
-    suspend fun city(): String = dataStore.data.first()[CITY] ?: DEFAULT_CITY
+    private fun citiesFrom(prefs: Preferences): List<String> {
+        val encoded = prefs[CITIES] ?: return listOf(legacyCity(prefs) ?: DEFAULT_CITY)
+        return decodeCities(encoded)
+    }
+
+    private fun forecastsFrom(prefs: Preferences): Map<String, CityForecast> {
+        val encoded = prefs[FORECASTS] ?: return legacyForecast(prefs)
+        return decodeForecasts(encoded)
+    }
+
+    private fun decodeCities(value: String): List<String> = try {
+        json.decodeFromString<List<String>>(value)
+            .map(::normalizeCity)
+            .filter(::isValidCitySlug)
+            .distinct()
+    } catch (_: SerializationException) {
+        emptyList()
+    } catch (_: IllegalArgumentException) {
+        emptyList()
+    }
+
+    private fun decodeForecasts(value: String): Map<String, CityForecast> = try {
+        json.decodeFromString<Map<String, CityForecast>>(value)
+    } catch (_: SerializationException) {
+        emptyMap()
+    } catch (_: IllegalArgumentException) {
+        emptyMap()
+    }
+
+    private fun legacyCity(prefs: Preferences): String? =
+        prefs[LEGACY_CITY]?.takeIf(::isValidCitySlug)
+
+    /** Import the original single-city installation without losing its forecast. */
+    private fun legacyForecast(prefs: Preferences): Map<String, CityForecast> {
+        val city = legacyCity(prefs) ?: return emptyMap()
+        val sun = prefs[LEGACY_SUN] ?: return emptyMap()
+        val rain = prefs[LEGACY_RAIN] ?: return emptyMap()
+        val fetchedAt = prefs[LEGACY_FETCHED_AT] ?: return emptyMap()
+        val compact = prefs[LEGACY_COMPACT] ?: sun
+        return mapOf(city to CityForecast(city, compact, sun, rain, fetchedAt))
+    }
 
     private companion object {
-        val CITY = stringPreferencesKey("city")
-        val COMPACT_SUMMARY = stringPreferencesKey("compact_summary")
-        val SUN_SUMMARY = stringPreferencesKey("sun_summary")
-        val RAIN_SUMMARY = stringPreferencesKey("rain_summary")
-        val FETCHED_AT = longPreferencesKey("fetched_at")
+        val CITIES = stringPreferencesKey("cities")
+        val FORECASTS = stringPreferencesKey("forecasts_by_city")
         val ENABLED = booleanPreferencesKey("enabled")
+
+        // Original single-city schema, read once for migration.
+        val LEGACY_CITY = stringPreferencesKey("city")
+        val LEGACY_COMPACT = stringPreferencesKey("compact_summary")
+        val LEGACY_SUN = stringPreferencesKey("sun_summary")
+        val LEGACY_RAIN = stringPreferencesKey("rain_summary")
+        val LEGACY_FETCHED_AT = longPreferencesKey("fetched_at")
     }
 }

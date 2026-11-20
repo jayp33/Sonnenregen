@@ -12,11 +12,8 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 import kotlin.math.roundToLong
 
-const val DEFAULT_CITY = "berlin"
 const val BASE_URL = "https://www.wetteronline.de"
 const val TIMEZONE = "Europe/Berlin"
-
-private val CITY_REGEX = Regex("^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 object ForecastAnalyzer {
     fun analyze(
@@ -25,8 +22,8 @@ object ForecastAnalyzer {
         nowcastHtml: String,
         now: OffsetDateTime? = null,
     ): Forecast {
-        val normalizedCity = city.trim().lowercase()
-        require(CITY_REGEX.matches(normalizedCity)) { "Invalid city slug: $normalizedCity" }
+        val normalizedCity = normalizeCity(city)
+        require(isValidCitySlug(normalizedCity)) { "Invalid city slug: $normalizedCity" }
 
         val hourlyShortcast = ForecastParser.parsePage(hourlyHtml)
         val nowcastShortcast = ForecastParser.parsePage(nowcastHtml)

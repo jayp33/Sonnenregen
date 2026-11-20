@@ -17,6 +17,16 @@
     <string name="enable_notification">Laufende Benachrichtigung aktivieren</string>
     <string name="allow_notifications">Benachrichtigungen erlauben</string>
 
+    <string name="cities">Orte</string>
+    <string name="city_hint">Ort-Slug, z. B. hamburg</string>
+    <string name="add_city">Ort hinzufügen</string>
+    <string name="remove">Entfernen</string>
+    <string name="invalid_city">Bitte einen gültigen Ort-Slug eingeben (Buchstaben, Zahlen, Bindestriche).</string>
+    <string name="city_already_added">Dieser Ort ist bereits konfiguriert.</string>
+    <string name="no_cities">Keine Orte konfiguriert – oben einen hinzufügen.</string>
+    <string name="no_cities_notification">Keine Orte konfiguriert</string>
+    <string name="city_line">%1$s: %2$s</string>
+
     <bool name="forecast_lowercase_second">false</bool>
     <string name="forecast_pair">%1$s, %2$s</string>
     <string name="duration_hours_minutes">%1$d Std. %2$d Min.</string>

@@ -2,6 +2,8 @@ package de.jayp33.sonnenregen.data
 
 import de.jayp33.sonnenregen.domain.BASE_URL
 import de.jayp33.sonnenregen.domain.DEFAULT_CITY
+import de.jayp33.sonnenregen.domain.isValidCitySlug
+import de.jayp33.sonnenregen.domain.normalizeCity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
@@ -16,8 +18,8 @@ class WetterOnlineClient {
         .build()
 
     suspend fun fetch(city: String = DEFAULT_CITY): Pair<String, String> = withContext(Dispatchers.IO) {
-        val normalizedCity = city.trim().lowercase()
-        require(CITY_REGEX.matches(normalizedCity)) { "Invalid city slug: $normalizedCity" }
+        val normalizedCity = normalizeCity(city)
+        require(isValidCitySlug(normalizedCity)) { "Invalid city slug: $normalizedCity" }
 
         val hourlyUrl = "$BASE_URL/wettertrend/$normalizedCity"
         val nowcastUrl = "$BASE_URL/90-minuten-wetter/$normalizedCity"
@@ -41,9 +43,5 @@ class WetterOnlineClient {
             return response.body?.string()
                 ?: throw SourceException("Empty response from $url")
         }
-    }
-
-    private companion object {
-        val CITY_REGEX = Regex("^[a-z0-9]+(?:-[a-z0-9]+)*$")
     }
 }

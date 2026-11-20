@@ -17,6 +17,16 @@
     <string name="enable_notification">Enable ongoing notification</string>
     <string name="allow_notifications">Allow notifications</string>
 
+    <string name="cities">Cities</string>
+    <string name="city_hint">City slug, e.g. hamburg</string>
+    <string name="add_city">Add city</string>
+    <string name="remove">Remove</string>
+    <string name="invalid_city">Enter a valid city slug (letters, digits, hyphens).</string>
+    <string name="city_already_added">This city is already configured.</string>
+    <string name="no_cities">No cities configured — add one above.</string>
+    <string name="no_cities_notification">No cities configured</string>
+    <string name="city_line">%1$s: %2$s</string>
+
     <bool name="forecast_lowercase_second">true</bool>
     <string name="forecast_pair">%1$s, %2$s</string>
     <string name="duration_hours_minutes">%1$d h %2$d min</string>

@@ -3,7 +3,7 @@
 ## Goal
 
 Sonnenregen should also be a native Android app showing a permanent notification
-with both forecasts for a location (default: Berlin):
+with both forecasts for one or more locations (default: Berlin):
 
 - how long until the sun shines, or until the current sunshine ends;
 - how long until it rains, or until the current rain ends.
@@ -46,6 +46,31 @@ German durations use `Std.`/`Min.` instead of `h`/`min`:
 - `Sonne in 2 Std. 10 Min., kein Regen`
 - `Regen in 30 Min., Sonne in 5 Std.`
 
+## Multiple cities
+
+The user can add and remove WetterOnline city slugs in the app. `normalizeCity()`
+trims/lowercases input and `isValidCitySlug()` validates it with
+`^[a-z0-9]+(?:-[a-z0-9]+)*$` before any URL is built. DataStore holds:
+
+- `cities`: a JSON array in the order the user added them;
+- `forecasts_by_city`: a JSON map from slug to the last good formatted forecast.
+
+The original single-city keys are read once and migrated on first access, so an
+existing installation keeps its Berlin forecast after the upgrade.
+
+One worker run fetches every configured city concurrently. Each city is handled
+independently:
+
+- a successful city replaces its stored forecast;
+- a failed city keeps its last good forecast and is marked stale for that
+  notification only;
+- the run succeeds if any city succeeded, retries if every failure was a network
+  error, and fails if every failure was a parse/validation error.
+
+Adding a city enqueues an immediate refresh; removing one reposts the notification
+without a network request. With no cities configured the notification shows an
+empty-state line.
+
 ## Data source and parsing
 
 The app fetches both pages with OkHttp (or Ktor), concurrently:
@@ -82,7 +107,8 @@ Then:
    condition changes. Produce `currently`, `event` (`starts` / `ends`), `at`,
    `minutes`, and a human-readable summary.
 
-City slugs are validated with `^[a-z0-9]+(?:-[a-z0-9]+)*$` before building URLs.
+City slugs are normalized and validated by the shared helpers in `domain/City.kt`
+before building URLs.
 
 ## Refresh behaviour
 
@@ -91,13 +117,13 @@ and constraints `NetworkType.CONNECTED`, not requiring charging or idle.
 
 On each run:
 
-1. Fetch and parse both pages. Do **not** skip the run based on
-   `PowerManager.isInteractive()`; see the note below.
-2. On success, update the notification and persist the result plus timestamp in
-   DataStore so it can be restored after reboot or app restart.
-3. On failure, keep the last good result, mark the notification as stale (e.g.
-   "Updated 25 min ago" or "Weather unavailable"), and let WorkManager retry
-   with backoff.
+1. Fetch and parse both pages for **each** configured city, concurrently. Do
+   **not** skip the run based on `PowerManager.isInteractive()`; see the note
+   below.
+2. On success, persist that city's result plus timestamp in DataStore and include
+   it in the notification.
+3. On failure, keep that city's last good result, show `Weather unavailable` for
+   it, and let WorkManager retry with backoff. Other cities are unaffected.
 
 ### Why the worker must not skip while the screen is off
 
@@ -129,8 +155,10 @@ manual refreshes.
 
 - Channel `weather`, `IMPORTANCE_LOW`, category string `weather` (Android does
   not define a `CATEGORY_WEATHER` constant).
-- `setOngoing(true)`, small icon, title = city.
-- One compact content line, with the sooner event first:
+- `setOngoing(true)`, small icon, title = app name.
+- `InboxStyle` with one compact line per city, `City: <summary>`, in the order
+  the user added them. A stale city shows `Weather unavailable` instead of its
+  compact summary. Each city's compact line puts the sooner event first:
   - `Sun in 2 h 10 min, no rain` / `Sonne in 2 Std. 10 Min., kein Regen`
   - `Rain in 30 min, sun in 5 h` / `Regen in 30 Min., Sonne in 5 Std.`
   - `Sun for 45 min, rain in 5 h` / `Sonne noch 45 Min., Regen in 5 Std.`
@@ -139,11 +167,11 @@ manual refreshes.
   Ongoing conditions sort first, events with no change sort last, and sun wins
   ties. The second phrase is lowercased so the line reads naturally. The verbose
   per-condition summaries remain in the app UI only.
-- Freshness: store `lastSuccessfulAt` in DataStore on every successful fetch.
-  Call `setWhen(lastSuccessfulAt)` and `setShowWhen(true)` so the system shows
-  when the data was fetched. For a live "time since update" indicator, also use
-  `setUsesChronometer(true)`: SystemUI then renders an automatically ticking
-  elapsed time since that timestamp, with no extra work from the app.
+- Freshness: each city stores its own `fetchedAtMillis`. The notification uses
+  the oldest of the shown timestamps via `setWhen()` and `setShowWhen(true)`.
+  For a live "time since update" indicator, also use `setUsesChronometer(true)`:
+  SystemUI then renders an automatically ticking elapsed time since that
+  timestamp, with no extra work from the app.
   Do **not** put a literal `"Updated 25 min ago"` string in the notification
   text — it is a snapshot and would freeze until the next WorkManager run, and
   WorkManager cannot tick more often than every 15 minutes.
@@ -162,7 +190,7 @@ manual refreshes.
 
 ## Error handling
 
-- Keep the last successful forecast when a fetch or parse fails.
+- Keep the last successful forecast **per city** when a fetch or parse fails.
 - Handle: network errors, HTTP errors, missing `ng-state`, invalid JSON, missing
   shortcast key, empty forecast, and unknown symbol codes.
 - Log parse errors with the symbol code / URL so markup changes are detectable.
@@ -174,8 +202,14 @@ manual refreshes.
 app/src/main/java/de/jayp33/sonnenregen/
   data/WetterOnlineClient.kt
   data/ForecastParser.kt
+  data/CityForecast.kt
+  data/CityStatus.kt
+  data/WeatherStore.kt
+  domain/City.kt
   domain/Models.kt
   domain/ForecastAnalyzer.kt
+  text/ForecastFormatter.kt
+  text/ForecastPhrases.kt
   work/WeatherWorker.kt
   notification/WeatherNotifier.kt
   receiver/BootReceiver.kt
@@ -208,7 +242,8 @@ not hit the network.
 
 ## Open questions / out of scope
 
-- Multiple cities or location-based city detection.
+- Location-based city detection, or very large city lists (each city needs two
+  HTTP requests per refresh).
 - Notification icons / small weather images.
 - Exact sunrise/sunset times (the hourly data only gives an approximate "08:00
   sunshine starts").
