@@ -53,13 +53,10 @@ object WeatherNotifier {
             pendingIntentFlags,
         )
 
-        val bigText = "Sun: ${weather.sunSummary}\nRain: ${weather.rainSummary}"
-
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_sun)
             .setContentTitle(weather.city)
-            .setContentText(weather.sunSummary)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(bigText))
+            .setContentText(weather.compactSummary)
             .setSubText(
                 context.getString(
                     if (stale) R.string.weather_unavailable else R.string.updated,

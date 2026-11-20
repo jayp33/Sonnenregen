@@ -11,7 +11,6 @@ import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import kotlin.math.abs
 import kotlin.math.roundToLong
 
 const val DEFAULT_CITY = "berlin"
@@ -200,17 +199,5 @@ object ForecastAnalyzer {
         OffsetDateTime.parse(value)
     } catch (_: Exception) {
         LocalDateTime.parse(value).atZone(ZoneId.of(TIMEZONE)).toOffsetDateTime()
-    }
-
-    private fun formatMinutes(minutes: Long): String {
-        val sign = if (minutes < 0) "-" else ""
-        val absolute = abs(minutes)
-        val hours = absolute / 60
-        val rest = absolute % 60
-        return when {
-            hours > 0 && rest > 0 -> "$sign$hours h $rest min"
-            hours > 0 -> "$sign$hours h"
-            else -> "$sign$rest min"
-        }
     }
 }

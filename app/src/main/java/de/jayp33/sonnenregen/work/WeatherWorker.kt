@@ -6,7 +6,6 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import de.jayp33.sonnenregen.data.SourceException
 import de.jayp33.sonnenregen.data.ParseException
-import de.jayp33.sonnenregen.data.StoredWeather
 import de.jayp33.sonnenregen.data.WeatherStore
 import de.jayp33.sonnenregen.data.WetterOnlineClient
 import de.jayp33.sonnenregen.domain.DEFAULT_CITY
@@ -30,16 +29,8 @@ class WeatherWorker(
             val (hourlyHtml, nowcastHtml) = client.fetch(city)
             val forecast = ForecastAnalyzer.analyze(city, hourlyHtml, nowcastHtml)
 
-            store.save(forecast)
-            notifier.show(
-                applicationContext,
-                StoredWeather(
-                    city = forecast.city,
-                    sunSummary = forecast.sun.summary,
-                    rainSummary = forecast.rain.summary,
-                    fetchedAtMillis = forecast.fetchedAt.toInstant().toEpochMilli(),
-                ),
-            )
+            val stored = store.save(forecast)
+            notifier.show(applicationContext, stored)
             Result.success()
         } catch (exc: IllegalArgumentException) {
             Log.w(TAG, "Invalid city: $city", exc)

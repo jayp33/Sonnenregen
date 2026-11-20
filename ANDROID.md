@@ -115,18 +115,23 @@ manual refreshes.
 - Channel `weather`, `IMPORTANCE_LOW`, category string `weather` (Android does
   not define a `CATEGORY_WEATHER` constant).
 - `setOngoing(true)`, small icon, title = city.
-- `BigTextStyle` with two lines:
-  - `Sun: Sunshine starts in 10 h 30 min (08:00).`
-  - `Rain: Rain starts in 22 h 30 min (20:00).`
+- One compact content line, with the sooner event first:
+  - `Sun in 2 h 10 min, no rain`
+  - `Rain in 30 min, sun in 5 h`
+  - `Sun for 45 min, rain in 5 h` (currently sunny; duration until it ends)
+  - `Rain now, no sun` (ongoing with no change in the forecast horizon)
+  Ordering uses the event's minutes from the provider's observation time.
+  Ongoing conditions sort first, events with no change sort last, and sun wins
+  ties. The second phrase is lowercased so the line reads naturally. The verbose
+  per-condition summaries remain in the app UI only.
 - Freshness: store `lastSuccessfulAt` in DataStore on every successful fetch.
   Call `setWhen(lastSuccessfulAt)` and `setShowWhen(true)` so the system shows
   when the data was fetched. For a live "time since update" indicator, also use
   `setUsesChronometer(true)`: SystemUI then renders an automatically ticking
   elapsed time since that timestamp, with no extra work from the app.
-  Do **not** put a literal `"Updated 25 min ago"` string in `BigTextStyle` —
-  notification text is a snapshot and would freeze until the next WorkManager
-  run, and WorkManager cannot tick more often than every 15 minutes. An absolute
-  `Updated 14:32` line in the text is fine if a fixed label is preferred.
+  Do **not** put a literal `"Updated 25 min ago"` string in the notification
+  text — it is a snapshot and would freeze until the next WorkManager run, and
+  WorkManager cannot tick more often than every 15 minutes.
 - Actions: **Refresh** and **Open app**.
 - On Android 13+ request `POST_NOTIFICATIONS` on first launch.
 
