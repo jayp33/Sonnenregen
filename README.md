@@ -1,51 +1,100 @@
 # Sonnenregen
 
-A small, dependency-free service that answers two questions for a WetterOnline
-location:
+Sonnenregen is a standalone Android app that keeps a compact sun/rain forecast in
+a permanent notification. It reads WetterOnline directly — no backend, account,
+or API key.
+
+For each configured city it answers:
 
 1. How long until the sun shines — or, if it is shining now, how long until it stops?
 2. How long until it rains — or, if it is raining now, how long until it stops?
 
-## How it works
+## Android app
 
-The pages at `https://www.wetteronline.de/wettertrend/<city>` and
-`https://www.wetteronline.de/90-minuten-wetter/<city>` are Angular SSR apps. Their
-HTML contains an `ng-state` JSON payload with the original forecast data:
+The app is the main deliverable of this repository. It is written in Kotlin with
+Jetpack Compose (`minSdk 26`, `compileSdk`/`targetSdk 36`) and works in English
+and German, selected by device locale.
 
-- hourly slots for the next 48 hours (`hours`, from the *wettertrend* page),
-- 15-minute slots for the next 90 minutes (`nowcast_trend.items`, from the
-  *90-minuten-wetter* page),
-- the provider's current observation (`current`, including solar elevation).
+**Highlights**
+
+- **Permanent notification** with a compact `Sun in 2 h 10 min, no rain` line.
+  The sooner event comes first. With one city the city name is the notification
+  header; with two or more cities an inbox shows `City: summary` lines in the
+  order you added them.
+- **Multiple cities**: add or remove WetterOnline slugs (`berlin`, `hamburg`, …)
+  in the app. Slugs stay lowercase for URLs; the app capitalizes the first
+  letter for display.
+- **Exact sunrise/sunset** from WetterOnline's own astro data, shown in the app
+  UI. Sunshine never starts before sunrise or continues past sunset.
+- **Offline-friendly**: each city keeps its last good forecast. A failed refresh
+  marks only that city `Weather unavailable` instead of wiping the others.
+- **Battery-friendly**: WorkManager refreshes every 15 minutes while connected.
+  There is no foreground service and no exact unlock-event detection; Doze
+  defers work and pending jobs catch up after unlock. The notification's
+  chronometer shows the age of the last successful fetch.
+- **Localized**: English/German UI, including `Std.`/`Min.` durations in German.
+
+Example notifications:
+
+```text
+Berlin
+Sun in 2 h 10 min, no rain
+```
+
+```text
+Sonnenregen
+Berlin: Sun in 2 h 10 min, no rain
+Hamburg: Rain in 30 min, sun in 5 h
+```
+
+### Build and install
+
+```bash
+# Set sdk.dir in local.properties first (the file is gitignored).
+./gradlew :app:testDebugUnitTest
+./gradlew :app:assembleDebug
+```
+
+The APK is written to `app/build/outputs/apk/debug/app-debug.apk`. See
+[ANDROID.md](ANDROID.md) for the full design and refresh behaviour.
+
+## How WetterOnline data is read
+
+Both the app and the Python helper use the same approach. The pages at
+`https://www.wetteronline.de/wettertrend/<city>` and
+`https://www.wetteronline.de/90-minuten-wetter/<city>` are Angular SSR apps whose
+HTML embeds an `ng-state` JSON payload with the original forecast data:
+
+- hourly slots for the next 48 hours (`hours`),
+- 15-minute slots for the next 90 minutes (`nowcast_trend.items`),
+- the provider's current observation (`current`, including solar elevation),
+- optional exact sunrise/sunset times (`astro/days`).
 
 Reading that payload avoids depending on translated labels, CSS class names and
-icon layouts. Each slot has an absolute ISO timestamp and a WetterOnline symbol
-code. The service stitches the 15-minute slots to the hourly slots (stretching
-the last 15-minute slot over the gap to the next full hour) and walks forward
-from the provider's current timestamp to the first slot where the condition
-changes.
+icon layouts. The 15-minute slots are stitched to the hourly slots, then the
+timeline is walked from the provider's current timestamp to the first condition
+change.
 
 Definitions used:
 
-- **Sunshine**: symbol `so`/`wb` (sunny or partly cloudy during the day), with
-  the current observation additionally requiring solar elevation above the horizon.
-- **Rain**: symbol containing a rain/shower marker (`r` or `s`) after the base
-  condition, e.g. `mdr1__` (light rain) or `mds1__` (shower). Snow is not counted
-  as rain.
+- **Sunshine**: symbol `so`/`wb` (sunny or partly cloudy during the day). The
+  timeline is split at sunrise/sunset; on the daylight side of sunrise a night
+  symbol is converted to its day counterpart (`mo` → `so`, `mb` → `wb`), so a
+  clear night starts sunshine at the *exact* sunrise instead of at the next
+  hourly grid boundary.
+- **Rain**: symbol containing a rain/shower marker (`r`, `s` or `g`) after the
+  base condition, e.g. `mdr1__` (light rain) or `mds1__` (shower). Snow (`n`) is
+  not counted as rain.
 
-The same page can also embed an `astro/days` payload with exact sunrise/sunset
-times. When present, the timeline is split at those times so a sunny symbol
-cannot produce "sunshine" before sunrise or after sunset. WetterOnline labels
-the whole hour containing sunrise with a night symbol (e.g. `mo` = *klar*); on
-the daylight side of the cut we use the matching day symbol (`so` = *sonnig*).
-That makes a clear night start sunshine at the exact sunrise time instead of at
-the next hourly grid boundary. The next sunrise and sunset are returned as
-`sunrise` and `sunset`; both are `null` when the provider has no data (e.g.
-polar day/night).
+When no astro data is available (e.g. polar day/night), the symbol and solar
+elevation rules are used unchanged.
 
-Both pages are cached in memory for 5 minutes (`CACHE_TTL` in `sonnenregen/core.py`)
-to avoid hammering the provider.
+## Python helper service (optional)
 
-## Run
+The original dependency-free Python service in `sonnenregen/` is kept as a small
+CLI/HTTP tool for inspecting the same data while debugging. **The Android app
+does not call it.** Pages are cached in memory for 5 minutes
+(`CACHE_TTL` in `sonnenregen/core.py`) to avoid hammering the provider.
 
 ```bash
 python -m sonnenregen.server                 # http://127.0.0.1:8080/?city=berlin
@@ -69,9 +118,9 @@ Example response (abbreviated):
   "sun": {
     "currently": false,
     "event": "starts",
-    "at": "2026-11-21T08:00:00+01:00",
-    "minutes": 633,
-    "summary": "Sunshine starts in 10 h 33 min (2026-11-21 08:00 +0100)."
+    "at": "2026-11-21T07:38:00+01:00",
+    "minutes": 611,
+    "summary": "Sunshine starts in 10 h 11 min (2026-11-21 07:38 +0100)."
   },
   "rain": {
     "currently": false,
@@ -94,26 +143,19 @@ explains why.
 
 ## Tests
 
+Both suites are offline and use trimmed snapshots of the real embedded payload
+plus small synthetic forecasts.
+
 ```bash
 python -m unittest discover -s tests -v
-```
-
-The tests use a trimmed snapshot of the real embedded payload plus small
-synthetic forecasts; they never hit the network.
-
-## Android app
-
-The repository also contains a standalone Kotlin/Jetpack Compose prototype in
-`app/`. It fetches and parses WetterOnline itself and does not call this Python
-service. The UI and notification are localized in English and German (selected
-by device locale). Multiple WetterOnline cities can be added and removed in the
-app; one ongoing notification shows a compact sun/rain line per city. See
-[ANDROID.md](ANDROID.md) for the design and refresh behaviour.
-
-```bash
-# Set sdk.dir in local.properties first (the file is gitignored).
 ./gradlew :app:testDebugUnitTest
-./gradlew :app:assembleDebug
 ```
 
-The APK is written to `app/build/outputs/apk/debug/app-debug.apk`.
+## Project layout
+
+```text
+app/            Android Kotlin/Compose app (the main deliverable)
+sonnenregen/    Python CLI/HTTP helper service
+tests/          Python tests and fixtures
+ANDROID.md      Android design and refresh notes
+```
