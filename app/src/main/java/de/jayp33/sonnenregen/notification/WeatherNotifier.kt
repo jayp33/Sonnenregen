@@ -31,16 +31,17 @@ object WeatherNotifier {
         context.getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
     }
 
-    /** One ongoing notification with a compact line per configured city. */
+    /** One ongoing notification; one city uses the city as header, many use an inbox. */
     fun show(context: Context, statuses: List<CityStatus>) {
-        val lines = statuses.map { status ->
-            val text = if (status.stale) {
-                context.getString(R.string.weather_unavailable)
-            } else {
-                status.compactSummary
-            }
-            context.getString(R.string.city_line, status.city, text)
-        }
+        val view = NotificationViewBuilder.build(
+            statuses = statuses,
+            appName = context.getString(R.string.app_name),
+            noCitiesText = context.getString(R.string.no_cities_notification),
+            textFor = {
+                if (it.stale) context.getString(R.string.weather_unavailable) else it.compactSummary
+            },
+            lineFor = { city, text -> context.getString(R.string.city_line, city, text) },
+        )
 
         val pendingIntentFlags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
 
@@ -64,24 +65,16 @@ object WeatherNotifier {
             pendingIntentFlags,
         )
 
-        val inboxStyle = NotificationCompat.InboxStyle()
-        if (lines.isEmpty()) {
-            inboxStyle.addLine(context.getString(R.string.no_cities_notification))
-        } else {
-            lines.forEach(inboxStyle::addLine)
-        }
-
         // The oldest real timestamp determines how fresh this notification is;
         // cities without a forecast have none and must not drag it to 1970.
         val fetchedAt = statuses.filter { it.fetchedAtMillis > 0 }
             .minOfOrNull { it.fetchedAtMillis } ?: System.currentTimeMillis()
         val anyFresh = statuses.any { !it.stale }
 
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_sun)
-            .setContentTitle(context.getString(R.string.app_name))
-            .setContentText(lines.firstOrNull() ?: context.getString(R.string.no_cities_notification))
-            .setStyle(inboxStyle)
+            .setContentTitle(view.title)
+            .setContentText(view.text)
             .setSubText(
                 context.getString(
                     if (anyFresh) R.string.updated else R.string.weather_unavailable,
@@ -95,7 +88,14 @@ object WeatherNotifier {
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .addAction(R.drawable.ic_stat_sun, context.getString(R.string.refresh), refreshPendingIntent)
             .addAction(R.drawable.ic_stat_sun, context.getString(R.string.open_app), openPendingIntent)
-            .build()
+
+        if (view.useInbox) {
+            val inboxStyle = NotificationCompat.InboxStyle()
+            view.lines.forEach(inboxStyle::addLine)
+            builder.setStyle(inboxStyle)
+        }
+
+        val notification = builder.build()
 
         try {
             NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, notification)

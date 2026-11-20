@@ -155,10 +155,15 @@ manual refreshes.
 
 - Channel `weather`, `IMPORTANCE_LOW`, category string `weather` (Android does
   not define a `CATEGORY_WEATHER` constant).
-- `setOngoing(true)`, small icon, title = app name.
-- `InboxStyle` with one compact line per city, `City: <summary>`, in the order
-  the user added them. A stale city shows `Weather unavailable` instead of its
-  compact summary. Each city's compact line puts the sooner event first:
+- `setOngoing(true)`, small icon.
+- With exactly one city, keep the original style: title = city name, compact line
+  as the notification body.
+- With two or more cities, title = app name and `InboxStyle` with one
+  `City: <summary>` line per city, in the order the user added them. With no
+  cities, the body is the empty-state line. `NotificationViewBuilder` decides
+  this shape; `WeatherNotifier` only applies it to the Android builder.
+- A stale city shows `Weather unavailable` instead of its compact summary. Each
+  city's compact line puts the sooner event first:
   - `Sun in 2 h 10 min, no rain` / `Sonne in 2 Std. 10 Min., kein Regen`
   - `Rain in 30 min, sun in 5 h` / `Regen in 30 Min., Sonne in 5 Std.`
   - `Sun for 45 min, rain in 5 h` / `Sonne noch 45 Min., Regen in 5 Std.`
@@ -211,6 +216,7 @@ app/src/main/java/de/jayp33/sonnenregen/
   text/ForecastFormatter.kt
   text/ForecastPhrases.kt
   work/WeatherWorker.kt
+  notification/NotificationView.kt
   notification/WeatherNotifier.kt
   receiver/BootReceiver.kt
   ui/MainActivity.kt
