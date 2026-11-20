@@ -22,7 +22,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import de.jayp33.sonnenregen.R
 import de.jayp33.sonnenregen.data.StoredWeather
 import de.jayp33.sonnenregen.data.WeatherStore
 import de.jayp33.sonnenregen.domain.DEFAULT_CITY
@@ -61,18 +63,21 @@ fun WeatherScreen() {
             modifier = Modifier.padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text("Sonnenregen", style = MaterialTheme.typography.headlineMedium)
-            Text("City: ${stored?.city ?: DEFAULT_CITY}")
+            Text(
+                stringResource(R.string.app_name),
+                style = MaterialTheme.typography.headlineMedium,
+            )
+            Text(stringResource(R.string.city, stored?.city ?: DEFAULT_CITY))
 
             if (stored != null) {
-                Text("Sun: ${stored!!.sunSummary}")
-                Text("Rain: ${stored!!.rainSummary}")
+                Text(stringResource(R.string.sun, stored!!.sunSummary))
+                Text(stringResource(R.string.rain, stored!!.rainSummary))
             } else {
-                Text("No forecast yet — tap Refresh now.")
+                Text(stringResource(R.string.no_forecast))
             }
 
             Button(onClick = { WeatherScheduler.refreshNow(context) }) {
-                Text("Refresh now")
+                Text(stringResource(R.string.refresh_now))
             }
 
             Button(
@@ -90,7 +95,11 @@ fun WeatherScreen() {
                     }
                 },
             ) {
-                Text(if (enabled) "Disable ongoing notification" else "Enable ongoing notification")
+                Text(
+                    stringResource(
+                        if (enabled) R.string.disable_notification else R.string.enable_notification,
+                    ),
+                )
             }
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
@@ -99,7 +108,7 @@ fun WeatherScreen() {
                 Button(onClick = {
                     permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 }) {
-                    Text("Allow notifications")
+                    Text(stringResource(R.string.allow_notifications))
                 }
             }
         }

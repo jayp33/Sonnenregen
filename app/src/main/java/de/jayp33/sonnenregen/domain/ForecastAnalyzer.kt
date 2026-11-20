@@ -10,7 +10,6 @@ import java.time.Duration
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import kotlin.math.roundToLong
 
 const val DEFAULT_CITY = "berlin"
@@ -18,7 +17,6 @@ const val BASE_URL = "https://www.wetteronline.de"
 const val TIMEZONE = "Europe/Berlin"
 
 private val CITY_REGEX = Regex("^[a-z0-9]+(?:-[a-z0-9]+)*$")
-private val SUMMARY_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm xx")
 
 object ForecastAnalyzer {
     fun analyze(
@@ -47,8 +45,8 @@ object ForecastAnalyzer {
             city = normalizedCity,
             now = reference,
             timezone = TIMEZONE,
-            sun = change(reference, timeline, { it.sunny }, "Sunshine"),
-            rain = change(reference, timeline, { it.raining }, "Rain"),
+            sun = change(reference, timeline, { it.sunny }, Condition.SUN),
+            rain = change(reference, timeline, { it.raining }, Condition.RAIN),
             horizon = timeline.last().end,
             sources = listOf(
                 "$BASE_URL/wettertrend/$normalizedCity",
@@ -161,7 +159,7 @@ object ForecastAnalyzer {
         now: OffsetDateTime,
         timeline: List<Slot>,
         condition: (Slot) -> Boolean,
-        label: String,
+        kind: Condition,
     ): Change {
         val index = currentIndex(now, timeline)
         val currently = condition(timeline[index])
@@ -174,18 +172,11 @@ object ForecastAnalyzer {
                 event = null,
                 at = null,
                 minutes = null,
-                label = label,
-                summary = if (currently) {
-                    "$label is not expected to end within the forecast horizon."
-                } else {
-                    "No ${label.lowercase()} expected within the forecast horizon."
-                },
+                condition = kind,
             )
 
         val minutes = Duration.between(now, target.start).seconds.toDouble().div(60).roundToLong()
-        val summary = "$label ${event.name.lowercase()} in ${formatMinutes(minutes)} " +
-            "(${target.start.format(SUMMARY_TIME)})."
-        return Change(currently, event, target.start, minutes, label, summary)
+        return Change(currently, event, target.start, minutes, kind)
     }
 
     private fun currentIndex(now: OffsetDateTime, timeline: List<Slot>): Int {

@@ -7,6 +7,8 @@ enum class SlotSource { CURRENT, NOWCAST, HOURLY, INTERPOLATED }
 
 enum class Event { STARTS, ENDS }
 
+enum class Condition { SUN, RAIN }
+
 data class Slot(
     val start: OffsetDateTime,
     val duration: Duration,
@@ -40,8 +42,7 @@ data class Change(
     val event: Event?,
     val at: OffsetDateTime?,
     val minutes: Long?,
-    val label: String,
-    val summary: String,
+    val condition: Condition,
 )
 
 data class Forecast(

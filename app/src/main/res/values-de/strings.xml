@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Sonnenregen</string>
+    <string name="notification_channel_name">Wettervorhersage</string>
+    <string name="notification_channel_description">Laufende Sonnen- und Regenvorhersage</string>
+    <string name="refresh">Aktualisieren</string>
+    <string name="open_app">App öffnen</string>
+    <string name="updated">Aktualisiert</string>
+    <string name="weather_unavailable">Wetter nicht verfügbar</string>
+
+    <string name="city">Ort: %1$s</string>
+    <string name="sun">Sonne: %1$s</string>
+    <string name="rain">Regen: %1$s</string>
+    <string name="no_forecast">Noch keine Vorhersage – tippe auf „Jetzt aktualisieren“.</string>
+    <string name="refresh_now">Jetzt aktualisieren</string>
+    <string name="disable_notification">Laufende Benachrichtigung deaktivieren</string>
+    <string name="enable_notification">Laufende Benachrichtigung aktivieren</string>
+    <string name="allow_notifications">Benachrichtigungen erlauben</string>
+
+    <bool name="forecast_lowercase_second">false</bool>
+    <string name="forecast_pair">%1$s, %2$s</string>
+    <string name="duration_hours_minutes">%1$d Std. %2$d Min.</string>
+    <string name="duration_hours">%1$d Std.</string>
+    <string name="duration_minutes">%1$d Min.</string>
+    <string name="sun_in">Sonne in %1$s</string>
+    <string name="sun_for">Sonne noch %1$s</string>
+    <string name="sun_now">Sonne jetzt</string>
+    <string name="rain_in">Regen in %1$s</string>
+    <string name="rain_for">Regen noch %1$s</string>
+    <string name="rain_now">Regen jetzt</string>
+    <string name="no_sun">keine Sonne</string>
+    <string name="no_rain">kein Regen</string>
+
+    <string name="summary_sun_starts">Sonne scheint in %1$s (%2$s).</string>
+    <string name="summary_sun_ends">Sonne scheint noch %1$s (%2$s).</string>
+    <string name="summary_rain_starts">Regen beginnt in %1$s (%2$s).</string>
+    <string name="summary_rain_ends">Regen dauert noch %1$s (%2$s).</string>
+    <string name="summary_sun_ongoing">Die Sonne hört innerhalb des Vorhersagezeitraums nicht auf zu scheinen.</string>
+    <string name="summary_rain_ongoing">Der Regen endet innerhalb des Vorhersagezeitraums nicht.</string>
+    <string name="summary_no_sun">Innerhalb des Vorhersagezeitraums ist keine Sonne zu erwarten.</string>
+    <string name="summary_no_rain">Innerhalb des Vorhersagezeitraums ist kein Regen zu erwarten.</string>
+</resources>

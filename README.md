@@ -93,7 +93,9 @@ synthetic forecasts; they never hit the network.
 
 The repository also contains a standalone Kotlin/Jetpack Compose prototype in
 `app/`. It fetches and parses WetterOnline itself and does not call this Python
-service. See [ANDROID.md](ANDROID.md) for the design and refresh behaviour.
+service. The UI and notification are localized in English and German (selected
+by device locale). See [ANDROID.md](ANDROID.md) for the design and refresh
+behaviour.
 
 ```bash
 # Set sdk.dir in local.properties first (the file is gitignored).

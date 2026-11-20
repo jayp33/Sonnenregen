@@ -8,7 +8,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import de.jayp33.sonnenregen.domain.DEFAULT_CITY
 import de.jayp33.sonnenregen.domain.Forecast
-import de.jayp33.sonnenregen.domain.NotificationText
+import de.jayp33.sonnenregen.text.ForecastFormatter
+import de.jayp33.sonnenregen.text.ForecastPhrases
 import kotlinx.coroutines.flow.first
 import java.time.ZoneId
 
@@ -23,23 +24,27 @@ data class StoredWeather(
 )
 
 class WeatherStore(context: Context) {
-    private val dataStore = context.applicationContext.weatherDataStore
+    private val appContext = context.applicationContext
+    private val dataStore = appContext.weatherDataStore
+    private val phrases = ForecastPhrases.from(appContext)
 
     suspend fun save(forecast: Forecast): StoredWeather {
-        val compact = NotificationText.compact(forecast)
+        val compact = ForecastFormatter.compact(forecast, phrases)
+        val sunSummary = ForecastFormatter.verbose(forecast.sun, phrases)
+        val rainSummary = ForecastFormatter.verbose(forecast.rain, phrases)
         val fetchedAtMillis = forecast.fetchedAt.atZoneSameInstant(ZoneId.of("UTC")).toInstant().toEpochMilli()
         dataStore.edit { prefs ->
             prefs[CITY] = forecast.city
             prefs[COMPACT_SUMMARY] = compact
-            prefs[SUN_SUMMARY] = forecast.sun.summary
-            prefs[RAIN_SUMMARY] = forecast.rain.summary
+            prefs[SUN_SUMMARY] = sunSummary
+            prefs[RAIN_SUMMARY] = rainSummary
             prefs[FETCHED_AT] = fetchedAtMillis
         }
         return StoredWeather(
             city = forecast.city,
             compactSummary = compact,
-            sunSummary = forecast.sun.summary,
-            rainSummary = forecast.rain.summary,
+            sunSummary = sunSummary,
+            rainSummary = rainSummary,
             fetchedAtMillis = fetchedAtMillis,
         )
     }
