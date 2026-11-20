@@ -1,5 +1,6 @@
 package de.jayp33.sonnenregen
 
+import de.jayp33.sonnenregen.domain.displayCity
 import de.jayp33.sonnenregen.domain.isValidCitySlug
 import de.jayp33.sonnenregen.domain.normalizeCity
 import org.junit.Assert.assertEquals
@@ -12,6 +13,13 @@ class CityTest {
     fun normalizes_user_input() {
         assertEquals("berlin", normalizeCity("  Berlin  "))
         assertEquals("frankfurt-am-main", normalizeCity("Frankfurt-Am-Main"))
+    }
+
+    @Test
+    fun capitalizes_only_the_first_letter_for_display() {
+        assertEquals("Berlin", displayCity("berlin"))
+        assertEquals("Frankfurt-am-main", displayCity("frankfurt-am-main"))
+        assertEquals("", displayCity(""))
     }
 
     @Test

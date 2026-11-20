@@ -33,6 +33,7 @@ import androidx.core.content.ContextCompat
 import de.jayp33.sonnenregen.R
 import de.jayp33.sonnenregen.data.CityForecast
 import de.jayp33.sonnenregen.data.WeatherStore
+import de.jayp33.sonnenregen.domain.displayCity
 import de.jayp33.sonnenregen.domain.isValidCitySlug
 import de.jayp33.sonnenregen.domain.normalizeCity
 import de.jayp33.sonnenregen.notification.WeatherNotifier
@@ -128,7 +129,7 @@ fun WeatherScreen() {
                 cities.forEach { city ->
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
-                            stringResource(R.string.city, city),
+                            stringResource(R.string.city, displayCity(city)),
                             style = MaterialTheme.typography.titleSmall,
                         )
                         val forecast = forecasts[city]

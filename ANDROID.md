@@ -50,7 +50,9 @@ German durations use `Std.`/`Min.` instead of `h`/`min`:
 
 The user can add and remove WetterOnline city slugs in the app. `normalizeCity()`
 trims/lowercases input and `isValidCitySlug()` validates it with
-`^[a-z0-9]+(?:-[a-z0-9]+)*$` before any URL is built. DataStore holds:
+`^[a-z0-9]+(?:-[a-z0-9]+)*$` before any URL is built. Slugs remain lowercase in
+storage; `displayCity()` capitalises the first letter for the UI and notification
+(`berlin` → `Berlin`, `frankfurt-am-main` → `Frankfurt-am-main`). DataStore holds:
 
 - `cities`: a JSON array in the order the user added them;
 - `forecasts_by_city`: a JSON map from slug to the last good formatted forecast.

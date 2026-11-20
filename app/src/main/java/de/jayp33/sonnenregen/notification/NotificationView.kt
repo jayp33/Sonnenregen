@@ -1,6 +1,7 @@
 package de.jayp33.sonnenregen.notification
 
 import de.jayp33.sonnenregen.data.CityStatus
+import de.jayp33.sonnenregen.domain.displayCity
 
 /** The shape of the notification, independent of Android's builder APIs. */
 data class NotificationView(
@@ -25,7 +26,7 @@ object NotificationViewBuilder {
         val single = statuses.singleOrNull()
         if (single != null) {
             return NotificationView(
-                title = single.city,
+                title = displayCity(single.city),
                 text = textFor(single),
                 lines = emptyList(),
                 useInbox = false,
@@ -35,7 +36,7 @@ object NotificationViewBuilder {
         val lines = if (statuses.isEmpty()) {
             listOf(noCitiesText)
         } else {
-            statuses.map { lineFor(it.city, textFor(it)) }
+            statuses.map { lineFor(displayCity(it.city), textFor(it)) }
         }
         return NotificationView(
             title = appName,

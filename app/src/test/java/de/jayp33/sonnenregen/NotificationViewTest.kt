@@ -10,7 +10,7 @@ class NotificationViewTest {
     fun one_city_uses_the_city_as_header() {
         val view = build(listOf(status("berlin", "Sun in 2 h, no rain")))
 
-        assertEquals("berlin", view.title)
+        assertEquals("Berlin", view.title)
         assertEquals("Sun in 2 h, no rain", view.text)
         assertEquals(false, view.useInbox)
         assertEquals(emptyList<String>(), view.lines)
@@ -20,7 +20,7 @@ class NotificationViewTest {
     fun one_stale_city_shows_unavailable_as_its_body() {
         val view = build(listOf(status("berlin", "Sun in 2 h, no rain", stale = true)))
 
-        assertEquals("berlin", view.title)
+        assertEquals("Berlin", view.title)
         assertEquals("Weather unavailable", view.text)
         assertEquals(false, view.useInbox)
     }
@@ -35,12 +35,12 @@ class NotificationViewTest {
         )
 
         assertEquals("Sonnenregen", view.title)
-        assertEquals("berlin: Sun in 2 h, no rain", view.text)
+        assertEquals("Berlin: Sun in 2 h, no rain", view.text)
         assertEquals(true, view.useInbox)
         assertEquals(
             listOf(
-                "berlin: Sun in 2 h, no rain",
-                "hamburg: Rain in 30 min, sun in 5 h",
+                "Berlin: Sun in 2 h, no rain",
+                "Hamburg: Rain in 30 min, sun in 5 h",
             ),
             view.lines,
         )
