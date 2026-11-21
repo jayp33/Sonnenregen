@@ -78,13 +78,18 @@ without reopening the activity.
 ## 48-hour colour overview
 
 Each city card also shows a colour-only forecast grid: 48 one-hour cells from the
-current hour, grouped into four blocks of six per calendar day in `Europe/Berlin`.
-An evening start therefore produces three rows (part of today, all of tomorrow,
-part of the day after); exactly midnight produces two. A slightly larger gap
-every six hours is the only orientation aid — no date prefix and no `00`/`06`/
-`12`/`18` labels — and no scrolling is needed. The grid sits directly under the
-city line; the Sun, Rain and sunrise/sunset text lives behind a collapsed
-"Show details" button, so the colours stay uncluttered by default.
+current hour, grouped into four blocks of six per calendar day in the city's own
+offset as supplied by WetterOnline (`-05:00` for New York, `+01:00` for Berlin,
+and so on). An evening start therefore produces three rows (part of today, all
+of tomorrow, part of the day after); exactly midnight produces two. A slightly
+larger gap every six hours is the only orientation aid — no date prefix and no
+`00`/`06`/`12`/`18` labels — and no scrolling is needed. The grid sits directly
+under the city line; the Sun, Rain and sunrise/sunset text lives behind a
+collapsed "Show details" button, so the colours stay uncluttered by default.
+
+Each `HourCell` stores that offset as `zoneId`, so even a DST change inside the
+48-hour window keeps the right local hours. Cells stored by older versions
+default to `Europe/Berlin` until the next refresh.
 
 The grid reads purely as weather at a glance. Night symbols (`m*`) never get a
 sun colour, so no pale yellow appears before sunrise or after sunset:

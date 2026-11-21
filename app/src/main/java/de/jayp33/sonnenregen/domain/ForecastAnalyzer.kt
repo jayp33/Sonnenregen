@@ -44,7 +44,7 @@ object ForecastAnalyzer {
         return Forecast(
             city = normalizedCity,
             now = reference,
-            timezone = TIMEZONE,
+            timezone = hours.firstOrNull()?.start?.offset?.id ?: TIMEZONE,
             sun = change(reference, sunTimeline, { it.sunny }, Condition.SUN),
             rain = change(reference, timeline, { it.raining }, Condition.RAIN),
             horizon = timeline.last().end,

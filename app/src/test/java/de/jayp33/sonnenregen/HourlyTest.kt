@@ -28,6 +28,7 @@ class HourlyTest {
         assertEquals(48, cells.size)
         assertEquals(at("2026-11-20T21:00:00+01:00").toInstant().toEpochMilli(), cells.first().startEpochMillis)
         assertEquals(at("2026-11-22T20:00:00+01:00").toInstant().toEpochMilli(), cells.last().startEpochMillis)
+        assertEquals("+01:00", cells.first().zoneId)
     }
 
     @Test
@@ -104,6 +105,20 @@ class HourlyTest {
         assertEquals(2, grouped.size)
         assertEquals((0..23).toList(), grouped.values.first().keys.toList())
         assertEquals((0..23).toList(), grouped.values.last().keys.toList())
+    }
+
+    @Test
+    fun grouping_uses_each_cell_offset_not_a_global_zone() {
+        val cells = listOf(
+            HourCell(at("2026-11-21T00:00:00-05:00").toInstant().toEpochMilli(), HourKind.SUN, "-05:00"),
+            HourCell(at("2026-11-21T01:00:00-05:00").toInstant().toEpochMilli(), HourKind.SUN, "-05:00"),
+            HourCell(at("2026-11-21T11:00:00+01:00").toInstant().toEpochMilli(), HourKind.SUN, "+01:00"),
+        )
+
+        val grouped = groupHoursByDay(cells)
+
+        assertEquals(1, grouped.size)
+        assertEquals(listOf(0, 1, 11), grouped.values.first().keys.toList())
     }
 
     private fun cellsFrom(start: String, count: Int): List<HourCell> {

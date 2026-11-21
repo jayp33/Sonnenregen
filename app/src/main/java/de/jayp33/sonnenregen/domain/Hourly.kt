@@ -28,6 +28,8 @@ enum class HourKind {
 data class HourCell(
     val startEpochMillis: Long,
     val kind: HourKind,
+    /** Offset/zone from WetterOnline's timestamp, e.g. "-05:00" or "Europe/Berlin". */
+    val zoneId: String = TIMEZONE,
 )
 
 /**
@@ -56,17 +58,21 @@ fun hourlyCells(
         HourCell(
             startEpochMillis = slot.start.toInstant().toEpochMilli(),
             kind = classify(slot),
+            zoneId = slot.start.offset.id,
         )
     }
 }
 
-/** Group cells by calendar day in the forecast's timezone, then by hour. */
-fun groupHoursByDay(
-    hours: List<HourCell>,
-    zone: ZoneId = ZoneId.of(TIMEZONE),
-): Map<LocalDate, Map<Int, HourCell>> {
+/** Group cells by calendar day/hour in each cell's own offset, then by hour. */
+fun groupHoursByDay(hours: List<HourCell>): Map<LocalDate, Map<Int, HourCell>> {
+    val fallback = ZoneId.of(TIMEZONE)
     val result = LinkedHashMap<LocalDate, MutableMap<Int, HourCell>>()
     hours.forEach { cell ->
+        val zone = try {
+            ZoneId.of(cell.zoneId)
+        } catch (_: Exception) {
+            fallback
+        }
         val time = Instant.ofEpochMilli(cell.startEpochMillis).atZone(zone)
         result.getOrPut(time.toLocalDate()) { LinkedHashMap() }[time.hour] = cell
     }

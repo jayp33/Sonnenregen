@@ -62,7 +62,7 @@ class CityStateTest {
     @Test
     fun hourly_cells_survive_json_round_trip() {
         val original = forecast("berlin", 20L).copy(
-            hours = listOf(HourCell(1_000L, HourKind.HEAVY_RAIN)),
+            hours = listOf(HourCell(1_000L, HourKind.HEAVY_RAIN, "-05:00")),
         )
 
         val encoded = Json.encodeToString(original)
@@ -79,6 +79,13 @@ class CityStateTest {
         """.trimIndent()
 
         assertEquals(emptyList<HourCell>(), Json.decodeFromString<CityForecast>(legacy).hours)
+    }
+
+    @Test
+    fun legacy_hour_cell_defaults_to_berlin_zone() {
+        val legacy = """{"startEpochMillis":1000,"kind":"SUN"}"""
+
+        assertEquals("Europe/Berlin", Json.decodeFromString<HourCell>(legacy).zoneId)
     }
 
     private fun forecast(city: String, fetchedAtMillis: Long) = CityForecast(
