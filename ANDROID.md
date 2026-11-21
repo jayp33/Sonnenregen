@@ -57,7 +57,8 @@ example `michelbach-an-der-bilz/gschlachtenbretzingen` (not just
 lowercase in storage. The add form lives in an `AlertDialog` opened by the +
 FAB, while Remove, the ↑/↓ reorder controls and a **Show in notification** switch
 live inside the expanded per-city details, so none of them clutters the default
-view. `ForecastParser` also reads
+view. A small muted `hidden` / `ausgeblendet` label next to the city name marks
+cities excluded from the notification. `ForecastParser` also reads
 the human-readable place name
 from the page heading (`<h1>`), falling back to `<title>` and then
 `displayCity()`. Page boilerplate such as ` - 4 Tage Vorhersage` is stripped,

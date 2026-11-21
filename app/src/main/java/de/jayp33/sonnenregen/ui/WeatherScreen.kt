@@ -183,10 +183,22 @@ fun WeatherScreen() {
                                     },
                                 verticalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
-                                Text(
-                                    stringResource(R.string.city, label),
-                                    style = MaterialTheme.typography.titleSmall,
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                ) {
+                                    Text(
+                                        stringResource(R.string.city, label),
+                                        style = MaterialTheme.typography.titleSmall,
+                                    )
+                                    if (city in hiddenCities) {
+                                        Text(
+                                            stringResource(R.string.hidden_indicator),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                }
                                 if (forecast != null) {
                                     HourlyOverview(label, forecast.hours)
                                 } else {
