@@ -146,14 +146,16 @@ fun WeatherScreen() {
             } else {
                 cities.forEach { city ->
                     val forecast = forecasts[city]
+                    val label = forecast?.displayName?.takeIf { it.isNotBlank() }
+                        ?: displayCity(city)
                     val detailsExpanded = city in expandedCities
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
-                            stringResource(R.string.city, displayCity(city)),
+                            stringResource(R.string.city, label),
                             style = MaterialTheme.typography.titleSmall,
                         )
                         if (forecast != null) {
-                            HourlyOverview(displayCity(city), forecast.hours)
+                            HourlyOverview(label, forecast.hours)
                             TextButton(onClick = {
                                 expandedCities = if (detailsExpanded) {
                                     expandedCities - city

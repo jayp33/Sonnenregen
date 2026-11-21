@@ -1,6 +1,7 @@
 package de.jayp33.sonnenregen
 
 import de.jayp33.sonnenregen.data.CityStatus
+import de.jayp33.sonnenregen.domain.displayCity
 import de.jayp33.sonnenregen.notification.NotificationViewBuilder
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -69,6 +70,29 @@ class NotificationViewTest {
     }
 
     @Test
+    fun uses_the_real_place_name_from_wetteronline() {
+        val view = build(
+            listOf(
+                status("frankfurt-oder", "Sun in 2 h", displayName = "Frankfurt (Oder)"),
+                status(
+                    "michelbach-an-der-bilz/gschlachtenbretzingen",
+                    "Rain in 30 min",
+                    displayName = "Gschlachtenbretzingen",
+                ),
+            ),
+        )
+
+        assertEquals("Sonnenregen", view.title)
+        assertEquals(
+            listOf(
+                "Frankfurt (Oder): Sun in 2 h",
+                "Gschlachtenbretzingen: Rain in 30 min",
+            ),
+            view.lines,
+        )
+    }
+
+    @Test
     fun no_cities_shows_the_empty_state() {
         val view = build(emptyList())
 
@@ -86,8 +110,14 @@ class NotificationViewTest {
         lineFor = { city, text -> "$city: $text" },
     )
 
-    private fun status(city: String, compactSummary: String, stale: Boolean = false) = CityStatus(
+    private fun status(
+        city: String,
+        compactSummary: String,
+        stale: Boolean = false,
+        displayName: String = displayCity(city),
+    ) = CityStatus(
         city = city,
+        displayName = displayName,
         compactSummary = compactSummary,
         fetchedAtMillis = 20L,
         stale = stale,

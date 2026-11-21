@@ -22,9 +22,10 @@ and German, selected by device locale.
   header; with two or more cities a wrapping text block shows `City: summary`
   lines in the order you added them, so long city names don't hide the forecast.
 - **Multiple cities**: add or remove WetterOnline slugs (`berlin`, `hamburg`, …)
-  in the app. Slugs stay lowercase for URLs; the app capitalizes them for
-  display. For places with a two-part WetterOnline path, enter the whole path,
-  e.g. `michelbach-an-der-bilz/gschlachtenbretzingen`.
+  in the app. Slugs stay lowercase for URLs; the app shows the real place name
+  from WetterOnline (`frankfurt-oder` → `Frankfurt (Oder)`,
+  `michelbach-an-der-bilz/gschlachtenbretzingen` → `Gschlachtenbretzingen`).
+  For places with a two-part WetterOnline path, enter the whole path.
 - **48-hour colour overview**: one label-free row per day, split into four
   six-hour blocks in the city's own local time. Yellow means sun, blue means
   rain, and one very light gray covers clouds and all night hours — so sun and

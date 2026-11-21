@@ -17,6 +17,7 @@ class ForecastAnalyzerTest {
         val forecast = ForecastAnalyzer.analyze("berlin", page, page)
 
         assertEquals("berlin", forecast.city)
+        assertEquals("Berlin", forecast.displayName)
         assertFalse(forecast.sun.currently)
         assertEquals("starts", forecast.sun.event!!.name.lowercase())
         assertEquals(OffsetDateTime.parse("2026-11-21T08:00:00+01:00"), forecast.sun.at)
@@ -25,6 +26,16 @@ class ForecastAnalyzerTest {
         assertEquals("starts", forecast.rain.event!!.name.lowercase())
         assertEquals(OffsetDateTime.parse("2026-11-21T20:00:00+01:00"), forecast.rain.at)
         assertEquals(48, forecast.hours.size)
+    }
+
+    @Test
+    fun carries_the_real_place_name_into_the_forecast() {
+        val page = "<h1> Wetter Frankfurt (Oder) &nbsp;</h1>" + TestData.page()
+
+        val forecast = ForecastAnalyzer.analyze("frankfurt-oder", page, page)
+
+        assertEquals("frankfurt-oder", forecast.city)
+        assertEquals("Frankfurt (Oder)", forecast.displayName)
     }
 
     @Test

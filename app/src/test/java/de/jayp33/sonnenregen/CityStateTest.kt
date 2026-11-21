@@ -60,8 +60,32 @@ class CityStateTest {
     }
 
     @Test
+    fun statuses_prefer_the_real_display_name() {
+        val berlin = forecast("berlin", fetchedAtMillis = 20L)
+            .copy(displayName = "Frankfurt (Oder)")
+
+        val statuses = buildStatuses(
+            cities = listOf("berlin"),
+            forecasts = mapOf("berlin" to berlin),
+        )
+
+        assertEquals("Frankfurt (Oder)", statuses.single().displayName)
+    }
+
+    @Test
+    fun statuses_fall_back_to_the_slug_when_no_name_was_fetched_yet() {
+        val statuses = buildStatuses(
+            cities = listOf("berlin"),
+            forecasts = mapOf("berlin" to forecast("berlin", fetchedAtMillis = 20L)),
+        )
+
+        assertEquals("Berlin", statuses.single().displayName)
+    }
+
+    @Test
     fun hourly_cells_survive_json_round_trip() {
         val original = forecast("berlin", 20L).copy(
+            displayName = "Frankfurt (Oder)",
             hours = listOf(HourCell(1_000L, HourKind.HEAVY_RAIN, "-05:00")),
         )
 
@@ -78,7 +102,10 @@ class CityStateTest {
              "fetchedAtMillis":20}
         """.trimIndent()
 
-        assertEquals(emptyList<HourCell>(), Json.decodeFromString<CityForecast>(legacy).hours)
+        val decoded = Json.decodeFromString<CityForecast>(legacy)
+
+        assertEquals(emptyList<HourCell>(), decoded.hours)
+        assertEquals("", decoded.displayName)
     }
 
     @Test

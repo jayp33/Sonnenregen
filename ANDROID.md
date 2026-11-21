@@ -54,13 +54,16 @@ trims/lowercases input and `isValidCitySlug()` validates each path segment with
 two-part WetterOnline path: enter it exactly as the path after `/wetter/`, for
 example `michelbach-an-der-bilz/gschlachtenbretzingen` (not just
 `gschlachtenbretzingen`, with the `ch` after `schla`). Slugs remain
-lowercase in storage; `displayCity()` capitalises every segment for the UI and
-notification (`berlin` → `Berlin`,
-`michelbach-an-der-bilz/gschlachtenbretzingen` →
-`Michelbach-an-der-bilz/Gschlachtenbretzingen`). DataStore holds:
+lowercase in storage. `ForecastParser` also reads the human-readable place name
+from the page heading (`<h1>`), falling back to `<title>` and then
+`displayCity()`. That name is persisted with the forecast and used by both the
+app and the notification, so `frankfurt-oder` becomes `Frankfurt (Oder)` and
+`michelbach-an-der-bilz/gschlachtenbretzingen` becomes
+`Gschlachtenbretzingen` instead of a hyphenated slug. DataStore holds:
 
 - `cities`: a JSON array in the order the user added them;
-- `forecasts_by_city`: a JSON map from slug to the last good formatted forecast.
+- `forecasts_by_city`: a JSON map from slug to the last good formatted forecast,
+  including its real `displayName`.
 
 The original single-city keys are read once and migrated on first access, so an
 existing installation keeps its Berlin forecast after the upgrade.
@@ -215,10 +218,10 @@ manual refreshes.
 - Channel `weather`, `IMPORTANCE_LOW`, category string `weather` (Android does
   not define a `CATEGORY_WEATHER` constant).
 - `setOngoing(true)`, small icon.
-- With exactly one city, keep the original style: title = city name, compact line
-  as the notification body.
+- With exactly one city, keep the original style: title = the real place name,
+  compact line as the notification body.
 - With two or more cities, title = app name and `BigTextStyle` with one
-  `City: <summary>` line per city, in the order the user added them. Big text
+  `<place name>: <summary>` line per city, in the order the user added them. Big text
   wraps long city names instead of ellipsizing the whole line, so the summary
   stays readable. With no cities, the body is the empty-state line.
   `NotificationViewBuilder` decides this shape; `WeatherNotifier` only applies

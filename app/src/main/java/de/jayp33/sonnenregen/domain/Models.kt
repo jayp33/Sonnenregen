@@ -50,6 +50,8 @@ data class Change(
 
 data class Forecast(
     val city: String,
+    /** Real place name from WetterOnline; the city slug stays the URL key. */
+    val displayName: String,
     val now: OffsetDateTime,
     val timezone: String,
     val sun: Change,

@@ -74,6 +74,7 @@ class WeatherStore(context: Context) {
         sunSummary = ForecastFormatter.verbose(forecast.sun, phrases),
         rainSummary = ForecastFormatter.verbose(forecast.rain, phrases),
         fetchedAtMillis = forecast.fetchedAt.toInstant().toEpochMilli(),
+        displayName = forecast.displayName,
         sunriseLabel = forecast.sunrise?.format(CLOCK_TIME),
         sunsetLabel = forecast.sunset?.format(CLOCK_TIME),
         hours = forecast.hours,

@@ -10,13 +10,65 @@ class ParseException(message: String, cause: Throwable? = null) : Exception(mess
 data class PageData(
     val shortcast: ShortcastDto,
     val astro: AstroDto?,
+    /** Human-readable place name from the page, e.g. "Frankfurt (Oder)". */
+    val placeName: String? = null,
 )
 
 object ForecastParser {
     private val ngStateRegex = Regex(
         """(?is)<script[^>]*\bid=["']ng-state["'][^>]*>(.*?)</script>""",
     )
+    private val h1Regex = Regex("""(?is)<h1[^>]*>(.*?)</h1>""")
+    private val titleRegex = Regex("""(?is)<title[^>]*>(.*?)</title>""")
+    private val tagRegex = Regex("""<[^>]+>""")
+    private val entityRegex = Regex(
+        """&(#(?:x[0-9a-f]+|[0-9]+)|[a-z]+);""",
+        RegexOption.IGNORE_CASE,
+    )
+    private val weatherPrefixRegex = Regex(
+        """^(?:14-Tage-Wetter|14-Day Weather|Wetter|Weather)\s+""",
+        RegexOption.IGNORE_CASE,
+    )
+    private val siteSuffixRegex = Regex(
+        """\s*-\s*WetterOnline\s*$""",
+        RegexOption.IGNORE_CASE,
+    )
     private val json = Json { ignoreUnknownKeys = true }
+
+    /**
+     * WetterOnline puts the real place name in the heading: "Wetter Berlin",
+     * "Wetter Frankfurt (Oder)", "Gschlachtenbretzingen" on the nowcast page.
+     * The title is a fallback; neither is part of the machine-readable payload.
+     */
+    internal fun extractPlaceName(html: String): String? {
+        val fromHeading = h1Regex.find(html)?.groupValues?.get(1)?.let(::cleanName)
+        if (!fromHeading.isNullOrBlank()) return fromHeading
+
+        return titleRegex.find(html)?.groupValues?.get(1)
+            ?.let(::cleanName)
+            ?.takeIf { it.isNotBlank() }
+    }
+
+    private fun cleanName(raw: String): String = tagRegex.replace(raw, " ")
+        .let(::decodeEntities)
+        .replace(Regex("""\s+"""), " ")
+        .trim()
+        .let { weatherPrefixRegex.replace(it, "") }
+        .let { siteSuffixRegex.replace(it, "") }
+        .trim()
+        .takeIf { it.length in 1..120 } ?: ""
+
+    private fun decodeEntities(value: String): String = entityRegex.replace(value) { match ->
+        when (val entity = match.groupValues[1].lowercase()) {
+            "nbsp" -> " "
+            "amp" -> "&"
+            "quot" -> "\""
+            "apos", "#39", "#x27" -> "'"
+            "lt" -> "<"
+            "gt" -> ">"
+            else -> match.value
+        }
+    }
 
     fun parsePage(html: String): ShortcastDto = parsePageData(html).shortcast
 
@@ -46,7 +98,7 @@ object ForecastParser {
             }
         }
 
-        return PageData(shortcast, astro)
+        return PageData(shortcast, astro, extractPlaceName(html))
     }
 }
 

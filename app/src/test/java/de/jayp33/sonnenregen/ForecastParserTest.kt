@@ -35,6 +35,27 @@ class ForecastParserTest {
     }
 
     @Test
+    fun reads_the_real_place_name_from_the_heading() {
+        val page = "<h1> Wetter Gschlachtenbretzingen &nbsp;</h1>" + TestData.page()
+
+        assertEquals("Gschlachtenbretzingen", ForecastParser.parsePageData(page).placeName)
+    }
+
+    @Test
+    fun keeps_official_parentheses_in_place_names() {
+        val page = "<h1> Wetter Frankfurt (Oder) &nbsp;</h1>" + TestData.page()
+
+        assertEquals("Frankfurt (Oder)", ForecastParser.parsePageData(page).placeName)
+    }
+
+    @Test
+    fun falls_back_to_the_page_title_for_the_place_name() {
+        val page = "<title>14-Tage-Wetter Frankfurt (Oder) - WetterOnline</title>" + TestData.page()
+
+        assertEquals("Frankfurt (Oder)", ForecastParser.parsePageData(page).placeName)
+    }
+
+    @Test
     fun missing_or_broken_astro_does_not_break_the_forecast() {
         assertNull(ForecastParser.parsePageData(TestData.page()).astro)
 

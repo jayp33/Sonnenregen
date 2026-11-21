@@ -43,6 +43,7 @@ object ForecastAnalyzer {
 
         return Forecast(
             city = normalizedCity,
+            displayName = hourlyPage.placeName ?: displayCity(normalizedCity),
             now = reference,
             timezone = hours.firstOrNull()?.start?.offset?.id ?: TIMEZONE,
             sun = change(reference, sunTimeline, { it.sunny }, Condition.SUN),
