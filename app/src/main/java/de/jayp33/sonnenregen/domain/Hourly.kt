@@ -63,6 +63,19 @@ fun hourlyCells(
     }
 }
 
+/**
+ * Build up to six 15-minute cells from the provider's nowcast slots. These are
+ * the raw quarter-hour items, not the stretched slots of the merged timeline.
+ */
+fun nowcastCells(now: OffsetDateTime, slots: List<Slot>, limit: Int = 6): List<HourCell> =
+    slots.filter { it.end.isAfter(now) }.take(limit).map { slot ->
+        HourCell(
+            startEpochMillis = slot.start.toInstant().toEpochMilli(),
+            kind = classify(slot),
+            zoneId = slot.start.offset.id,
+        )
+    }
+
 /** Group cells by calendar day/hour in each cell's own offset, then by hour. */
 fun groupHoursByDay(hours: List<HourCell>): Map<LocalDate, Map<Int, HourCell>> {
     val fallback = ZoneId.of(TIMEZONE)
@@ -78,6 +91,9 @@ fun groupHoursByDay(hours: List<HourCell>): Map<LocalDate, Map<Int, HourCell>> {
     }
     return result
 }
+
+internal fun HourKind.isRain(): Boolean =
+    this == HourKind.LIGHT_RAIN || this == HourKind.RAIN || this == HourKind.HEAVY_RAIN
 
 private fun classify(slot: Slot): HourKind {
     // Night symbols (m*) never get a sun colour: no sun before sunrise or after

@@ -15,6 +15,8 @@ data class CityForecast(
     val sunsetLabel: String? = null,
     /** Colour-grid cells for the 48-hour overview; empty in old installs. */
     val hours: List<HourCell> = emptyList(),
+    /** Quarter-hour cells for the 90-minute row; empty in old installs. */
+    val nowcastCells: List<HourCell> = emptyList(),
     /** Real place name from WetterOnline; blank in pre-name installs. */
     val displayName: String = "",
 )

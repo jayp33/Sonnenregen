@@ -132,6 +132,7 @@ class CityStateTest {
         val original = forecast("berlin", 20L).copy(
             displayName = "Frankfurt (Oder)",
             hours = listOf(HourCell(1_000L, HourKind.HEAVY_RAIN, "-05:00")),
+            nowcastCells = listOf(HourCell(2_000L, HourKind.RAIN, "+01:00")),
         )
 
         val encoded = Json.encodeToString(original)
@@ -150,6 +151,7 @@ class CityStateTest {
         val decoded = Json.decodeFromString<CityForecast>(legacy)
 
         assertEquals(emptyList<HourCell>(), decoded.hours)
+        assertEquals(emptyList<HourCell>(), decoded.nowcastCells)
         assertEquals("", decoded.displayName)
     }
 

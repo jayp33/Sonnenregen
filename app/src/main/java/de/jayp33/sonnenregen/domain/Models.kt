@@ -74,4 +74,6 @@ data class Forecast(
     val sunrise: OffsetDateTime? = null,
     val sunset: OffsetDateTime? = null,
     val hours: List<HourCell> = emptyList(),
+    /** Quarter-hour cells for the 90-minute window, used by the extra grid row. */
+    val nowcastCells: List<HourCell> = emptyList(),
 )

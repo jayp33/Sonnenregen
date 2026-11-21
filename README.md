@@ -41,6 +41,8 @@ and German, selected by device locale.
   reveal the detailed Sun/Rain, sunrise/sunset and Remove controls; tap again to
   hide them. The controls also work for cities without a forecast, so broken
   places can be removed. Adding a city happens in a dialog behind a small + button.
+  When rain is expected in the next 90 minutes, an extra six-cell row prefixed
+  `90` appears underneath with 15-minute detail in the same colours.
 - **Exact sunrise/sunset** from WetterOnline's own astro data, shown in the app
   UI. Sunshine never starts before sunrise or continues past sunset.
 - **Offline-friendly**: each city keeps its last good forecast. A failed refresh

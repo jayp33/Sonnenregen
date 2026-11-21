@@ -119,6 +119,14 @@ tappable region; tapping it toggles that city's Sun, Rain, sunrise/sunset,
 freshness, reorder and Remove controls, so the colours stay uncluttered by
 default and no "Show details" button is needed.
 
+Below the day rows, an optional `90` row shows the 90-minute nowcast as six
+15-minute cells with the same colours and a fixed-width prefix matching the
+weekday column. It is rendered only when at least one of those cells is rain.
+The cells come from the raw `nowcast_trend` items (or the hourly page's nearcast
+as fallback), not from the stretched timeline slots. `CityForecast.nowcastCells`
+defaults to an empty list, so old installs simply have no extra row until the
+next refresh.
+
 Each `HourCell` stores that offset as `zoneId`, so even a DST change inside the
 48-hour window keeps the right local hours. Cells stored by older versions
 default to `Europe/Berlin` until the next refresh.

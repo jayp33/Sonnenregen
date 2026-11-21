@@ -2,6 +2,8 @@ package de.jayp33.sonnenregen
 
 import de.jayp33.sonnenregen.data.ForecastParser
 import de.jayp33.sonnenregen.domain.ForecastAnalyzer
+import de.jayp33.sonnenregen.domain.HourKind
+import de.jayp33.sonnenregen.domain.isRain
 import de.jayp33.sonnenregen.domain.isRainSymbol
 import de.jayp33.sonnenregen.domain.isSunSymbol
 import org.junit.Assert.assertEquals
@@ -165,6 +167,49 @@ class ForecastAnalyzerTest {
         )
 
         assertEquals(null, forecast.rainOutlook.againInMinutes)
+    }
+
+    @Test
+    fun nowcast_cells_come_from_the_90_minute_page() {
+        val shortcast = nowcastShortcast(withSecondRain = true)
+        val forecast = ForecastAnalyzer.analyze(
+            "berlin",
+            TestData.pageWith(shortcast),
+            TestData.pageWith(shortcast),
+        )
+
+        assertEquals(5, forecast.nowcastCells.size)
+        assertEquals(
+            OffsetDateTime.parse("2026-11-21T21:15:00+01:00").toInstant().toEpochMilli(),
+            forecast.nowcastCells.first().startEpochMillis,
+        )
+        assertTrue(forecast.nowcastCells.any { it.kind.isRain() })
+        assertEquals(HourKind.CLOUDY, forecast.nowcastCells.last().kind)
+    }
+
+    @Test
+    fun nowcast_cells_fall_back_to_the_hourly_page_nearcast() {
+        val hourlyShortcast = """
+            {
+              "current": {"date":"2026-11-21T21:15:00+01:00","symbol":"mo____"},
+              "nowcast_trend": {"items":[
+                {"date":"2026-11-21T21:15:00+01:00","symbol":"mdr1__"},
+                {"date":"2026-11-21T21:30:00+01:00","symbol":"mw____"}
+              ]},
+              "hours": [
+                {"date":"2026-11-21T22:00:00+01:00","symbol":"mo____"}
+              ]
+            }
+        """.trimIndent()
+        val nowcastShortcast = TestData.sunnyMorningShortcast
+        val forecast = ForecastAnalyzer.analyze(
+            "berlin",
+            TestData.pageWith(hourlyShortcast),
+            TestData.pageWith(nowcastShortcast),
+        )
+
+        assertEquals(2, forecast.nowcastCells.size)
+        assertTrue(forecast.nowcastCells.first().kind.isRain())
     }
 
     private fun nowcastShortcast(withSecondRain: Boolean): String {

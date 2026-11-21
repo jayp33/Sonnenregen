@@ -8,6 +8,9 @@ import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import de.jayp33.sonnenregen.R
+import de.jayp33.sonnenregen.data.CityForecast
+import de.jayp33.sonnenregen.domain.HourCell
+import de.jayp33.sonnenregen.domain.HourKind
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -74,6 +77,58 @@ class CityItemTest {
     }
 
     @Test
+    fun nowcast_row_appears_when_it_rains_in_the_90_minutes() {
+        val prefix = InstrumentationRegistry.getInstrumentation()
+            .targetContext.getString(R.string.nowcast_prefix)
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                CityItem(
+                    label = "Berlin",
+                    index = 0,
+                    cityCount = 1,
+                    forecast = forecastWith(HourKind.RAIN),
+                    detailsExpanded = false,
+                    hidden = false,
+                    nowMillis = 0L,
+                    onToggleExpanded = {},
+                    onToggleNotificationVisibility = {},
+                    onMove = {},
+                    onRemove = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(prefix).assertIsDisplayed()
+    }
+
+    @Test
+    fun nowcast_row_is_hidden_without_rain_in_the_90_minutes() {
+        val prefix = InstrumentationRegistry.getInstrumentation()
+            .targetContext.getString(R.string.nowcast_prefix)
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                CityItem(
+                    label = "Berlin",
+                    index = 0,
+                    cityCount = 1,
+                    forecast = forecastWith(HourKind.CLOUDY),
+                    detailsExpanded = false,
+                    hidden = false,
+                    nowMillis = 0L,
+                    onToggleExpanded = {},
+                    onToggleNotificationVisibility = {},
+                    onMove = {},
+                    onRemove = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(prefix).assertDoesNotExist()
+    }
+
+    @Test
     fun controls_are_hidden_until_details_are_expanded() {
         val removeLabel = InstrumentationRegistry.getInstrumentation()
             .targetContext.getString(R.string.remove)
@@ -98,4 +153,14 @@ class CityItemTest {
 
         composeTestRule.onNodeWithText(removeLabel).assertDoesNotExist()
     }
+
+    private fun forecastWith(nowcastKind: HourKind) = CityForecast(
+        city = "berlin",
+        compactSummary = "Rain for 15 min, sun in 2 h",
+        sunSummary = "Sunshine starts in 2 h.",
+        rainSummary = "Rain ends in 15 min.",
+        fetchedAtMillis = 0L,
+        hours = listOf(HourCell(1_000L, HourKind.CLOUDY)),
+        nowcastCells = listOf(HourCell(2_000L, nowcastKind, "+01:00")),
+    )
 }

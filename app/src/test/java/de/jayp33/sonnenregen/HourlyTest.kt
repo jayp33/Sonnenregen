@@ -6,7 +6,11 @@ import de.jayp33.sonnenregen.domain.Slot
 import de.jayp33.sonnenregen.domain.SlotSource
 import de.jayp33.sonnenregen.domain.groupHoursByDay
 import de.jayp33.sonnenregen.domain.hourlyCells
+import de.jayp33.sonnenregen.domain.isRain
+import de.jayp33.sonnenregen.domain.nowcastCells
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Duration
 import java.time.OffsetDateTime
@@ -119,6 +123,43 @@ class HourlyTest {
 
         assertEquals(1, grouped.size)
         assertEquals(listOf(0, 1, 11), grouped.values.first().keys.toList())
+    }
+
+    @Test
+    fun nowcast_cells_cover_six_quarter_hours_from_now() {
+        val slots = nowcastSlots("2026-11-21T21:00:00+01:00", 7, rainAt = 1)
+        val now = at("2026-11-21T21:15:00+01:00")
+
+        val cells = nowcastCells(now, slots)
+
+        assertEquals(6, cells.size)
+        assertEquals(now.toInstant().toEpochMilli(), cells.first().startEpochMillis)
+        assertEquals(HourKind.LIGHT_RAIN, cells.first().kind)
+        assertEquals(HourKind.CLOUDY, cells.last().kind)
+        assertEquals("+01:00", cells.first().zoneId)
+        assertTrue(cells.any { it.kind.isRain() })
+    }
+
+    @Test
+    fun nowcast_without_rain_has_no_rain_cells() {
+        val slots = nowcastSlots("2026-11-21T21:15:00+01:00", 6, rainAt = -1)
+
+        val cells = nowcastCells(at("2026-11-21T21:15:00+01:00"), slots)
+
+        assertEquals(6, cells.size)
+        assertFalse(cells.any { it.kind.isRain() })
+    }
+
+    private fun nowcastSlots(start: String, count: Int, rainAt: Int): List<Slot> {
+        val first = at(start)
+        return (0 until count).map { index ->
+            Slot(
+                start = first.plusMinutes(15L * index),
+                duration = Duration.ofMinutes(15),
+                symbol = if (index == rainAt) "mdr1__" else "mo____",
+                source = SlotSource.NOWCAST,
+            )
+        }
     }
 
     private fun cellsFrom(start: String, count: Int): List<HourCell> {

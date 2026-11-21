@@ -163,6 +163,7 @@ class WeatherStore(context: Context) {
         sunriseLabel = forecast.sunrise?.format(CLOCK_TIME),
         sunsetLabel = forecast.sunset?.format(CLOCK_TIME),
         hours = forecast.hours,
+        nowcastCells = forecast.nowcastCells,
     )
 
     suspend fun isEnabled(): Boolean = dataStore.data.first()[ENABLED] ?: true

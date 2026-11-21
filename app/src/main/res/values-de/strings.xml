@@ -17,6 +17,7 @@
     <string name="sunrise">Sonnenaufgang: %1$s</string>
     <string name="sunset">Sonnenuntergang: %1$s</string>
 
+    <string name="nowcast_prefix">90</string>
     <string name="weekday_monday">Mo</string>
     <string name="weekday_tuesday">Di</string>
     <string name="weekday_wednesday">Mi</string>

@@ -21,10 +21,14 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import de.jayp33.sonnenregen.R
+import de.jayp33.sonnenregen.domain.CLOCK_TIME
 import de.jayp33.sonnenregen.domain.HourCell
 import de.jayp33.sonnenregen.domain.HourKind
+import de.jayp33.sonnenregen.domain.TIMEZONE
 import de.jayp33.sonnenregen.domain.groupHoursByDay
 import java.time.DayOfWeek
+import java.time.Instant
+import java.time.ZoneId
 
 /**
  * One row per calendar day in the forecast's own timezone, prefixed with that
@@ -58,7 +62,7 @@ fun HourlyOverview(city: String, hours: List<HourCell>, modifier: Modifier = Mod
                         horizontalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
                         (firstHour until firstHour + 6).forEach { hour ->
-                            Cell(byHour[hour], hour, city)
+                            Cell(byHour[hour], hourLabel(hour), city)
                         }
                     }
                 }
@@ -67,13 +71,40 @@ fun HourlyOverview(city: String, hours: List<HourCell>, modifier: Modifier = Mod
     }
 }
 
+/**
+ * The finer 90-minute window, shown only when it contains rain. Its six
+ * quarter-hour cells use the same colours as the hourly grid and a short
+ * `90` prefix in the same fixed-width column.
+ */
 @Composable
-private fun RowScope.Cell(cell: HourCell?, hour: Int, city: String) {
+fun NowcastOverview(city: String, cells: List<HourCell>, modifier: Modifier = Modifier) {
+    if (cells.isEmpty()) return
+
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(R.string.nowcast_prefix),
+            modifier = Modifier.width(24.dp),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+        )
+        cells.forEach { cell ->
+            Cell(cell, cell.timeLabel(), city)
+        }
+    }
+}
+
+@Composable
+private fun RowScope.Cell(cell: HourCell?, time: String, city: String) {
     val description = cell?.let {
         stringResource(
             R.string.hour_description,
             city,
-            hour.toString().padStart(2, '0') + ":00",
+            time,
             stringResource(it.kind.label()),
         )
     }
@@ -87,6 +118,17 @@ private fun RowScope.Cell(cell: HourCell?, hour: Int, city: String) {
                 .semantics(mergeDescendants = true) { contentDescription = description }
         },
     )
+}
+
+private fun hourLabel(hour: Int): String = hour.toString().padStart(2, '0') + ":00"
+
+private fun HourCell.timeLabel(): String {
+    val zone = try {
+        ZoneId.of(zoneId)
+    } catch (_: Exception) {
+        ZoneId.of(TIMEZONE)
+    }
+    return Instant.ofEpochMilli(startEpochMillis).atZone(zone).toLocalTime().format(CLOCK_TIME)
 }
 
 internal fun DayOfWeek.weekdayLabel(): Int = when (this) {
