@@ -8,13 +8,14 @@ data class NotificationView(
     val title: String,
     val text: String,
     val lines: List<String>,
-    val useInbox: Boolean,
+    val useBigText: Boolean,
 )
 
 object NotificationViewBuilder {
     /**
      * One city keeps the original style: city name as header, compact line as
-     * body. Two or more cities use an inbox with one labelled line per city.
+     * body. Two or more cities use a wrapping big-text block with one labelled
+     * line per city, so long names don't eat the whole line.
      */
     fun build(
         statuses: List<CityStatus>,
@@ -29,7 +30,7 @@ object NotificationViewBuilder {
                 title = displayCity(single.city),
                 text = textFor(single),
                 lines = emptyList(),
-                useInbox = false,
+                useBigText = false,
             )
         }
 
@@ -42,7 +43,7 @@ object NotificationViewBuilder {
             title = appName,
             text = lines.first(),
             lines = lines,
-            useInbox = true,
+            useBigText = true,
         )
     }
 }

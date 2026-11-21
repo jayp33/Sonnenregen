@@ -204,10 +204,12 @@ manual refreshes.
 - `setOngoing(true)`, small icon.
 - With exactly one city, keep the original style: title = city name, compact line
   as the notification body.
-- With two or more cities, title = app name and `InboxStyle` with one
-  `City: <summary>` line per city, in the order the user added them. With no
-  cities, the body is the empty-state line. `NotificationViewBuilder` decides
-  this shape; `WeatherNotifier` only applies it to the Android builder.
+- With two or more cities, title = app name and `BigTextStyle` with one
+  `City: <summary>` line per city, in the order the user added them. Big text
+  wraps long city names instead of ellipsizing the whole line, so the summary
+  stays readable. With no cities, the body is the empty-state line.
+  `NotificationViewBuilder` decides this shape; `WeatherNotifier` only applies
+  it to the Android builder.
 - A stale city shows `Weather unavailable` instead of its compact summary. Each
   city's compact line puts the sooner event first:
   - `Sun in 2 h 10 min, no rain` / `Sonne in 2 Std. 10 Min., kein Regen`

@@ -12,7 +12,7 @@ class NotificationViewTest {
 
         assertEquals("Berlin", view.title)
         assertEquals("Sun in 2 h, no rain", view.text)
-        assertEquals(false, view.useInbox)
+        assertEquals(false, view.useBigText)
         assertEquals(emptyList<String>(), view.lines)
     }
 
@@ -22,11 +22,11 @@ class NotificationViewTest {
 
         assertEquals("Berlin", view.title)
         assertEquals("Weather unavailable", view.text)
-        assertEquals(false, view.useInbox)
+        assertEquals(false, view.useBigText)
     }
 
     @Test
-    fun two_cities_use_an_inbox_with_the_app_name_as_header() {
+    fun two_cities_use_wrapping_text_with_the_app_name_as_header() {
         val view = build(
             listOf(
                 status("berlin", "Sun in 2 h, no rain"),
@@ -36,7 +36,7 @@ class NotificationViewTest {
 
         assertEquals("Sonnenregen", view.title)
         assertEquals("Berlin: Sun in 2 h, no rain", view.text)
-        assertEquals(true, view.useInbox)
+        assertEquals(true, view.useBigText)
         assertEquals(
             listOf(
                 "Berlin: Sun in 2 h, no rain",
@@ -47,12 +47,34 @@ class NotificationViewTest {
     }
 
     @Test
+    fun long_city_names_keep_the_whole_summary_line() {
+        val view = build(
+            listOf(
+                status("frankfurt-am-main", "Sun in 2 h, no rain"),
+                status("berlin", "Rain in 30 min"),
+            ),
+        )
+
+        assertEquals(
+            listOf(
+                "Frankfurt-am-main: Sun in 2 h, no rain",
+                "Berlin: Rain in 30 min",
+            ),
+            view.lines,
+        )
+        assertEquals(
+            "Frankfurt-am-main: Sun in 2 h, no rain\nBerlin: Rain in 30 min",
+            view.lines.joinToString("\n"),
+        )
+    }
+
+    @Test
     fun no_cities_shows_the_empty_state() {
         val view = build(emptyList())
 
         assertEquals("Sonnenregen", view.title)
         assertEquals("No cities configured", view.text)
-        assertEquals(true, view.useInbox)
+        assertEquals(true, view.useBigText)
         assertEquals(listOf("No cities configured"), view.lines)
     }
 
