@@ -39,6 +39,8 @@
     <string name="city_hint">Ort-Slug, z. B. hamburg oder region/ort</string>
     <string name="add_city">Ort hinzufügen</string>
     <string name="cancel">Abbrechen</string>
+    <string name="move_up">Nach oben</string>
+    <string name="move_down">Nach unten</string>
     <string name="remove">Entfernen</string>
     <string name="invalid_city">Bitte einen gültigen Ort-Slug eingeben (Buchstaben, Zahlen, Bindestriche, /).</string>
     <string name="city_already_added">Dieser Ort ist bereits konfiguriert.</string>

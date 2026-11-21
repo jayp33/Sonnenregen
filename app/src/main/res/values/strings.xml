@@ -39,6 +39,8 @@
     <string name="city_hint">City slug, e.g. hamburg or region/city</string>
     <string name="add_city">Add city</string>
     <string name="cancel">Cancel</string>
+    <string name="move_up">Move up</string>
+    <string name="move_down">Move down</string>
     <string name="remove">Remove</string>
     <string name="invalid_city">Enter a valid city slug (letters, digits, hyphens, /).</string>
     <string name="city_already_added">This city is already configured.</string>

@@ -55,8 +55,9 @@ two-part WetterOnline path: enter it exactly as the path after `/wetter/`, for
 example `michelbach-an-der-bilz/gschlachtenbretzingen` (not just
 `gschlachtenbretzingen`, with the `ch` after `schla`). Slugs remain
 lowercase in storage. The add form lives in an `AlertDialog` opened by the +
-FAB, and Remove lives inside the expanded per-city details, so neither clutters
-the default view. `ForecastParser` also reads the human-readable place name
+FAB, while Remove and the ↑/↓ reorder controls live inside the expanded per-city
+details, so none of them clutters the default view. `ForecastParser` also reads
+the human-readable place name
 from the page heading (`<h1>`), falling back to `<title>` and then
 `displayCity()`. Page boilerplate such as ` - 4 Tage Vorhersage` is stripped,
 while hyphens inside real names (`Garmisch-Partenkirchen`) are kept. That name
@@ -65,7 +66,8 @@ app and the notification, so `frankfurt-oder` becomes `Frankfurt (Oder)` and
 `michelbach-an-der-bilz/gschlachtenbretzingen` becomes
 `Gschlachtenbretzingen` instead of a hyphenated slug. DataStore holds:
 
-- `cities`: a JSON array in the order the user added them;
+- `cities`: a JSON array in the user's current order (add order initially, then
+  adjustable with the ↑/↓ controls in each city's details);
 - `forecasts_by_city`: a JSON map from slug to the last good formatted forecast,
   including its real `displayName`.
 
@@ -103,7 +105,8 @@ of tomorrow, part of the day after); exactly midnight produces two. A slightly
 larger gap every six hours is the only orientation aid — no date prefix and no
 `00`/`06`/`12`/`18` labels — and no scrolling is needed. The grid sits directly
 under the city line. The city line plus grid is one tappable region; tapping it
-toggles that city's Sun, Rain, sunrise/sunset, freshness and Remove controls, so
+toggles that city's Sun, Rain, sunrise/sunset, freshness, reorder and Remove
+controls, so
 the colours stay uncluttered by default and no "Show details" button is needed.
 
 Each `HourCell` stores that offset as `zoneId`, so even a DST change inside the
@@ -230,7 +233,7 @@ manual refreshes.
 - With exactly one city, title = the real place name and the compact line as the
   notification body.
 - With two or more cities, title = app name and one `<place name>: <summary>`
-  line per city, in the order the user added them. With no cities, the body is
+  line per city, in the user's current city order. With no cities, the body is
   the empty-state line.
 - Both shapes use `BigTextStyle`. It wraps long single-city summaries and long
   city names instead of ellipsizing them, so no tail is lost on narrow screens.

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -157,7 +158,7 @@ fun WeatherScreen() {
                 if (cities.isEmpty()) {
                     Text(stringResource(R.string.no_cities))
                 } else {
-                    cities.forEach { city ->
+                    cities.forEachIndexed { index, city ->
                         val forecast = forecasts[city]
                         val label = forecast?.displayName?.takeIf { it.isNotBlank() }
                             ?: displayCity(city)
@@ -203,13 +204,41 @@ fun WeatherScreen() {
                                     Text(listOfNotNull(sunrise, sunset).joinToString(" · "))
                                 }
 
-                                Button(onClick = {
-                                    scope.launch {
-                                        store.removeCity(city)
-                                        if (enabled) WeatherNotifier.show(context, store.statuses())
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    TextButton(
+                                        enabled = index > 0,
+                                        onClick = {
+                                            scope.launch {
+                                                store.moveCity(city, -1)
+                                                if (enabled) {
+                                                    WeatherNotifier.show(context, store.statuses())
+                                                }
+                                            }
+                                        },
+                                    ) {
+                                        Text("↑ " + stringResource(R.string.move_up))
                                     }
-                                }) {
-                                    Text(stringResource(R.string.remove))
+                                    TextButton(
+                                        enabled = index < cities.lastIndex,
+                                        onClick = {
+                                            scope.launch {
+                                                store.moveCity(city, 1)
+                                                if (enabled) {
+                                                    WeatherNotifier.show(context, store.statuses())
+                                                }
+                                            }
+                                        },
+                                    ) {
+                                        Text("↓ " + stringResource(R.string.move_down))
+                                    }
+                                    Button(onClick = {
+                                        scope.launch {
+                                            store.removeCity(city)
+                                            if (enabled) WeatherNotifier.show(context, store.statuses())
+                                        }
+                                    }) {
+                                        Text(stringResource(R.string.remove))
+                                    }
                                 }
                             }
                         }

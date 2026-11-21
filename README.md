@@ -20,13 +20,15 @@ and German, selected by device locale.
 - **Permanent notification** with a compact `Sun in 2 h 10 min, no rain` line.
   The sooner event comes first. With one city the place name is the notification
   header; with two or more cities a wrapping text block shows `City: summary`
-  lines in the order you added them. The body always wraps, so long city names or
+  lines in your chosen city order. The body always wraps, so long city names or
   summaries don't hide the forecast on narrow screens.
 - **Multiple cities**: add or remove WetterOnline slugs (`berlin`, `hamburg`, …)
   in the app. Slugs stay lowercase for URLs; the app shows the real place name
   from WetterOnline (`frankfurt-oder` → `Frankfurt (Oder)`,
   `michelbach-an-der-bilz/gschlachtenbretzingen` → `Gschlachtenbretzingen`).
-  For places with a two-part WetterOnline path, enter the whole path.
+  For places with a two-part WetterOnline path, enter the whole path. Use the
+  ↑/↓ controls in a city’s details to change the order used by the UI and the
+  notification.
 - **48-hour colour overview**: one label-free row per day, split into four
   six-hour blocks in the city's own local time. Yellow means sun, blue means
   rain, and one very light gray covers clouds and all night hours — so sun and

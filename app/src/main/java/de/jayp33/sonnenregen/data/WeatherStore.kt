@@ -20,6 +20,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
+/** Move one city by +/-1 without touching the others or allowing out-of-range moves. */
+internal fun reorderCity(cities: List<String>, city: String, offset: Int): List<String> {
+    val from = cities.indexOf(city)
+    val to = from + offset
+    if (from < 0 || to !in cities.indices) return cities
+    return cities.toMutableList().apply { add(to, removeAt(from)) }
+}
+
 private val Context.weatherDataStore by preferencesDataStore(name = "weather")
 
 class WeatherStore(context: Context) {
@@ -52,6 +60,15 @@ class WeatherStore(context: Context) {
         dataStore.edit { prefs ->
             prefs[CITIES] = json.encodeToString(citiesFrom(prefs).filterNot { it == city })
             prefs[FORECASTS] = json.encodeToString(forecastsFrom(prefs).filterKeys { it != city })
+        }
+    }
+
+    /** Swap a city with its neighbour; the UI observes the new order immediately. */
+    suspend fun moveCity(city: String, offset: Int) {
+        dataStore.edit { prefs ->
+            val current = citiesFrom(prefs)
+            val next = reorderCity(current, city, offset)
+            if (next != current) prefs[CITIES] = json.encodeToString(next)
         }
     }
 
