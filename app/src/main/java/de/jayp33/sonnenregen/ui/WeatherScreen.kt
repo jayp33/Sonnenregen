@@ -321,7 +321,7 @@ internal fun CityItem(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Text(
-                    stringResource(R.string.city, label),
+                    label,
                     style = MaterialTheme.typography.titleSmall,
                 )
                 if (hidden) {

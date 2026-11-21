@@ -49,6 +49,31 @@ class CityItemTest {
     }
 
     @Test
+    fun city_label_is_shown_without_a_prefix() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                CityItem(
+                    label = "Berlin",
+                    index = 0,
+                    cityCount = 1,
+                    forecast = null,
+                    detailsExpanded = false,
+                    hidden = false,
+                    nowMillis = 0L,
+                    onToggleExpanded = {},
+                    onToggleNotificationVisibility = {},
+                    onMove = {},
+                    onRemove = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("Berlin").assertIsDisplayed()
+        composeTestRule.onNodeWithText("City: Berlin").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Ort: Berlin").assertDoesNotExist()
+    }
+
+    @Test
     fun controls_are_hidden_until_details_are_expanded() {
         val removeLabel = InstrumentationRegistry.getInstrumentation()
             .targetContext.getString(R.string.remove)

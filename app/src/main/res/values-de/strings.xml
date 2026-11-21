@@ -12,7 +12,6 @@
     <string name="updated_days_ago">Vor %1$d Tagen aktualisiert</string>
     <string name="weather_unavailable">Wetter nicht verfügbar</string>
 
-    <string name="city">Ort: %1$s</string>
     <string name="sun">Sonne: %1$s</string>
     <string name="rain">Regen: %1$s</string>
     <string name="sunrise">Sonnenaufgang: %1$s</string>
