@@ -31,7 +31,7 @@ class HourlyTest {
     }
 
     @Test
-    fun day_and_night_variants_share_the_same_colour() {
+    fun clear_nights_are_cloudy_but_day_sun_is_yellow() {
         val cells = hourlyCells(
             now = at("2026-11-21T06:30:00+01:00"),
             hours = listOf(
@@ -54,8 +54,8 @@ class HourlyTest {
 
         assertEquals(
             listOf(
-                HourKind.SUN, // 06:00 current, clear night
-                HourKind.SUN, // mo
+                HourKind.CLOUDY, // 06:00 current, clear night
+                HourKind.CLOUDY, // mo
                 HourKind.SUN, // so
                 HourKind.PARTLY_SUN, // mb
                 HourKind.PARTLY_SUN, // wb

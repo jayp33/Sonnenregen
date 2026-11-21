@@ -83,9 +83,13 @@ private fun RowScope.Cell(cell: HourCell?, hour: Int, city: String) {
 
 @Suppress("DEPRECATION")
 private fun HourKind.color(): Color = when (this) {
-    HourKind.SUN, HourKind.CLEAR_NIGHT -> Color(0xFFF2C230)
+    HourKind.SUN -> Color(0xFFF2C230)
     HourKind.PARTLY_SUN -> Color(0xFFF7DE8C)
-    HourKind.CLOUDY, HourKind.OVERCAST, HourKind.CLOUDY_NIGHT -> Color(0xFFBFC4C9)
+    HourKind.CLOUDY,
+    HourKind.OVERCAST,
+    HourKind.CLOUDY_NIGHT,
+    HourKind.CLEAR_NIGHT,
+    -> Color(0xFFBFC4C9)
     HourKind.LIGHT_RAIN -> Color(0xFFA9D2F2)
     HourKind.RAIN -> Color(0xFF4C9BD6)
     HourKind.HEAVY_RAIN -> Color(0xFF1F5C99)
@@ -93,9 +97,9 @@ private fun HourKind.color(): Color = when (this) {
 
 @Suppress("DEPRECATION")
 private fun HourKind.label(): Int = when (this) {
-    HourKind.SUN, HourKind.CLEAR_NIGHT -> R.string.hour_sun
+    HourKind.SUN -> R.string.hour_sun
     HourKind.PARTLY_SUN -> R.string.hour_partly_sun
-    HourKind.CLOUDY, HourKind.CLOUDY_NIGHT -> R.string.hour_cloudy
+    HourKind.CLOUDY, HourKind.CLOUDY_NIGHT, HourKind.CLEAR_NIGHT -> R.string.hour_cloudy
     HourKind.OVERCAST -> R.string.hour_overcast
     HourKind.LIGHT_RAIN -> R.string.hour_light_rain
     HourKind.RAIN -> R.string.hour_rain

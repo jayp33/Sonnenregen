@@ -82,21 +82,21 @@ part of the day after); exactly midnight produces two. A slightly larger gap
 every six hours is the only orientation aid — no date prefix and no `00`/`06`/
 `12`/`18` labels — and no scrolling is needed.
 
-Day and night variants of the same condition share a colour, so the grid reads
-purely as weather at a glance:
+The grid reads purely as weather at a glance. A clear night counts as clouds,
+not sun:
 
-- bright/pale yellow — sunny/clear / partly sunny;
-- light gray — all clouds, regardless of intensity;
+- bright/pale yellow — sunny / partly sunny;
+- light gray — all clouds and clear nights, regardless of cloud intensity;
 - light/medium/dark blue — light rain / rain / heavy rain.
 
-For example, `mo` and `so` are both bright yellow, `mb` and `wb` both pale yellow.
-Sunrise/sunset stay in the adjacent text line instead of being encoded as glyphs.
-No weather icons or labels are drawn; each cell carries a localized
-`contentDescription` for screen readers. The overview is stored as
-`CityForecast.hours` (defaulting to an empty list), so existing installs simply
-show no grid until their next refresh. Legacy night enum values from the first
-grid version still decode and render with their day colours. The notification is
-unchanged.
+For example, `so` is bright yellow, `mo` (clear night) is light gray like clouds,
+and `mb` and `wb` are both pale yellow. Sunrise/sunset stay in the adjacent text
+line instead of being encoded as glyphs. No weather icons or labels are drawn;
+each cell carries a localized `contentDescription` for screen readers. The
+overview is stored as `CityForecast.hours` (defaulting to an empty list), so
+existing installs simply show no grid until their next refresh. Legacy night enum
+values from the first grid version still decode; `CLEAR_NIGHT` now renders gray
+like clouds. The notification is unchanged.
 
 ## Data source and parsing
 

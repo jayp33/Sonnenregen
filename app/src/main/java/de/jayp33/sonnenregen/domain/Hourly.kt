@@ -74,14 +74,14 @@ fun groupHoursByDay(
 }
 
 private fun classify(slot: Slot): HourKind {
-    // Day and night variants of the same condition share a colour, so the grid
-    // reads purely as weather at a glance. Sunrise/sunset stay in the text line.
+    // A clear night has no sun to show, so it is cloud-gray instead of yellow.
+    // Partly cloudy nights keep the pale yellow used for partly sunny hours.
     if (isRainSymbol(slot.symbol)) return rainKind(slot.symbol)
 
     return when (slot.symbol.take(2)) {
-        "so", "mo" -> HourKind.SUN // sunny / clear night
-        "wb", "mb" -> HourKind.PARTLY_SUN // partly sunny / partly cloudy night
-        "bw", "mw" -> HourKind.CLOUDY
+        "so" -> HourKind.SUN
+        "mo", "bw", "mw" -> HourKind.CLOUDY // clear night / cloudy day + night
+        "wb", "mb" -> HourKind.PARTLY_SUN
         else -> HourKind.OVERCAST // bd, md, fog, ...
     }
 }
