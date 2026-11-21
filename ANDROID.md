@@ -82,16 +82,16 @@ part of the day after); exactly midnight produces two. A slightly larger gap
 every six hours is the only orientation aid — no date prefix and no `00`/`06`/
 `12`/`18` labels — and no scrolling is needed.
 
-The grid reads purely as weather at a glance. A clear night counts as clouds,
-not sun:
+The grid reads purely as weather at a glance. Night symbols (`m*`) never get a
+sun colour, so no pale yellow appears before sunrise or after sunset:
 
-- bright/pale yellow — sunny / partly sunny;
-- very light gray — all clouds and clear nights, regardless of cloud intensity;
+- bright/pale yellow — sunny (`so`) / partly sunny (`wb`), day symbols only;
+- very light gray — all clouds and every night symbol (`mo`, `mb`, `mw`, `md`);
 - light/medium/dark blue — light rain / rain / heavy rain.
 
-For example, `so` is bright yellow, `mo` (clear night) is very light gray like
-clouds, and `mb` and `wb` are both pale yellow. Sunrise/sunset stay in the text
-line instead of being encoded as glyphs. No weather icons or labels are drawn;
+For example, `so` is bright yellow, `wb` is pale yellow, and all four night
+symbols are very light gray. Sunrise/sunset stay in the text line instead of
+being encoded as glyphs. No weather icons or labels are drawn;
 each cell carries a localized `contentDescription` for screen readers. The
 overview is stored as `CityForecast.hours` (defaulting to an empty list), so
 existing installs simply show no grid until their next refresh. Legacy night

@@ -31,7 +31,7 @@ class HourlyTest {
     }
 
     @Test
-    fun clear_nights_are_cloudy_but_day_sun_is_yellow() {
+    fun night_symbols_are_never_sunny() {
         val cells = hourlyCells(
             now = at("2026-11-21T06:30:00+01:00"),
             hours = listOf(
@@ -57,12 +57,12 @@ class HourlyTest {
                 HourKind.CLOUDY, // 06:00 current, clear night
                 HourKind.CLOUDY, // mo
                 HourKind.SUN, // so
-                HourKind.PARTLY_SUN, // mb
-                HourKind.PARTLY_SUN, // wb
+                HourKind.CLOUDY, // mb, partly cloudy night
+                HourKind.PARTLY_SUN, // wb, partly sunny day
                 HourKind.CLOUDY, // mw
                 HourKind.CLOUDY, // bw
-                HourKind.OVERCAST, // md
-                HourKind.OVERCAST, // bd
+                HourKind.CLOUDY, // md
+                HourKind.CLOUDY, // bd
             ),
             cells.map { it.kind },
         )

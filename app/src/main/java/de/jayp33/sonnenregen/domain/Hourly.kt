@@ -74,15 +74,14 @@ fun groupHoursByDay(
 }
 
 private fun classify(slot: Slot): HourKind {
-    // A clear night has no sun to show, so it is cloud-gray instead of yellow.
-    // Partly cloudy nights keep the pale yellow used for partly sunny hours.
+    // Night symbols (m*) never get a sun colour: no sun before sunrise or after
+    // sunset. Only WetterOnline's actual day sun symbols are yellow.
     if (isRainSymbol(slot.symbol)) return rainKind(slot.symbol)
 
     return when (slot.symbol.take(2)) {
         "so" -> HourKind.SUN
-        "mo", "bw", "mw" -> HourKind.CLOUDY // clear night / cloudy day + night
-        "wb", "mb" -> HourKind.PARTLY_SUN
-        else -> HourKind.OVERCAST // bd, md, fog, ...
+        "wb" -> HourKind.PARTLY_SUN
+        else -> HourKind.CLOUDY // bw, bd and every night symbol: mo, mb, mw, md
     }
 }
 
