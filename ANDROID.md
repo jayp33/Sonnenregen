@@ -268,7 +268,9 @@ manual refreshes.
   Do **not** put a literal `"Updated 25 min ago"` string in the notification
   text — it is a snapshot and would freeze until the next WorkManager run, and
   WorkManager cannot tick more often than every 15 minutes.
-- Actions: **Refresh** and **Open app**.
+- Tapping the notification body opens `MainActivity` directly via a
+  `PendingIntent` with `CLEAR_TOP | SINGLE_TOP`, reusing an existing task.
+  Actions: **Refresh** only.
 - On Android 13+ request `POST_NOTIFICATIONS` on first launch.
 
 ## Lifecycle

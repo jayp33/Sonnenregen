@@ -1,5 +1,6 @@
 package de.jayp33.sonnenregen.notification
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -33,6 +34,27 @@ object WeatherNotifier {
 
     /** One ongoing notification; both single and multi-city bodies wrap in big text. */
     fun show(context: Context, statuses: List<CityStatus>) {
+        val notification = buildNotification(context, statuses)
+        try {
+            NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, notification)
+        } catch (exc: SecurityException) {
+            // POST_NOTIFICATIONS was denied on Android 13+; keep the app usable.
+            Log.w(TAG, "Cannot post notification", exc)
+        }
+    }
+
+    /** Also used by tests to verify the notification's content intent. */
+    internal fun openAppIntent(context: Context): Intent =
+        Intent(context, MainActivity::class.java).apply {
+            addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP,
+            )
+        }
+
+    /** Separate from posting so the content intent can be tested on a device. */
+    internal fun buildNotification(context: Context, statuses: List<CityStatus>): Notification {
         val view = NotificationViewBuilder.build(
             statuses = statuses,
             appName = context.getString(R.string.app_name),
@@ -55,13 +77,10 @@ object WeatherNotifier {
             pendingIntentFlags,
         )
 
-        val openIntent = Intent(context, MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        }
         val openPendingIntent = PendingIntent.getActivity(
             context,
-            2,
-            openIntent,
+            OPEN_REQUEST_CODE,
+            openAppIntent(context),
             pendingIntentFlags,
         )
 
@@ -86,8 +105,8 @@ object WeatherNotifier {
             .setOngoing(true)
             .setCategory(CATEGORY)
             .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setContentIntent(openPendingIntent)
             .addAction(R.drawable.ic_stat_sun, context.getString(R.string.refresh), refreshPendingIntent)
-            .addAction(R.drawable.ic_stat_sun, context.getString(R.string.open_app), openPendingIntent)
 
         if (view.useBigText) {
             // InboxStyle ellipsized every line: a long city name swallowed the
@@ -97,19 +116,13 @@ object WeatherNotifier {
             builder.setStyle(NotificationCompat.BigTextStyle().bigText(bigText))
         }
 
-        val notification = builder.build()
-
-        try {
-            NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, notification)
-        } catch (exc: SecurityException) {
-            // POST_NOTIFICATIONS was denied on Android 13+; keep the app usable.
-            Log.w(TAG, "Cannot post notification", exc)
-        }
+        return builder.build()
     }
 
     fun cancel(context: Context) {
         NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID)
     }
 
+    internal const val OPEN_REQUEST_CODE = 2
     private const val TAG = "WeatherNotifier"
 }

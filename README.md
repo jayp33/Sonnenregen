@@ -23,7 +23,8 @@ and German, selected by device locale.
   lines in your chosen city order. The body always wraps, so long city names or
   summaries don't hide the forecast on narrow screens. Per-city **Show in
   notification** switches keep the app overview broad while the notification
-  stays concise.
+  stays concise. Tapping the notification opens the app directly; the only
+  action is **Refresh**.
 - **Multiple cities**: add or remove WetterOnline slugs (`berlin`, `hamburg`, …)
   in the app. Slugs stay lowercase for URLs; the app shows the real place name
   from WetterOnline (`frankfurt-oder` → `Frankfurt (Oder)`,

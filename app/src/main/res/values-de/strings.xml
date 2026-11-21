@@ -4,7 +4,6 @@
     <string name="notification_channel_name">Wettervorhersage</string>
     <string name="notification_channel_description">Laufende Sonnen- und Regenvorhersage</string>
     <string name="refresh">Aktualisieren</string>
-    <string name="open_app">App öffnen</string>
     <string name="updated">Aktualisiert</string>
     <string name="updated_just_now">Gerade aktualisiert</string>
     <string name="updated_minutes_ago">Vor %1$d Min. aktualisiert</string>
