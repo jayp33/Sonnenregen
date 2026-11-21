@@ -35,7 +35,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -253,48 +257,82 @@ fun WeatherScreen() {
     }
 
     if (showAddCityDialog) {
-        AlertDialog(
-            onDismissRequest = ::dismissAddCity,
-            title = { Text(stringResource(R.string.add_city)) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = cityInput,
-                        onValueChange = { cityInput = it; error = null },
-                        label = { Text(stringResource(R.string.city_hint)) },
-                        singleLine = true,
-                    )
-                    if (error != null) {
-                        Text(error!!, color = MaterialTheme.colorScheme.error)
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    scope.launch {
-                        val city = normalizeCity(cityInput)
-                        error = when {
-                            !isValidCitySlug(city) -> context.getString(R.string.invalid_city)
-                            city in cities -> context.getString(R.string.city_already_added)
-                            !store.addCity(city) -> context.getString(R.string.invalid_city)
-                            else -> {
-                                dismissAddCity()
-                                WeatherScheduler.refreshNow(context)
-                                null
-                            }
+        AddCityDialog(
+            input = cityInput,
+            error = error,
+            onInputChange = { cityInput = it; error = null },
+            onDismiss = ::dismissAddCity,
+            onConfirm = {
+                scope.launch {
+                    val city = normalizeCity(cityInput)
+                    error = when {
+                        !isValidCitySlug(city) -> context.getString(R.string.invalid_city)
+                        city in cities -> context.getString(R.string.city_already_added)
+                        !store.addCity(city) -> context.getString(R.string.invalid_city)
+                        else -> {
+                            dismissAddCity()
+                            WeatherScheduler.refreshNow(context)
+                            null
                         }
                     }
-                }) {
-                    Text(stringResource(R.string.add_city))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = ::dismissAddCity) {
-                    Text(stringResource(R.string.cancel))
                 }
             },
         )
     }
+}
+
+/** Add-city dialog whose text field is focused as soon as the dialog opens. */
+@Composable
+internal fun AddCityDialog(
+    input: String,
+    error: String?,
+    onInputChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    val focusRequester = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
+    val attached = remember { mutableStateOf(false) }
+
+    // A dialog's content is laid out after its LaunchedEffects run, so wait for
+    // the field to be attached before claiming focus.
+    LaunchedEffect(attached.value) {
+        if (attached.value) {
+            focusRequester.requestFocus()
+            keyboard?.show()
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.add_city)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = input,
+                    onValueChange = onInputChange,
+                    label = { Text(stringResource(R.string.city_hint)) },
+                    singleLine = true,
+                    modifier = Modifier
+                        .focusRequester(focusRequester)
+                        .onGloballyPositioned { attached.value = true },
+                )
+                if (error != null) {
+                    Text(error, color = MaterialTheme.colorScheme.error)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(stringResource(R.string.add_city))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        },
+    )
 }
 
 @Composable

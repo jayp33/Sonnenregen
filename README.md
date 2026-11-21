@@ -40,7 +40,8 @@ and German, selected by device locale.
   icons. The grid sits right under the city name. Tap the city line or grid to
   reveal the detailed Sun/Rain, sunrise/sunset and Remove controls; tap again to
   hide them. The controls also work for cities without a forecast, so broken
-  places can be removed. Adding a city happens in a dialog behind a small + button.
+  places can be removed. Adding a city happens in a dialog behind a small + button;
+  its input field takes focus right away so typing can start immediately.
   When rain is expected in the next 90 minutes, an extra six-cell row prefixed
   `90` appears underneath with 15-minute detail in the same colours; each cell
   carries its start time (`21:15`, `21:30`, …).

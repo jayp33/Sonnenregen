@@ -55,7 +55,9 @@ two-part WetterOnline path: enter it exactly as the path after `/wetter/`, for
 example `michelbach-an-der-bilz/gschlachtenbretzingen` (not just
 `gschlachtenbretzingen`, with the `ch` after `schla`). Slugs remain
 lowercase in storage. The add form lives in an `AlertDialog` opened by the +
-FAB, while Remove, the ↑/↓ reorder controls and a **Show in notification** switch
+FAB; its `OutlinedTextField` takes focus and opens the keyboard as soon as the
+dialog appears, so typing can start without an extra tap. Remove, the ↑/↓ reorder
+controls and a **Show in notification** switch
 live inside the expanded per-city details, so none of them clutters the default
 view. Those controls also appear when a city has no forecast yet (or its fetch
 failed), so a broken city can always be removed. A small muted eye-off icon
