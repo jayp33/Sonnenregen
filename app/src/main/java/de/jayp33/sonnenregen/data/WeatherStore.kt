@@ -157,7 +157,7 @@ class WeatherStore(context: Context) {
         city = forecast.city,
         compactSummary = ForecastFormatter.compact(forecast, phrases),
         sunSummary = ForecastFormatter.verbose(forecast.sun, phrases),
-        rainSummary = ForecastFormatter.verbose(forecast.rain, phrases),
+        rainSummary = ForecastFormatter.verboseRain(forecast, phrases),
         fetchedAtMillis = forecast.fetchedAt.toInstant().toEpochMilli(),
         displayName = forecast.displayName,
         sunriseLabel = forecast.sunrise?.format(CLOCK_TIME),

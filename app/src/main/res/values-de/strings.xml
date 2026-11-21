@@ -60,6 +60,7 @@
     <string name="rain_in">Regen in %1$s</string>
     <string name="rain_for">Regen noch %1$s</string>
     <string name="rain_now">Regen jetzt</string>
+    <string name="rain_again">%1$s (wieder in %2$s)</string>
     <string name="no_sun">keine Sonne</string>
     <string name="no_rain">kein Regen</string>
 
@@ -67,6 +68,7 @@
     <string name="summary_sun_ends">Sonne scheint noch %1$s (%2$s).</string>
     <string name="summary_rain_starts">Regen beginnt in %1$s (%2$s).</string>
     <string name="summary_rain_ends">Regen dauert noch %1$s (%2$s).</string>
+    <string name="summary_rain_again">%1$s Danach wieder Regen in %2$s.</string>
     <string name="summary_sun_ongoing">Die Sonne hört innerhalb des Vorhersagezeitraums nicht auf zu scheinen.</string>
     <string name="summary_rain_ongoing">Der Regen endet innerhalb des Vorhersagezeitraums nicht.</string>
     <string name="summary_no_sun">Innerhalb des Vorhersagezeitraums ist keine Sonne zu erwarten.</string>

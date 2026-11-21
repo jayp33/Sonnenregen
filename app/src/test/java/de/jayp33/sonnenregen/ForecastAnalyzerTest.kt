@@ -120,4 +120,75 @@ class ForecastAnalyzerTest {
         assertFalse(isRainSymbol("mdsn1_"))
         assertFalse(isRainSymbol("so____"))
     }
+
+    @Test
+    fun detects_a_second_rain_window_inside_the_90_minute_nowcast() {
+        val forecast = ForecastAnalyzer.analyze(
+            "berlin",
+            TestData.pageWith(nowcastShortcast(withSecondRain = true)),
+            TestData.pageWith(nowcastShortcast(withSecondRain = true)),
+        )
+
+        assertEquals(true, forecast.rain.currently)
+        assertEquals(15L, forecast.rain.minutes!!)
+        assertEquals(45L, forecast.rainOutlook.againInMinutes!!)
+    }
+
+    @Test
+    fun no_second_rain_means_no_again_hint() {
+        val forecast = ForecastAnalyzer.analyze(
+            "berlin",
+            TestData.pageWith(nowcastShortcast(withSecondRain = false)),
+            TestData.pageWith(nowcastShortcast(withSecondRain = false)),
+        )
+
+        assertEquals(null, forecast.rainOutlook.againInMinutes)
+    }
+
+    @Test
+    fun hourly_only_rain_does_not_produce_a_nowcast_hint() {
+        val shortcast = """
+            {
+              "current": {"date":"2026-11-21T21:00:00+01:00","symbol":"mw____"},
+              "nowcast_trend": {"items":[]},
+              "hours": [
+                {"date":"2026-11-21T21:00:00+01:00","symbol":"mw____"},
+                {"date":"2026-11-21T22:00:00+01:00","symbol":"mw____"},
+                {"date":"2026-11-21T23:00:00+01:00","symbol":"mdr1__"}
+              ]
+            }
+        """.trimIndent()
+        val forecast = ForecastAnalyzer.analyze(
+            "berlin",
+            TestData.pageWith(shortcast),
+            TestData.pageWith(shortcast),
+        )
+
+        assertEquals(null, forecast.rainOutlook.againInMinutes)
+    }
+
+    private fun nowcastShortcast(withSecondRain: Boolean): String {
+        val secondRain = if (withSecondRain) {
+            """{"date":"2026-11-21T22:00:00+01:00","symbol":"mdr1__"},"""
+        } else {
+            ""
+        }
+        return """
+            {
+              "current": {"date":"2026-11-21T21:15:00+01:00","symbol":"mdr1__"},
+              "nowcast_trend": {"items":[
+                {"date":"2026-11-21T21:00:00+01:00","symbol":"mdr1__"},
+                {"date":"2026-11-21T21:15:00+01:00","symbol":"mdr1__"},
+                {"date":"2026-11-21T21:30:00+01:00","symbol":"mw____"},
+                {"date":"2026-11-21T21:45:00+01:00","symbol":"mw____"},
+                $secondRain
+                {"date":"2026-11-21T22:15:00+01:00","symbol":"mw____"}
+              ]},
+              "hours": [
+                {"date":"2026-11-21T22:00:00+01:00","symbol":"mw____"},
+                {"date":"2026-11-21T23:00:00+01:00","symbol":"mw____"}
+              ]
+            }
+        """.trimIndent()
+    }
 }

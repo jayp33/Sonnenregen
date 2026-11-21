@@ -12,9 +12,14 @@ object ForecastFormatter {
 
     /** One compact line for the notification: soonest event first. */
     fun compact(forecast: Forecast, phrases: ForecastPhrases): String =
-        compact(forecast.sun, forecast.rain, phrases)
+        compact(forecast.sun, forecast.rain, phrases, forecast.rainOutlook.againInMinutes)
 
-    fun compact(sun: Change, rain: Change, phrases: ForecastPhrases): String {
+    fun compact(
+        sun: Change,
+        rain: Change,
+        phrases: ForecastPhrases,
+        rainAgainInMinutes: Long? = null,
+    ): String {
         val first: Change
         val second: Change
         if (comesBefore(rain, sun)) {
@@ -24,10 +29,19 @@ object ForecastFormatter {
             first = sun
             second = rain
         }
-        val secondText = phrase(second, phrases).let {
+        val firstText = phrase(
+            first,
+            phrases,
+            rainAgainInMinutes.takeIf { first.condition == Condition.RAIN },
+        )
+        val secondText = phrase(
+            second,
+            phrases,
+            rainAgainInMinutes.takeIf { second.condition == Condition.RAIN },
+        ).let {
             if (phrases.lowerCaseSecond) it.replaceFirstChar { char -> char.lowercase() } else it
         }
-        return format(phrases.pair, phrase(first, phrases), secondText)
+        return format(phrases.pair, firstText, secondText)
     }
 
     /** Verbose single-condition text for the app UI. */
@@ -53,6 +67,14 @@ object ForecastFormatter {
         }
     }
 
+    /** Verbose rain text, including a later shower inside the nowcast window. */
+    fun verboseRain(forecast: Forecast, phrases: ForecastPhrases): String {
+        val base = verbose(forecast.rain, phrases)
+        val again = forecast.rainOutlook.againInMinutes ?: return base
+        if (forecast.rain.minutes == null || again <= 0) return base
+        return format(phrases.summaryRainAgain, base, duration(again, phrases))
+    }
+
     fun duration(minutes: Long, phrases: ForecastPhrases): String {
         val sign = if (minutes < 0) "-" else ""
         val absolute = abs(minutes)
@@ -66,27 +88,38 @@ object ForecastFormatter {
         return sign + value
     }
 
-    private fun phrase(change: Change, phrases: ForecastPhrases): String {
+    private fun phrase(
+        change: Change,
+        phrases: ForecastPhrases,
+        againInMinutes: Long? = null,
+    ): String {
         val minutes = change.minutes
-        if (minutes == null) {
-            return when (change.condition) {
+        val text = if (minutes == null) {
+            when (change.condition) {
                 Condition.SUN -> if (change.currently) phrases.sunNow else phrases.noSun
                 Condition.RAIN -> if (change.currently) phrases.rainNow else phrases.noRain
             }
-        }
-        val duration = duration(minutes, phrases)
-        return when (change.condition) {
-            Condition.SUN -> if (change.currently) {
-                format(phrases.sunFor, duration)
-            } else {
-                format(phrases.sunIn, duration)
+        } else {
+            val duration = duration(minutes, phrases)
+            when (change.condition) {
+                Condition.SUN -> if (change.currently) {
+                    format(phrases.sunFor, duration)
+                } else {
+                    format(phrases.sunIn, duration)
+                }
+                Condition.RAIN -> if (change.currently) {
+                    format(phrases.rainFor, duration)
+                } else {
+                    format(phrases.rainIn, duration)
+                }
             }
-            Condition.RAIN -> if (change.currently) {
-                format(phrases.rainFor, duration)
-            } else {
-                format(phrases.rainIn, duration)
-            }
         }
+        if (change.condition != Condition.RAIN || minutes == null ||
+            againInMinutes == null || againInMinutes <= 0
+        ) {
+            return text
+        }
+        return format(phrases.rainAgain, text, duration(againInMinutes, phrases))
     }
 
     private fun comesBefore(candidate: Change, other: Change): Boolean =

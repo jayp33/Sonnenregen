@@ -33,11 +33,21 @@ object ForecastAnalyzer {
         val (_, nowcastItems, nowcastCurrent) = slotsFrom(nowcastShortcast)
 
         val nowcast = nowcastItems.ifEmpty { nearcast }
+        val nowcastHorizon = nowcast.maxOfOrNull { it.end }
         val current = hourlyCurrent ?: nowcastCurrent
         if (hours.isEmpty()) throw ParseException("The hourly forecast is empty")
 
         val reference = now ?: current?.start ?: OffsetDateTime.now(ZoneId.of(TIMEZONE))
         val timeline = buildTimeline(reference, hours, nowcast, current)
+        val rainOutlook = RainOutlook(
+            againInMinutes = nowcastHorizon?.let { horizon ->
+                conditionWindows(reference, timeline, { it.raining }, horizon)
+                    .drop(1)
+                    .firstOrNull()
+                    ?.let { minutesBetween(reference, it.start) }
+                    ?.takeIf { it > 0 }
+            },
+        )
         val windows = daylightWindows(hourlyPage.astro)
         val sunTimeline = applyDaylight(timeline, windows)
 
@@ -48,6 +58,7 @@ object ForecastAnalyzer {
             timezone = hours.firstOrNull()?.start?.offset?.id ?: TIMEZONE,
             sun = change(reference, sunTimeline, { it.sunny }, Condition.SUN),
             rain = change(reference, timeline, { it.raining }, Condition.RAIN),
+            rainOutlook = rainOutlook,
             horizon = timeline.last().end,
             sources = listOf(
                 "$BASE_URL/wettertrend/$normalizedCity",
@@ -159,6 +170,33 @@ object ForecastAnalyzer {
         return cleaned
     }
 
+    /** Continuous spans where [condition] holds, clipped to [until] and `now`. */
+    private fun conditionWindows(
+        now: OffsetDateTime,
+        timeline: List<Slot>,
+        condition: (Slot) -> Boolean,
+        until: OffsetDateTime,
+    ): List<TimeWindow> {
+        val result = mutableListOf<TimeWindow>()
+        var start: OffsetDateTime? = null
+        for (slot in timeline) {
+            val end = minOf(slot.end, until)
+            if (!end.isAfter(now) || !slot.start.isBefore(until)) continue
+            if (condition(slot)) {
+                if (start == null) start = maxOf(slot.start, now)
+            } else if (start != null) {
+                val close = maxOf(slot.start, start)
+                if (close.isAfter(start)) result += TimeWindow(start, close)
+                start = null
+            }
+        }
+        if (start != null && until.isAfter(start)) result += TimeWindow(start, until)
+        return result
+    }
+
+    private fun minutesBetween(from: OffsetDateTime, to: OffsetDateTime): Long =
+        Duration.between(from, to).seconds.toDouble().div(60).roundToLong()
+
     private fun change(
         now: OffsetDateTime,
         timeline: List<Slot>,
@@ -179,7 +217,7 @@ object ForecastAnalyzer {
                 condition = kind,
             )
 
-        val minutes = Duration.between(now, target.start).seconds.toDouble().div(60).roundToLong()
+        val minutes = minutesBetween(now, target.start)
         return Change(currently, event, target.start, minutes, kind)
     }
 

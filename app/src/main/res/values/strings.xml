@@ -60,6 +60,7 @@
     <string name="rain_in">Rain in %1$s</string>
     <string name="rain_for">Rain for %1$s</string>
     <string name="rain_now">Rain now</string>
+    <string name="rain_again">%1$s (again in %2$s)</string>
     <string name="no_sun">no sun</string>
     <string name="no_rain">no rain</string>
 
@@ -67,6 +68,7 @@
     <string name="summary_sun_ends">Sunshine ends in %1$s (%2$s).</string>
     <string name="summary_rain_starts">Rain starts in %1$s (%2$s).</string>
     <string name="summary_rain_ends">Rain ends in %1$s (%2$s).</string>
+    <string name="summary_rain_again">%1$s Then again in %2$s.</string>
     <string name="summary_sun_ongoing">Sunshine is not expected to end within the forecast horizon.</string>
     <string name="summary_rain_ongoing">Rain is not expected to end within the forecast horizon.</string>
     <string name="summary_no_sun">No sunshine expected within the forecast horizon.</string>

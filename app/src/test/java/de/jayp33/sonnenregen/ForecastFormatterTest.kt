@@ -4,6 +4,7 @@ import de.jayp33.sonnenregen.domain.Change
 import de.jayp33.sonnenregen.domain.Condition
 import de.jayp33.sonnenregen.domain.Event
 import de.jayp33.sonnenregen.domain.ForecastAnalyzer
+import de.jayp33.sonnenregen.domain.RainOutlook
 import de.jayp33.sonnenregen.text.ForecastFormatter
 import de.jayp33.sonnenregen.text.ForecastPhrases
 import org.junit.Assert.assertEquals
@@ -145,6 +146,41 @@ class ForecastFormatterTest {
         )
     }
 
+    @Test
+    fun compact_adds_the_next_rain_inside_the_nowcast_window() {
+        assertEquals(
+            "Rain for 15 min (again in 45 min), sun in 2 h",
+            ForecastFormatter.compact(
+                sun = change(Condition.SUN, minutes = 120),
+                rain = change(Condition.RAIN, currently = true, minutes = 15),
+                phrases = english,
+                rainAgainInMinutes = 45,
+            ),
+        )
+        assertEquals(
+            "Regen noch 15 Min. (wieder in 45 Min.), Sonne in 2 Std.",
+            ForecastFormatter.compact(
+                sun = change(Condition.SUN, minutes = 120),
+                rain = change(Condition.RAIN, currently = true, minutes = 15),
+                phrases = german,
+                rainAgainInMinutes = 45,
+            ),
+        )
+    }
+
+    @Test
+    fun verbose_rain_mentions_the_later_shower() {
+        val forecast = ForecastAnalyzer.analyze("berlin", TestData.page(), TestData.page()).copy(
+            rain = change(Condition.RAIN, currently = true, minutes = 15),
+            rainOutlook = RainOutlook(againInMinutes = 45),
+        )
+
+        assertEquals(
+            "Rain ends in 15 min (2026-11-21 08:00 +0100). Then again in 45 min.",
+            ForecastFormatter.verboseRain(forecast, english),
+        )
+    }
+
     private fun change(
         condition: Condition,
         currently: Boolean = false,
@@ -169,12 +205,14 @@ class ForecastFormatterTest {
         rainIn = "Rain in %1\$s",
         rainFor = "Rain for %1\$s",
         rainNow = "Rain now",
+        rainAgain = "%1\$s (again in %2\$s)",
         noSun = "no sun",
         noRain = "no rain",
         summarySunStarts = "Sunshine starts in %1\$s (%2\$s).",
         summarySunEnds = "Sunshine ends in %1\$s (%2\$s).",
         summaryRainStarts = "Rain starts in %1\$s (%2\$s).",
         summaryRainEnds = "Rain ends in %1\$s (%2\$s).",
+        summaryRainAgain = "%1\$s Then again in %2\$s.",
         summarySunOngoing = "Sunshine is not expected to end within the forecast horizon.",
         summaryRainOngoing = "Rain is not expected to end within the forecast horizon.",
         summaryNoSun = "No sunshine expected within the forecast horizon.",
@@ -192,9 +230,11 @@ class ForecastFormatterTest {
         rainIn = "Regen in %1\$s",
         rainFor = "Regen noch %1\$s",
         rainNow = "Regen jetzt",
+        rainAgain = "%1\$s (wieder in %2\$s)",
         noSun = "keine Sonne",
         noRain = "kein Regen",
         summarySunStarts = "Sonne scheint in %1\$s (%2\$s).",
         summaryNoRain = "Innerhalb des Vorhersagezeitraums ist kein Regen zu erwarten.",
+        summaryRainAgain = "%1\$s Danach wieder Regen in %2\$s.",
     )
 }

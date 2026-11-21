@@ -48,6 +48,17 @@ data class Change(
     val condition: Condition,
 )
 
+/** A continuous span in the timeline, used for condition windows. */
+data class TimeWindow(val start: OffsetDateTime, val end: OffsetDateTime)
+
+/**
+ * Rain that starts again after the current/first rain window inside the
+ * provider's 90-minute nowcast. Null when there is no such second window.
+ */
+data class RainOutlook(
+    val againInMinutes: Long? = null,
+)
+
 data class Forecast(
     val city: String,
     /** Real place name from WetterOnline; the city slug stays the URL key. */
@@ -56,6 +67,7 @@ data class Forecast(
     val timezone: String,
     val sun: Change,
     val rain: Change,
+    val rainOutlook: RainOutlook = RainOutlook(),
     val horizon: OffsetDateTime?,
     val sources: List<String>,
     val fetchedAt: OffsetDateTime = OffsetDateTime.now(),
