@@ -33,6 +33,15 @@ object ForecastParser {
         """\s*-\s*WetterOnline\s*$""",
         RegexOption.IGNORE_CASE,
     )
+    /**
+     * Some page variants append a descriptor after the place, e.g.
+     * "Frankfurt (Oder) - 4 Tage Vorhersage". Only drop such a suffix when it
+     * looks like page boilerplate; a hyphen inside a real name has no spaces.
+     */
+    private val descriptorSuffixRegex = Regex(
+        """\s+-\s+(?=\d|.*(?:Vorhersage|Prognose|Wetter|Tage)).*$""",
+        RegexOption.IGNORE_CASE,
+    )
     private val json = Json { ignoreUnknownKeys = true }
 
     /**
@@ -55,6 +64,7 @@ object ForecastParser {
         .trim()
         .let { weatherPrefixRegex.replace(it, "") }
         .let { siteSuffixRegex.replace(it, "") }
+        .let { descriptorSuffixRegex.replace(it, "") }
         .trim()
         .takeIf { it.length in 1..120 } ?: ""
 

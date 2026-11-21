@@ -56,7 +56,9 @@ example `michelbach-an-der-bilz/gschlachtenbretzingen` (not just
 `gschlachtenbretzingen`, with the `ch` after `schla`). Slugs remain
 lowercase in storage. `ForecastParser` also reads the human-readable place name
 from the page heading (`<h1>`), falling back to `<title>` and then
-`displayCity()`. That name is persisted with the forecast and used by both the
+`displayCity()`. Page boilerplate such as ` - 4 Tage Vorhersage` is stripped,
+while hyphens inside real names (`Garmisch-Partenkirchen`) are kept. That name
+is persisted with the forecast and used by both the
 app and the notification, so `frankfurt-oder` becomes `Frankfurt (Oder)` and
 `michelbach-an-der-bilz/gschlachtenbretzingen` becomes
 `Gschlachtenbretzingen` instead of a hyphenated slug. DataStore holds:

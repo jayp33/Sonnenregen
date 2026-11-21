@@ -56,6 +56,23 @@ class ForecastParserTest {
     }
 
     @Test
+    fun strips_a_page_descriptor_after_the_place_name() {
+        val fromTitle = "<title>Frankfurt (Oder) - 4 Tage Vorhersage - WetterOnline</title>" +
+            TestData.page()
+        val fromHeading = "<h1>Frankfurt (Oder) - 4 Tage Vorhersage</h1>" + TestData.page()
+
+        assertEquals("Frankfurt (Oder)", ForecastParser.parsePageData(fromTitle).placeName)
+        assertEquals("Frankfurt (Oder)", ForecastParser.parsePageData(fromHeading).placeName)
+    }
+
+    @Test
+    fun keeps_hyphens_that_are_part_of_the_place_name() {
+        val page = "<h1>Wetter Garmisch-Partenkirchen &nbsp;</h1>" + TestData.page()
+
+        assertEquals("Garmisch-Partenkirchen", ForecastParser.parsePageData(page).placeName)
+    }
+
+    @Test
     fun missing_or_broken_astro_does_not_break_the_forecast() {
         assertNull(ForecastParser.parsePageData(TestData.page()).astro)
 
