@@ -8,16 +8,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -26,46 +22,31 @@ import de.jayp33.sonnenregen.R
 import de.jayp33.sonnenregen.domain.HourCell
 import de.jayp33.sonnenregen.domain.HourKind
 import de.jayp33.sonnenregen.domain.groupHoursByDay
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
-import java.util.Locale
 
 /**
  * One row per calendar day in the forecast's own timezone. Each day is split
- * into four labelled six-hour groups so hours are readable without scrolling.
+ * into four blocks of six, separated by a small gap for orientation.
  */
 @Composable
 fun HourlyOverview(city: String, hours: List<HourCell>, modifier: Modifier = Modifier) {
     if (hours.isEmpty()) return
 
-    val locale = LocalContext.current.resources.configuration.locales.get(0) ?: Locale.getDefault()
-    val dateFormat = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).withLocale(locale)
     val byDay = groupHoursByDay(hours)
 
     Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        byDay.forEach { (date, byHour) ->
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-                Text(
-                    text = date.format(dateFormat),
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier.width(56.dp).padding(top = 1.dp),
-                )
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        (0..3).forEach { group ->
-                            val firstHour = group * 6
-                            Column(modifier = Modifier.weight(1f)) {
-                                Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                                    (firstHour until firstHour + 6).forEach { hour ->
-                                        Cell(byHour[hour], hour, city)
-                                    }
-                                }
-                                Text(
-                                    text = firstHour.toString().padStart(2, '0'),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    modifier = Modifier.padding(top = 2.dp),
-                                )
-                            }
+        byDay.forEach { (_, byHour) ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                (0..3).forEach { group ->
+                    val firstHour = group * 6
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
+                        (firstHour until firstHour + 6).forEach { hour ->
+                            Cell(byHour[hour], hour, city)
                         }
                     }
                 }
@@ -104,8 +85,7 @@ private fun RowScope.Cell(cell: HourCell?, hour: Int, city: String) {
 private fun HourKind.color(): Color = when (this) {
     HourKind.SUN, HourKind.CLEAR_NIGHT -> Color(0xFFF2C230)
     HourKind.PARTLY_SUN -> Color(0xFFF7DE8C)
-    HourKind.CLOUDY, HourKind.CLOUDY_NIGHT -> Color(0xFFBFC4C9)
-    HourKind.OVERCAST -> Color(0xFF7C848C)
+    HourKind.CLOUDY, HourKind.OVERCAST, HourKind.CLOUDY_NIGHT -> Color(0xFFBFC4C9)
     HourKind.LIGHT_RAIN -> Color(0xFFA9D2F2)
     HourKind.RAIN -> Color(0xFF4C9BD6)
     HourKind.HEAVY_RAIN -> Color(0xFF1F5C99)
