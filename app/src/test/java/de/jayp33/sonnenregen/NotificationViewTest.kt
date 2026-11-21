@@ -13,7 +13,7 @@ class NotificationViewTest {
 
         assertEquals("Berlin", view.title)
         assertEquals("Sun in 2 h, no rain", view.text)
-        assertEquals(false, view.useBigText)
+        assertEquals(true, view.useBigText)
         assertEquals(emptyList<String>(), view.lines)
     }
 
@@ -23,7 +23,18 @@ class NotificationViewTest {
 
         assertEquals("Berlin", view.title)
         assertEquals("Weather unavailable", view.text)
-        assertEquals(false, view.useBigText)
+        assertEquals(true, view.useBigText)
+    }
+
+    @Test
+    fun single_city_summary_uses_wrapping_text() {
+        val summary = "Sonne in 2 Std. 10 Min., Regen in 5 Std. 30 Min."
+        val view = build(listOf(status("berlin", summary)))
+
+        assertEquals("Berlin", view.title)
+        assertEquals(summary, view.text)
+        assertEquals(true, view.useBigText)
+        assertEquals(emptyList<String>(), view.lines)
     }
 
     @Test

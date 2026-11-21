@@ -18,9 +18,10 @@ and German, selected by device locale.
 **Highlights**
 
 - **Permanent notification** with a compact `Sun in 2 h 10 min, no rain` line.
-  The sooner event comes first. With one city the city name is the notification
+  The sooner event comes first. With one city the place name is the notification
   header; with two or more cities a wrapping text block shows `City: summary`
-  lines in the order you added them, so long city names don't hide the forecast.
+  lines in the order you added them. The body always wraps, so long city names or
+  summaries don't hide the forecast on narrow screens.
 - **Multiple cities**: add or remove WetterOnline slugs (`berlin`, `hamburg`, …)
   in the app. Slugs stay lowercase for URLs; the app shows the real place name
   from WetterOnline (`frankfurt-oder` → `Frankfurt (Oder)`,

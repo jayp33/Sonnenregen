@@ -31,7 +31,7 @@ object WeatherNotifier {
         context.getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
     }
 
-    /** One ongoing notification; one city uses the city as header, many use wrapping lines. */
+    /** One ongoing notification; both single and multi-city bodies wrap in big text. */
     fun show(context: Context, statuses: List<CityStatus>) {
         val view = NotificationViewBuilder.build(
             statuses = statuses,
@@ -90,12 +90,11 @@ object WeatherNotifier {
             .addAction(R.drawable.ic_stat_sun, context.getString(R.string.open_app), openPendingIntent)
 
         if (view.useBigText) {
-            // InboxStyle ellipsizes every line, so a long city name swallowed the
-            // summary. BigTextStyle wraps each line instead.
-            builder.setStyle(
-                NotificationCompat.BigTextStyle()
-                    .bigText(view.lines.joinToString("\n")),
-            )
+            // InboxStyle ellipsized every line: a long city name swallowed the
+            // summary, and a long single-city summary lost its tail. BigTextStyle
+            // wraps instead. Multi-city lines are already newline-separated.
+            val bigText = view.lines.joinToString("\n").ifEmpty { view.text }
+            builder.setStyle(NotificationCompat.BigTextStyle().bigText(bigText))
         }
 
         val notification = builder.build()

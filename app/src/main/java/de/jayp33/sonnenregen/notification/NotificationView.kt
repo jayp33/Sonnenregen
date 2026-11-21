@@ -12,9 +12,9 @@ data class NotificationView(
 
 object NotificationViewBuilder {
     /**
-     * One city keeps the original style: city name as header, compact line as
-     * body. Two or more cities use a wrapping big-text block with one labelled
-     * line per city, so long names don't eat the whole line.
+     * One city keeps the city name as header and the compact line as body;
+     * two or more cities use the app name with one labelled line per city.
+     * Both shapes use wrapping big text so long summaries aren't ellipsized.
      */
     fun build(
         statuses: List<CityStatus>,
@@ -29,7 +29,7 @@ object NotificationViewBuilder {
                 title = single.displayName,
                 text = textFor(single),
                 lines = emptyList(),
-                useBigText = false,
+                useBigText = true,
             )
         }
 

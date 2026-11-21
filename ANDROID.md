@@ -220,12 +220,13 @@ manual refreshes.
 - Channel `weather`, `IMPORTANCE_LOW`, category string `weather` (Android does
   not define a `CATEGORY_WEATHER` constant).
 - `setOngoing(true)`, small icon.
-- With exactly one city, keep the original style: title = the real place name,
-  compact line as the notification body.
-- With two or more cities, title = app name and `BigTextStyle` with one
-  `<place name>: <summary>` line per city, in the order the user added them. Big text
-  wraps long city names instead of ellipsizing the whole line, so the summary
-  stays readable. With no cities, the body is the empty-state line.
+- With exactly one city, title = the real place name and the compact line as the
+  notification body.
+- With two or more cities, title = app name and one `<place name>: <summary>`
+  line per city, in the order the user added them. With no cities, the body is
+  the empty-state line.
+- Both shapes use `BigTextStyle`. It wraps long single-city summaries and long
+  city names instead of ellipsizing them, so no tail is lost on narrow screens.
   `NotificationViewBuilder` decides this shape; `WeatherNotifier` only applies
   it to the Android builder.
 - A stale city shows `Weather unavailable` instead of its compact summary. Each
