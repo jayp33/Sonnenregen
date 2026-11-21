@@ -166,116 +166,46 @@ fun WeatherScreen() {
                         val forecast = forecasts[city]
                         val label = forecast?.displayName?.takeIf { it.isNotBlank() }
                             ?: displayCity(city)
-                        val detailsExpanded = city in expandedCities
 
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            // The city line and colour grid are one tappable summary;
-                            // no separate show/hide button is needed.
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        expandedCities = if (detailsExpanded) {
-                                            expandedCities - city
-                                        } else {
-                                            expandedCities + city
-                                        }
-                                    },
-                                verticalArrangement = Arrangement.spacedBy(4.dp),
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                ) {
-                                    Text(
-                                        stringResource(R.string.city, label),
-                                        style = MaterialTheme.typography.titleSmall,
-                                    )
-                                    if (city in hiddenCities) {
-                                        Text(
-                                            stringResource(R.string.hidden_indicator),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
-                                    }
-                                }
-                                if (forecast != null) {
-                                    HourlyOverview(label, forecast.hours)
+                        CityItem(
+                            label = label,
+                            index = index,
+                            cityCount = cities.size,
+                            forecast = forecast,
+                            detailsExpanded = city in expandedCities,
+                            hidden = city in hiddenCities,
+                            nowMillis = nowMillis,
+                            onToggleExpanded = {
+                                expandedCities = if (city in expandedCities) {
+                                    expandedCities - city
                                 } else {
-                                    Text(stringResource(R.string.no_forecast))
+                                    expandedCities + city
                                 }
-                            }
-
-                            if (forecast != null && detailsExpanded) {
-                                UpdatedText(forecast.fetchedAtMillis, nowMillis)
-                                Text(stringResource(R.string.sun, forecast.sunSummary))
-                                Text(stringResource(R.string.rain, forecast.rainSummary))
-                                val sunrise = forecast.sunriseLabel?.let {
-                                    stringResource(R.string.sunrise, it)
-                                }
-                                val sunset = forecast.sunsetLabel?.let {
-                                    stringResource(R.string.sunset, it)
-                                }
-                                if (sunrise != null || sunset != null) {
-                                    Text(listOfNotNull(sunrise, sunset).joinToString(" · "))
-                                }
-
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                ) {
-                                    Switch(
-                                        checked = city !in hiddenCities,
-                                        onCheckedChange = { visible ->
-                                            scope.launch {
-                                                store.setCityNotificationVisible(city, visible)
-                                                if (enabled) {
-                                                    WeatherNotifier.show(context, store.statuses())
-                                                }
-                                            }
-                                        },
-                                    )
-                                    Text(stringResource(R.string.show_in_notification))
-                                }
-
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    TextButton(
-                                        enabled = index > 0,
-                                        onClick = {
-                                            scope.launch {
-                                                store.moveCity(city, -1)
-                                                if (enabled) {
-                                                    WeatherNotifier.show(context, store.statuses())
-                                                }
-                                            }
-                                        },
-                                    ) {
-                                        Text("↑ " + stringResource(R.string.move_up))
-                                    }
-                                    TextButton(
-                                        enabled = index < cities.lastIndex,
-                                        onClick = {
-                                            scope.launch {
-                                                store.moveCity(city, 1)
-                                                if (enabled) {
-                                                    WeatherNotifier.show(context, store.statuses())
-                                                }
-                                            }
-                                        },
-                                    ) {
-                                        Text("↓ " + stringResource(R.string.move_down))
-                                    }
-                                    Button(onClick = {
-                                        scope.launch {
-                                            store.removeCity(city)
-                                            if (enabled) WeatherNotifier.show(context, store.statuses())
-                                        }
-                                    }) {
-                                        Text(stringResource(R.string.remove))
+                            },
+                            onToggleNotificationVisibility = { visible ->
+                                scope.launch {
+                                    store.setCityNotificationVisible(city, visible)
+                                    if (enabled) {
+                                        WeatherNotifier.show(context, store.statuses())
                                     }
                                 }
-                            }
-                        }
+                            },
+                            onMove = { offset ->
+                                scope.launch {
+                                    store.moveCity(city, offset)
+                                    if (enabled) {
+                                        WeatherNotifier.show(context, store.statuses())
+                                    }
+                                }
+                            },
+                            onRemove = {
+                                scope.launch {
+                                    store.removeCity(city)
+                                    expandedCities = expandedCities - city
+                                    if (enabled) WeatherNotifier.show(context, store.statuses())
+                                }
+                            },
+                        )
                     }
                 }
 
@@ -360,6 +290,102 @@ fun WeatherScreen() {
                 }
             },
         )
+    }
+}
+
+@Composable
+internal fun CityItem(
+    label: String,
+    index: Int,
+    cityCount: Int,
+    forecast: CityForecast?,
+    detailsExpanded: Boolean,
+    hidden: Boolean,
+    nowMillis: Long,
+    onToggleExpanded: () -> Unit,
+    onToggleNotificationVisibility: (Boolean) -> Unit,
+    onMove: (Int) -> Unit,
+    onRemove: () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        // The city line and colour grid are one tappable summary;
+        // no separate show/hide button is needed.
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onToggleExpanded),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(
+                    stringResource(R.string.city, label),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                if (hidden) {
+                    Text(
+                        stringResource(R.string.hidden_indicator),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            if (forecast != null) {
+                HourlyOverview(label, forecast.hours)
+            } else {
+                Text(stringResource(R.string.no_forecast))
+            }
+        }
+
+        // Controls must stay reachable for cities without a forecast: those are
+        // exactly the broken ones the user needs to be able to remove.
+        if (detailsExpanded) {
+            if (forecast != null) {
+                UpdatedText(forecast.fetchedAtMillis, nowMillis)
+                Text(stringResource(R.string.sun, forecast.sunSummary))
+                Text(stringResource(R.string.rain, forecast.rainSummary))
+                val sunrise = forecast.sunriseLabel?.let {
+                    stringResource(R.string.sunrise, it)
+                }
+                val sunset = forecast.sunsetLabel?.let {
+                    stringResource(R.string.sunset, it)
+                }
+                if (sunrise != null || sunset != null) {
+                    Text(listOfNotNull(sunrise, sunset).joinToString(" · "))
+                }
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Switch(
+                    checked = !hidden,
+                    onCheckedChange = onToggleNotificationVisibility,
+                )
+                Text(stringResource(R.string.show_in_notification))
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(
+                    enabled = index > 0,
+                    onClick = { onMove(-1) },
+                ) {
+                    Text("↑ " + stringResource(R.string.move_up))
+                }
+                TextButton(
+                    enabled = index < cityCount - 1,
+                    onClick = { onMove(1) },
+                ) {
+                    Text("↓ " + stringResource(R.string.move_down))
+                }
+                Button(onClick = onRemove) {
+                    Text(stringResource(R.string.remove))
+                }
+            }
+        }
     }
 }
 

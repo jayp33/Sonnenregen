@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 
 /** Move one city by +/-1 without touching the others or allowing out-of-range moves. */
 internal fun reorderCity(cities: List<String>, city: String, offset: Int): List<String> {
@@ -37,11 +38,59 @@ internal fun updateNotificationVisibility(
 
 private val Context.weatherDataStore by preferencesDataStore(name = "weather")
 
+internal val cityJson = Json { ignoreUnknownKeys = true }
+
+/**
+ * Keep every non-blank stored entry, even if it is no longer a valid slug.
+ * Invalid entries would otherwise disappear from the UI together with their
+ * Remove button, leaving a broken city undeletable.
+ */
+internal fun decodeCities(value: String, json: Json = cityJson): List<String> = try {
+    json.decodeFromString<List<String>>(value)
+        .map(::normalizeCity)
+        .filter(String::isNotBlank)
+        .distinct()
+} catch (_: SerializationException) {
+    emptyList()
+} catch (_: IllegalArgumentException) {
+    emptyList()
+}
+
+internal fun decodeHiddenCities(value: String, json: Json = cityJson): Set<String> = try {
+    json.decodeFromString<List<String>>(value)
+        .map(::normalizeCity)
+        .filter(String::isNotBlank)
+        .toSet()
+} catch (_: SerializationException) {
+    emptySet()
+} catch (_: IllegalArgumentException) {
+    emptySet()
+}
+
+/** Decode each city independently so one corrupt entry cannot erase the rest. */
+internal fun decodeForecasts(value: String, json: Json = cityJson): Map<String, CityForecast> = try {
+    json.decodeFromString<JsonObject>(value)
+        .mapNotNull { (key, element) ->
+            try {
+                normalizeCity(key) to json.decodeFromString<CityForecast>(element.toString())
+            } catch (_: SerializationException) {
+                null
+            } catch (_: IllegalArgumentException) {
+                null
+            }
+        }
+        .toMap()
+} catch (_: SerializationException) {
+    emptyMap()
+} catch (_: IllegalArgumentException) {
+    emptyMap()
+}
+
 class WeatherStore(context: Context) {
     private val appContext = context.applicationContext
     private val dataStore = appContext.weatherDataStore
     private val phrases = ForecastPhrases.from(appContext)
-    private val json = Json { ignoreUnknownKeys = true }
+    private val json = cityJson
 
     /** Reactive views for the UI; worker updates flow through the same DataStore. */
     val citiesFlow: Flow<List<String>> = dataStore.data.map(::citiesFrom)
@@ -132,38 +181,8 @@ class WeatherStore(context: Context) {
         return decodeForecasts(encoded)
     }
 
-    private fun decodeCities(value: String): List<String> = try {
-        json.decodeFromString<List<String>>(value)
-            .map(::normalizeCity)
-            .filter(::isValidCitySlug)
-            .distinct()
-    } catch (_: SerializationException) {
-        emptyList()
-    } catch (_: IllegalArgumentException) {
-        emptyList()
-    }
-
     private fun hiddenCitiesFrom(prefs: Preferences): Set<String> =
         prefs[HIDDEN_CITIES]?.let(::decodeHiddenCities) ?: emptySet()
-
-    private fun decodeHiddenCities(value: String): Set<String> = try {
-        json.decodeFromString<List<String>>(value)
-            .map(::normalizeCity)
-            .filter(::isValidCitySlug)
-            .toSet()
-    } catch (_: SerializationException) {
-        emptySet()
-    } catch (_: IllegalArgumentException) {
-        emptySet()
-    }
-
-    private fun decodeForecasts(value: String): Map<String, CityForecast> = try {
-        json.decodeFromString<Map<String, CityForecast>>(value)
-    } catch (_: SerializationException) {
-        emptyMap()
-    } catch (_: IllegalArgumentException) {
-        emptyMap()
-    }
 
     private fun legacyCity(prefs: Preferences): String? =
         prefs[LEGACY_CITY]?.takeIf(::isValidCitySlug)

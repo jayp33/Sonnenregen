@@ -57,7 +57,9 @@ example `michelbach-an-der-bilz/gschlachtenbretzingen` (not just
 lowercase in storage. The add form lives in an `AlertDialog` opened by the +
 FAB, while Remove, the ↑/↓ reorder controls and a **Show in notification** switch
 live inside the expanded per-city details, so none of them clutters the default
-view. A small muted `hidden` / `ausgeblendet` label next to the city name marks
+view. Those controls also appear when a city has no forecast yet (or its fetch
+failed), so a broken city can always be removed. A small muted `hidden` /
+`ausgeblendet` label next to the city name marks
 cities excluded from the notification. `ForecastParser` also reads
 the human-readable place name
 from the page heading (`<h1>`), falling back to `<title>` and then
@@ -69,9 +71,12 @@ app and the notification, so `frankfurt-oder` becomes `Frankfurt (Oder)` and
 `Gschlachtenbretzingen` instead of a hyphenated slug. DataStore holds:
 
 - `cities`: a JSON array in the user's current order (add order initially, then
-  adjustable with the ↑/↓ controls in each city's details);
+  adjustable with the ↑/↓ controls in each city's details). Non-blank entries are
+  kept even if they no longer look like valid slugs, so they stay visible and
+  removable;
 - `forecasts_by_city`: a JSON map from slug to the last good formatted forecast,
-  including its real `displayName`.
+  including its real `displayName`. Keys are normalized and each entry is decoded
+  independently, so one bad forecast cannot hide the others.
 - `hidden_from_notification`: a JSON array of slugs excluded from notification
   statuses but still shown in the app; missing means none are hidden.
 
