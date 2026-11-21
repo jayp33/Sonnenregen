@@ -3,6 +3,7 @@ package de.jayp33.sonnenregen.ui
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -74,6 +75,33 @@ class CityItemTest {
         composeTestRule.onNodeWithText("Berlin").assertIsDisplayed()
         composeTestRule.onNodeWithText("City: Berlin").assertDoesNotExist()
         composeTestRule.onNodeWithText("Ort: Berlin").assertDoesNotExist()
+    }
+
+    @Test
+    fun hidden_city_shows_an_eye_icon_instead_of_the_text() {
+        val hiddenLabel = InstrumentationRegistry.getInstrumentation()
+            .targetContext.getString(R.string.hidden_indicator)
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                CityItem(
+                    label = "Berlin",
+                    index = 0,
+                    cityCount = 1,
+                    forecast = null,
+                    detailsExpanded = false,
+                    hidden = true,
+                    nowMillis = 0L,
+                    onToggleExpanded = {},
+                    onToggleNotificationVisibility = {},
+                    onMove = {},
+                    onRemove = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithContentDescription(hiddenLabel).assertIsDisplayed()
+        composeTestRule.onNodeWithText(hiddenLabel).assertDoesNotExist()
     }
 
     @Test
