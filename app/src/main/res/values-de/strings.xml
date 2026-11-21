@@ -17,6 +17,14 @@
     <string name="sunrise">Sonnenaufgang: %1$s</string>
     <string name="sunset">Sonnenuntergang: %1$s</string>
 
+    <string name="weekday_monday">Mo</string>
+    <string name="weekday_tuesday">Di</string>
+    <string name="weekday_wednesday">Mi</string>
+    <string name="weekday_thursday">Do</string>
+    <string name="weekday_friday">Fr</string>
+    <string name="weekday_saturday">Sa</string>
+    <string name="weekday_sunday">So</string>
+
     <string name="hour_description">%1$s, %2$s, %3$s</string>
     <string name="hour_sun">sonnig</string>
     <string name="hour_partly_sun">teilweise sonnig</string>

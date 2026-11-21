@@ -110,13 +110,14 @@ Each city card also shows a colour-only forecast grid: 48 one-hour cells from th
 current hour, grouped into four blocks of six per calendar day in the city's own
 offset as supplied by WetterOnline (`-05:00` for New York, `+01:00` for Berlin,
 and so on). An evening start therefore produces three rows (part of today, all
-of tomorrow, part of the day after); exactly midnight produces two. A slightly
-larger gap every six hours is the only orientation aid — no date prefix and no
-`00`/`06`/`12`/`18` labels — and no scrolling is needed. The grid sits directly
-under the city line. The city line plus grid is one tappable region; tapping it
-toggles that city's Sun, Rain, sunrise/sunset, freshness, reorder and Remove
-controls, so
-the colours stay uncluttered by default and no "Show details" button is needed.
+of tomorrow, part of the day after); exactly midnight produces two. Each row
+starts with a short localized weekday (`Mo`/`Di`/…, `Mon`/`Tue`/…) in a fixed-width
+column, so all rows line up. A slightly larger gap every six hours is the only
+in-row orientation aid — no `00`/`06`/`12`/`18` labels — and no scrolling is needed.
+The grid sits directly under the city line. The city line plus grid is one
+tappable region; tapping it toggles that city's Sun, Rain, sunrise/sunset,
+freshness, reorder and Remove controls, so the colours stay uncluttered by
+default and no "Show details" button is needed.
 
 Each `HourCell` stores that offset as `zoneId`, so even a DST change inside the
 48-hour window keeps the right local hours. Cells stored by older versions
@@ -131,8 +132,9 @@ sun colour, so no pale yellow appears before sunrise or after sunset:
 
 For example, `so` is bright yellow, `wb` is pale yellow, and all four night
 symbols are very light gray. Sunrise/sunset stay in the text line instead of
-being encoded as glyphs. No weather icons or labels are drawn;
-each cell carries a localized `contentDescription` for screen readers. The
+being encoded as glyphs. No weather icons are drawn; the weekday prefix comes
+from localized `weekday_*` strings. Each cell carries a localized
+`contentDescription` for screen readers. The
 overview is stored as `CityForecast.hours` (defaulting to an empty list), so
 existing installs simply show no grid until their next refresh. Legacy night
 enum values from the first grid version still decode; `CLEAR_NIGHT` now renders

@@ -33,14 +33,14 @@ and German, selected by device locale.
   For places with a two-part WetterOnline path, enter the whole path. Use the
   ↑/↓ controls in a city’s details to change the order used by the UI and the
   notification.
-- **48-hour colour overview**: one label-free row per day, split into four
-  six-hour blocks in the city's own local time. Yellow means sun, blue means
-  rain, and one very light gray covers clouds and all night hours — so sun and
-  rain pop out at a glance without scrolling, icons, or labels. The grid sits
-  right under the city name. Tap the city line or grid to reveal the detailed
-  Sun/Rain, sunrise/sunset and Remove controls; tap again to hide them. The
-  controls also work for cities without a forecast, so broken places can be
-  removed. Adding a city happens in a dialog behind a small + button.
+- **48-hour colour overview**: one row per day, prefixed with its short weekday
+  (`Mo`/`Di`/…), split into four six-hour blocks in the city's own local time.
+  Yellow means sun, blue means rain, and one very light gray covers clouds and
+  all night hours — so sun and rain pop out at a glance without scrolling or
+  icons. The grid sits right under the city name. Tap the city line or grid to
+  reveal the detailed Sun/Rain, sunrise/sunset and Remove controls; tap again to
+  hide them. The controls also work for cities without a forecast, so broken
+  places can be removed. Adding a city happens in a dialog behind a small + button.
 - **Exact sunrise/sunset** from WetterOnline's own astro data, shown in the app
   UI. Sunshine never starts before sunrise or continues past sunset.
 - **Offline-friendly**: each city keeps its last good forecast. A failed refresh

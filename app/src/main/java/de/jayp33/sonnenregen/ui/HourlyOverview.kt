@@ -8,8 +8,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -20,10 +24,12 @@ import de.jayp33.sonnenregen.R
 import de.jayp33.sonnenregen.domain.HourCell
 import de.jayp33.sonnenregen.domain.HourKind
 import de.jayp33.sonnenregen.domain.groupHoursByDay
+import java.time.DayOfWeek
 
 /**
- * One row per calendar day in the forecast's own timezone. Each day is split
- * into four blocks of six, separated by a small gap for orientation.
+ * One row per calendar day in the forecast's own timezone, prefixed with that
+ * day's short weekday. Each day is split into four blocks of six, separated by
+ * a small gap for orientation.
  */
 @Composable
 fun HourlyOverview(city: String, hours: List<HourCell>, modifier: Modifier = Modifier) {
@@ -32,11 +38,19 @@ fun HourlyOverview(city: String, hours: List<HourCell>, modifier: Modifier = Mod
     val byDay = groupHoursByDay(hours)
 
     Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        byDay.forEach { (_, byHour) ->
+        byDay.forEach { (date, byHour) ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
+                Text(
+                    text = stringResource(date.dayOfWeek.weekdayLabel()),
+                    modifier = Modifier.width(24.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                )
                 (0..3).forEach { group ->
                     val firstHour = group * 6
                     Row(
@@ -73,6 +87,16 @@ private fun RowScope.Cell(cell: HourCell?, hour: Int, city: String) {
                 .semantics(mergeDescendants = true) { contentDescription = description }
         },
     )
+}
+
+internal fun DayOfWeek.weekdayLabel(): Int = when (this) {
+    DayOfWeek.MONDAY -> R.string.weekday_monday
+    DayOfWeek.TUESDAY -> R.string.weekday_tuesday
+    DayOfWeek.WEDNESDAY -> R.string.weekday_wednesday
+    DayOfWeek.THURSDAY -> R.string.weekday_thursday
+    DayOfWeek.FRIDAY -> R.string.weekday_friday
+    DayOfWeek.SATURDAY -> R.string.weekday_saturday
+    DayOfWeek.SUNDAY -> R.string.weekday_sunday
 }
 
 @Suppress("DEPRECATION")

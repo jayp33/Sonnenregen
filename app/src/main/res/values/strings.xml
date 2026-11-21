@@ -17,6 +17,14 @@
     <string name="sunrise">Sunrise: %1$s</string>
     <string name="sunset">Sunset: %1$s</string>
 
+    <string name="weekday_monday">Mon</string>
+    <string name="weekday_tuesday">Tue</string>
+    <string name="weekday_wednesday">Wed</string>
+    <string name="weekday_thursday">Thu</string>
+    <string name="weekday_friday">Fri</string>
+    <string name="weekday_saturday">Sat</string>
+    <string name="weekday_sunday">Sun</string>
+
     <string name="hour_description">%1$s, %2$s, %3$s</string>
     <string name="hour_sun">sunny</string>
     <string name="hour_partly_sun">partly sunny</string>
