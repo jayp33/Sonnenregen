@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -52,10 +50,6 @@ fun HourlyOverview(city: String, hours: List<HourCell>, modifier: Modifier = Mod
                 }
             }
         }
-        Text(
-            text = stringResource(R.string.hourly_legend),
-            style = MaterialTheme.typography.labelSmall,
-        )
     }
 }
 
@@ -89,7 +83,7 @@ private fun HourKind.color(): Color = when (this) {
     HourKind.OVERCAST,
     HourKind.CLOUDY_NIGHT,
     HourKind.CLEAR_NIGHT,
-    -> Color(0xFFBFC4C9)
+    -> Color(0xFFD9DEE3)
     HourKind.LIGHT_RAIN -> Color(0xFFA9D2F2)
     HourKind.RAIN -> Color(0xFF4C9BD6)
     HourKind.HEAVY_RAIN -> Color(0xFF1F5C99)

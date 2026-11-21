@@ -25,8 +25,8 @@ and German, selected by device locale.
   in the app. Slugs stay lowercase for URLs; the app capitalizes the first
   letter for display.
 - **48-hour colour overview**: one label-free row per day, split into four
-  six-hour blocks. Yellow means sun, blue means rain, and one light gray covers
-  clouds and clear nights — so sun and rain pop out at a glance without
+  six-hour blocks. Yellow means sun, blue means rain, and one very light gray
+  covers clouds and clear nights — so sun and rain pop out at a glance without
   scrolling, icons, or labels.
 - **Exact sunrise/sunset** from WetterOnline's own astro data, shown in the app
   UI. Sunshine never starts before sunrise or continues past sunset.
