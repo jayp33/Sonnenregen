@@ -25,6 +25,8 @@
     <string name="hour_rain">rain</string>
     <string name="hour_heavy_rain">heavy rain</string>
     <string name="no_forecast">No forecast yet — tap Refresh now.</string>
+    <string name="show_details">Show details</string>
+    <string name="hide_details">Hide details</string>
     <string name="refresh_now">Refresh now</string>
     <string name="disable_notification">Disable ongoing notification</string>
     <string name="enable_notification">Enable ongoing notification</string>

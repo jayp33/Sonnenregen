@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -48,6 +49,7 @@ fun WeatherScreen() {
 
     var cities by remember { mutableStateOf<List<String>>(emptyList()) }
     var forecasts by remember { mutableStateOf<Map<String, CityForecast>>(emptyMap()) }
+    var expandedCities by remember { mutableStateOf<Set<String>>(emptySet()) }
     var cityInput by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     var enabled by remember { mutableStateOf(true) }
@@ -127,25 +129,45 @@ fun WeatherScreen() {
                 Text(stringResource(R.string.no_cities))
             } else {
                 cities.forEach { city ->
+                    val forecast = forecasts[city]
+                    val detailsExpanded = city in expandedCities
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
                             stringResource(R.string.city, displayCity(city)),
                             style = MaterialTheme.typography.titleSmall,
                         )
-                        val forecast = forecasts[city]
                         if (forecast != null) {
-                            Text(stringResource(R.string.sun, forecast.sunSummary))
-                            Text(stringResource(R.string.rain, forecast.rainSummary))
-                            val sunrise = forecast.sunriseLabel?.let {
-                                stringResource(R.string.sunrise, it)
-                            }
-                            val sunset = forecast.sunsetLabel?.let {
-                                stringResource(R.string.sunset, it)
-                            }
-                            if (sunrise != null || sunset != null) {
-                                Text(listOfNotNull(sunrise, sunset).joinToString(" · "))
-                            }
                             HourlyOverview(displayCity(city), forecast.hours)
+                            TextButton(onClick = {
+                                expandedCities = if (detailsExpanded) {
+                                    expandedCities - city
+                                } else {
+                                    expandedCities + city
+                                }
+                            }) {
+                                Text(
+                                    stringResource(
+                                        if (detailsExpanded) {
+                                            R.string.hide_details
+                                        } else {
+                                            R.string.show_details
+                                        },
+                                    ),
+                                )
+                            }
+                            if (detailsExpanded) {
+                                Text(stringResource(R.string.sun, forecast.sunSummary))
+                                Text(stringResource(R.string.rain, forecast.rainSummary))
+                                val sunrise = forecast.sunriseLabel?.let {
+                                    stringResource(R.string.sunrise, it)
+                                }
+                                val sunset = forecast.sunsetLabel?.let {
+                                    stringResource(R.string.sunset, it)
+                                }
+                                if (sunrise != null || sunset != null) {
+                                    Text(listOfNotNull(sunrise, sunset).joinToString(" · "))
+                                }
+                            }
                         } else {
                             Text(stringResource(R.string.no_forecast))
                         }

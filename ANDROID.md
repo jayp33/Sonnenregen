@@ -80,7 +80,9 @@ current hour, grouped into four blocks of six per calendar day in `Europe/Berlin
 An evening start therefore produces three rows (part of today, all of tomorrow,
 part of the day after); exactly midnight produces two. A slightly larger gap
 every six hours is the only orientation aid — no date prefix and no `00`/`06`/
-`12`/`18` labels — and no scrolling is needed.
+`12`/`18` labels — and no scrolling is needed. The grid sits directly under the
+city line; the Sun, Rain and sunrise/sunset text lives behind a collapsed
+"Show details" button, so the colours stay uncluttered by default.
 
 The grid reads purely as weather at a glance. Night symbols (`m*`) never get a
 sun colour, so no pale yellow appears before sunrise or after sunset:

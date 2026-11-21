@@ -27,7 +27,8 @@ and German, selected by device locale.
 - **48-hour colour overview**: one label-free row per day, split into four
   six-hour blocks. Yellow means sun, blue means rain, and one very light gray
   covers clouds and all night hours — so sun and rain pop out at a glance without
-  scrolling, icons, or labels.
+  scrolling, icons, or labels. The grid sits right under the city name; the
+  detailed Sun/Rain and sunrise/sunset lines are collapsed by default.
 - **Exact sunrise/sunset** from WetterOnline's own astro data, shown in the app
   UI. Sunshine never starts before sunrise or continues past sunset.
 - **Offline-friendly**: each city keeps its last good forecast. A failed refresh

@@ -25,6 +25,8 @@
     <string name="hour_rain">Regen</string>
     <string name="hour_heavy_rain">starker Regen</string>
     <string name="no_forecast">Noch keine Vorhersage – tippe auf „Jetzt aktualisieren“.</string>
+    <string name="show_details">Details anzeigen</string>
+    <string name="hide_details">Details ausblenden</string>
     <string name="refresh_now">Jetzt aktualisieren</string>
     <string name="disable_notification">Laufende Benachrichtigung deaktivieren</string>
     <string name="enable_notification">Laufende Benachrichtigung aktivieren</string>

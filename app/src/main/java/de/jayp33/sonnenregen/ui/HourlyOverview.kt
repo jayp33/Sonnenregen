@@ -83,7 +83,7 @@ private fun HourKind.color(): Color = when (this) {
     HourKind.OVERCAST,
     HourKind.CLOUDY_NIGHT,
     HourKind.CLEAR_NIGHT,
-    -> Color(0xFFD9DEE3)
+    -> Color(0xFFE4E9EE)
     HourKind.LIGHT_RAIN -> Color(0xFFA9D2F2)
     HourKind.RAIN -> Color(0xFF4C9BD6)
     HourKind.HEAVY_RAIN -> Color(0xFF1F5C99)
