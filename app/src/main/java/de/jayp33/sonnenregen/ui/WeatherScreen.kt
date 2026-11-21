@@ -5,16 +5,20 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -25,10 +29,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import de.jayp33.sonnenregen.R
@@ -54,6 +59,7 @@ fun WeatherScreen() {
     var forecasts by remember { mutableStateOf<Map<String, CityForecast>>(emptyMap()) }
     var expandedCities by remember { mutableStateOf<Set<String>>(emptySet()) }
     var nowMillis by remember { mutableStateOf(System.currentTimeMillis()) }
+    var showAddCityDialog by remember { mutableStateOf(false) }
     var cityInput by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     var enabled by remember { mutableStateOf(true) }
@@ -88,92 +94,85 @@ fun WeatherScreen() {
         .filter { it > 0L }
         .minOrNull()
 
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .padding(24.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.headlineMedium,
-                )
-                if (oldestFetchedAt != null) {
-                    UpdatedText(oldestFetchedAt, nowMillis)
-                }
-            }
+    fun dismissAddCity() {
+        showAddCityDialog = false
+        cityInput = ""
+        error = null
+    }
 
-            Text(stringResource(R.string.cities), style = MaterialTheme.typography.titleMedium)
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+    Scaffold(
+        floatingActionButton = {
+            val addCityLabel = stringResource(R.string.add_city)
+            FloatingActionButton(
+                onClick = {
+                    cityInput = ""
+                    error = null
+                    showAddCityDialog = true
+                },
+                modifier = Modifier.semantics(mergeDescendants = true) {
+                    contentDescription = addCityLabel
+                },
             ) {
-                OutlinedTextField(
-                    value = cityInput,
-                    onValueChange = { cityInput = it; error = null },
-                    label = { Text(stringResource(R.string.city_hint)) },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
-                )
-                Button(onClick = {
-                    scope.launch {
-                        val city = normalizeCity(cityInput)
-                        error = when {
-                            !isValidCitySlug(city) -> context.getString(R.string.invalid_city)
-                            city in cities -> context.getString(R.string.city_already_added)
-                            !store.addCity(city) -> context.getString(R.string.invalid_city)
-                            else -> {
-                                cityInput = ""
-                                WeatherScheduler.refreshNow(context)
-                                null
-                            }
-                        }
+                Text("+", style = MaterialTheme.typography.titleLarge)
+            }
+        },
+    ) { padding ->
+        Surface(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .padding(padding)
+                    .padding(24.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        stringResource(R.string.app_name),
+                        style = MaterialTheme.typography.headlineMedium,
+                    )
+                    if (oldestFetchedAt != null) {
+                        UpdatedText(oldestFetchedAt, nowMillis)
                     }
-                }) {
-                    Text(stringResource(R.string.add_city))
                 }
-            }
 
-            if (error != null) {
-                Text(error!!, color = MaterialTheme.colorScheme.error)
-            }
+                Text(stringResource(R.string.cities), style = MaterialTheme.typography.titleMedium)
 
-            if (cities.isEmpty()) {
-                Text(stringResource(R.string.no_cities))
-            } else {
-                cities.forEach { city ->
-                    val forecast = forecasts[city]
-                    val label = forecast?.displayName?.takeIf { it.isNotBlank() }
-                        ?: displayCity(city)
-                    val detailsExpanded = city in expandedCities
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(
-                            stringResource(R.string.city, label),
-                            style = MaterialTheme.typography.titleSmall,
-                        )
-                        if (forecast != null) {
-                            HourlyOverview(label, forecast.hours)
-                            TextButton(onClick = {
-                                expandedCities = if (detailsExpanded) {
-                                    expandedCities - city
-                                } else {
-                                    expandedCities + city
-                                }
-                            }) {
-                                Text(
-                                    stringResource(
-                                        if (detailsExpanded) {
-                                            R.string.hide_details
+                if (cities.isEmpty()) {
+                    Text(stringResource(R.string.no_cities))
+                } else {
+                    cities.forEach { city ->
+                        val forecast = forecasts[city]
+                        val label = forecast?.displayName?.takeIf { it.isNotBlank() }
+                            ?: displayCity(city)
+                        val detailsExpanded = city in expandedCities
+
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            // The city line and colour grid are one tappable summary;
+                            // no separate show/hide button is needed.
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        expandedCities = if (detailsExpanded) {
+                                            expandedCities - city
                                         } else {
-                                            R.string.show_details
-                                        },
-                                    ),
+                                            expandedCities + city
+                                        }
+                                    },
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                Text(
+                                    stringResource(R.string.city, label),
+                                    style = MaterialTheme.typography.titleSmall,
                                 )
+                                if (forecast != null) {
+                                    HourlyOverview(label, forecast.hours)
+                                } else {
+                                    Text(stringResource(R.string.no_forecast))
+                                }
                             }
-                            if (detailsExpanded) {
+
+                            if (forecast != null && detailsExpanded) {
                                 UpdatedText(forecast.fetchedAtMillis, nowMillis)
                                 Text(stringResource(R.string.sun, forecast.sunSummary))
                                 Text(stringResource(R.string.rain, forecast.rainSummary))
@@ -186,58 +185,101 @@ fun WeatherScreen() {
                                 if (sunrise != null || sunset != null) {
                                     Text(listOfNotNull(sunrise, sunset).joinToString(" · "))
                                 }
+
+                                Button(onClick = {
+                                    scope.launch {
+                                        store.removeCity(city)
+                                        if (enabled) WeatherNotifier.show(context, store.statuses())
+                                    }
+                                }) {
+                                    Text(stringResource(R.string.remove))
+                                }
                             }
-                        } else {
-                            Text(stringResource(R.string.no_forecast))
-                        }
-                        Button(onClick = {
-                            scope.launch {
-                                store.removeCity(city)
-                                if (enabled) WeatherNotifier.show(context, store.statuses())
-                            }
-                        }) {
-                            Text(stringResource(R.string.remove))
                         }
                     }
                 }
-            }
 
-            Button(onClick = { WeatherScheduler.refreshNow(context) }) {
-                Text(stringResource(R.string.refresh_now))
-            }
+                Button(onClick = { WeatherScheduler.refreshNow(context) }) {
+                    Text(stringResource(R.string.refresh_now))
+                }
 
-            Button(
-                onClick = {
-                    scope.launch {
-                        val next = !enabled
-                        store.setEnabled(next)
-                        if (next) {
-                            WeatherScheduler.schedule(context)
-                        } else {
-                            WeatherScheduler.cancel(context)
-                            WeatherNotifier.cancel(context)
+                Button(
+                    onClick = {
+                        scope.launch {
+                            val next = !enabled
+                            store.setEnabled(next)
+                            if (next) {
+                                WeatherScheduler.schedule(context)
+                            } else {
+                                WeatherScheduler.cancel(context)
+                                WeatherNotifier.cancel(context)
+                            }
+                            enabled = next
                         }
-                        enabled = next
-                    }
-                },
-            ) {
-                Text(
-                    stringResource(
-                        if (enabled) R.string.disable_notification else R.string.enable_notification,
-                    ),
-                )
-            }
+                    },
+                ) {
+                    Text(
+                        stringResource(
+                            if (enabled) R.string.disable_notification else R.string.enable_notification,
+                        ),
+                    )
+                }
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                !notificationGranted
-            ) {
-                Button(onClick = {
-                    permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                }) {
-                    Text(stringResource(R.string.allow_notifications))
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                    !notificationGranted
+                ) {
+                    Button(onClick = {
+                        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }) {
+                        Text(stringResource(R.string.allow_notifications))
+                    }
                 }
             }
         }
+    }
+
+    if (showAddCityDialog) {
+        AlertDialog(
+            onDismissRequest = ::dismissAddCity,
+            title = { Text(stringResource(R.string.add_city)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = cityInput,
+                        onValueChange = { cityInput = it; error = null },
+                        label = { Text(stringResource(R.string.city_hint)) },
+                        singleLine = true,
+                    )
+                    if (error != null) {
+                        Text(error!!, color = MaterialTheme.colorScheme.error)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    scope.launch {
+                        val city = normalizeCity(cityInput)
+                        error = when {
+                            !isValidCitySlug(city) -> context.getString(R.string.invalid_city)
+                            city in cities -> context.getString(R.string.city_already_added)
+                            !store.addCity(city) -> context.getString(R.string.invalid_city)
+                            else -> {
+                                dismissAddCity()
+                                WeatherScheduler.refreshNow(context)
+                                null
+                            }
+                        }
+                    }
+                }) {
+                    Text(stringResource(R.string.add_city))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = ::dismissAddCity) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+        )
     }
 }
 

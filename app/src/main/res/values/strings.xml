@@ -30,8 +30,6 @@
     <string name="hour_rain">rain</string>
     <string name="hour_heavy_rain">heavy rain</string>
     <string name="no_forecast">No forecast yet — tap Refresh now.</string>
-    <string name="show_details">Show details</string>
-    <string name="hide_details">Hide details</string>
     <string name="refresh_now">Refresh now</string>
     <string name="disable_notification">Disable ongoing notification</string>
     <string name="enable_notification">Enable ongoing notification</string>
@@ -40,10 +38,11 @@
     <string name="cities">Cities</string>
     <string name="city_hint">City slug, e.g. hamburg or region/city</string>
     <string name="add_city">Add city</string>
+    <string name="cancel">Cancel</string>
     <string name="remove">Remove</string>
     <string name="invalid_city">Enter a valid city slug (letters, digits, hyphens, /).</string>
     <string name="city_already_added">This city is already configured.</string>
-    <string name="no_cities">No cities configured — add one above.</string>
+    <string name="no_cities">No cities configured — use the + button to add one.</string>
     <string name="no_cities_notification">No cities configured</string>
     <string name="city_line">%1$s: %2$s</string>
 

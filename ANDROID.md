@@ -54,7 +54,9 @@ trims/lowercases input and `isValidCitySlug()` validates each path segment with
 two-part WetterOnline path: enter it exactly as the path after `/wetter/`, for
 example `michelbach-an-der-bilz/gschlachtenbretzingen` (not just
 `gschlachtenbretzingen`, with the `ch` after `schla`). Slugs remain
-lowercase in storage. `ForecastParser` also reads the human-readable place name
+lowercase in storage. The add form lives in an `AlertDialog` opened by the +
+FAB, and Remove lives inside the expanded per-city details, so neither clutters
+the default view. `ForecastParser` also reads the human-readable place name
 from the page heading (`<h1>`), falling back to `<title>` and then
 `displayCity()`. Page boilerplate such as ` - 4 Tage Vorhersage` is stripped,
 while hyphens inside real names (`Garmisch-Partenkirchen`) are kept. That name
@@ -100,8 +102,9 @@ and so on). An evening start therefore produces three rows (part of today, all
 of tomorrow, part of the day after); exactly midnight produces two. A slightly
 larger gap every six hours is the only orientation aid — no date prefix and no
 `00`/`06`/`12`/`18` labels — and no scrolling is needed. The grid sits directly
-under the city line; the Sun, Rain and sunrise/sunset text lives behind a
-collapsed "Show details" button, so the colours stay uncluttered by default.
+under the city line. The city line plus grid is one tappable region; tapping it
+toggles that city's Sun, Rain, sunrise/sunset, freshness and Remove controls, so
+the colours stay uncluttered by default and no "Show details" button is needed.
 
 Each `HourCell` stores that offset as `zoneId`, so even a DST change inside the
 48-hour window keeps the right local hours. Cells stored by older versions

@@ -30,8 +30,6 @@
     <string name="hour_rain">Regen</string>
     <string name="hour_heavy_rain">starker Regen</string>
     <string name="no_forecast">Noch keine Vorhersage – tippe auf „Jetzt aktualisieren“.</string>
-    <string name="show_details">Details anzeigen</string>
-    <string name="hide_details">Details ausblenden</string>
     <string name="refresh_now">Jetzt aktualisieren</string>
     <string name="disable_notification">Laufende Benachrichtigung deaktivieren</string>
     <string name="enable_notification">Laufende Benachrichtigung aktivieren</string>
@@ -40,10 +38,11 @@
     <string name="cities">Orte</string>
     <string name="city_hint">Ort-Slug, z. B. hamburg oder region/ort</string>
     <string name="add_city">Ort hinzufügen</string>
+    <string name="cancel">Abbrechen</string>
     <string name="remove">Entfernen</string>
     <string name="invalid_city">Bitte einen gültigen Ort-Slug eingeben (Buchstaben, Zahlen, Bindestriche, /).</string>
     <string name="city_already_added">Dieser Ort ist bereits konfiguriert.</string>
-    <string name="no_cities">Keine Orte konfiguriert – oben einen hinzufügen.</string>
+    <string name="no_cities">Keine Orte konfiguriert – über die +-Schaltfläche einen hinzufügen.</string>
     <string name="no_cities_notification">Keine Orte konfiguriert</string>
     <string name="city_line">%1$s: %2$s</string>
 
