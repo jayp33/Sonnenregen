@@ -55,8 +55,9 @@ two-part WetterOnline path: enter it exactly as the path after `/wetter/`, for
 example `michelbach-an-der-bilz/gschlachtenbretzingen` (not just
 `gschlachtenbretzingen`, with the `ch` after `schla`). Slugs remain
 lowercase in storage. The add form lives in an `AlertDialog` opened by the +
-FAB, while Remove and the ↑/↓ reorder controls live inside the expanded per-city
-details, so none of them clutters the default view. `ForecastParser` also reads
+FAB, while Remove, the ↑/↓ reorder controls and a **Show in notification** switch
+live inside the expanded per-city details, so none of them clutters the default
+view. `ForecastParser` also reads
 the human-readable place name
 from the page heading (`<h1>`), falling back to `<title>` and then
 `displayCity()`. Page boilerplate such as ` - 4 Tage Vorhersage` is stripped,
@@ -70,6 +71,8 @@ app and the notification, so `frankfurt-oder` becomes `Frankfurt (Oder)` and
   adjustable with the ↑/↓ controls in each city's details);
 - `forecasts_by_city`: a JSON map from slug to the last good formatted forecast,
   including its real `displayName`.
+- `hidden_from_notification`: a JSON array of slugs excluded from notification
+  statuses but still shown in the app; missing means none are hidden.
 
 The original single-city keys are read once and migrated on first access, so an
 existing installation keeps its Berlin forecast after the upgrade.
@@ -233,7 +236,9 @@ manual refreshes.
 - With exactly one city, title = the real place name and the compact line as the
   notification body.
 - With two or more cities, title = app name and one `<place name>: <summary>`
-  line per city, in the user's current city order. With no cities, the body is
+  line per visible city, in the user's current city order. Hidden cities stay in
+  the app but are filtered out by `buildStatuses()`, including the timestamp rule.
+  With no visible cities, the body is
   the empty-state line.
 - Both shapes use `BigTextStyle`. It wraps long single-city summaries and long
   city names instead of ellipsizing them, so no tail is lost on narrow screens.

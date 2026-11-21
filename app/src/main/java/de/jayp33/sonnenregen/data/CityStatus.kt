@@ -15,7 +15,8 @@ fun buildStatuses(
     cities: List<String>,
     forecasts: Map<String, CityForecast>,
     staleCities: Set<String> = emptySet(),
-): List<CityStatus> = cities.mapNotNull { city ->
+    hiddenCities: Set<String> = emptySet(),
+): List<CityStatus> = cities.filterNot { it in hiddenCities }.mapNotNull { city ->
     val forecast = forecasts[city]
     when {
         forecast != null -> CityStatus(

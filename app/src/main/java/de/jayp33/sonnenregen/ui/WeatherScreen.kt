@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -30,6 +31,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -58,6 +60,7 @@ fun WeatherScreen() {
 
     var cities by remember { mutableStateOf<List<String>>(emptyList()) }
     var forecasts by remember { mutableStateOf<Map<String, CityForecast>>(emptyMap()) }
+    var hiddenCities by remember { mutableStateOf<Set<String>>(emptySet()) }
     var expandedCities by remember { mutableStateOf<Set<String>>(emptySet()) }
     var nowMillis by remember { mutableStateOf(System.currentTimeMillis()) }
     var showAddCityDialog by remember { mutableStateOf(false) }
@@ -98,6 +101,7 @@ fun WeatherScreen() {
         }
         launch { store.citiesFlow.collect { cities = it } }
         launch { store.forecastsFlow.collect { forecasts = it } }
+        launch { store.hiddenCitiesFlow.collect { hiddenCities = it } }
     }
 
     LaunchedEffect(Unit) {
@@ -202,6 +206,24 @@ fun WeatherScreen() {
                                 }
                                 if (sunrise != null || sunset != null) {
                                     Text(listOfNotNull(sunrise, sunset).joinToString(" · "))
+                                }
+
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    Switch(
+                                        checked = city !in hiddenCities,
+                                        onCheckedChange = { visible ->
+                                            scope.launch {
+                                                store.setCityNotificationVisible(city, visible)
+                                                if (enabled) {
+                                                    WeatherNotifier.show(context, store.statuses())
+                                                }
+                                            }
+                                        },
+                                    )
+                                    Text(stringResource(R.string.show_in_notification))
                                 }
 
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

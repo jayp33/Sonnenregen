@@ -4,6 +4,7 @@ import de.jayp33.sonnenregen.data.CityForecast
 import de.jayp33.sonnenregen.data.buildStatuses
 import de.jayp33.sonnenregen.data.mergeForecasts
 import de.jayp33.sonnenregen.data.reorderCity
+import de.jayp33.sonnenregen.data.updateNotificationVisibility
 import de.jayp33.sonnenregen.domain.HourCell
 import de.jayp33.sonnenregen.domain.HourKind
 import kotlinx.serialization.decodeFromString
@@ -74,6 +75,33 @@ class CityStateTest {
         )
         assertEquals(order, reorderCity(order, "berlin", -1))
         assertEquals(order, reorderCity(order, "unknown", 1))
+    }
+
+    @Test
+    fun hidden_cities_are_left_out_of_the_notification() {
+        val statuses = buildStatuses(
+            cities = listOf("berlin", "hamburg", "munich"),
+            forecasts = mapOf(
+                "berlin" to forecast("berlin", fetchedAtMillis = 20L),
+                "hamburg" to forecast("hamburg", fetchedAtMillis = 10L),
+                "munich" to forecast("munich", fetchedAtMillis = 5L),
+            ),
+            hiddenCities = setOf("hamburg"),
+        )
+
+        assertEquals(listOf("berlin", "munich"), statuses.map { it.city })
+    }
+
+    @Test
+    fun notification_visibility_toggles_one_city_at_a_time() {
+        val hidden = updateNotificationVisibility(emptySet(), "hamburg", visible = false)
+
+        assertEquals(setOf("hamburg"), hidden)
+        assertEquals(emptySet<String>(), updateNotificationVisibility(hidden, "hamburg", true))
+        assertEquals(
+            setOf("hamburg", "berlin"),
+            updateNotificationVisibility(hidden, "berlin", false),
+        )
     }
 
     @Test

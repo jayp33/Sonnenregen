@@ -28,6 +28,13 @@ internal fun reorderCity(cities: List<String>, city: String, offset: Int): List<
     return cities.toMutableList().apply { add(to, removeAt(from)) }
 }
 
+/** Add/remove one city from the notification-only hide list. */
+internal fun updateNotificationVisibility(
+    hidden: Set<String>,
+    city: String,
+    visible: Boolean,
+): Set<String> = if (visible) hidden - city else hidden + city
+
 private val Context.weatherDataStore by preferencesDataStore(name = "weather")
 
 class WeatherStore(context: Context) {
@@ -39,6 +46,7 @@ class WeatherStore(context: Context) {
     /** Reactive views for the UI; worker updates flow through the same DataStore. */
     val citiesFlow: Flow<List<String>> = dataStore.data.map(::citiesFrom)
     val forecastsFlow: Flow<Map<String, CityForecast>> = dataStore.data.map(::forecastsFrom)
+    val hiddenCitiesFlow: Flow<Set<String>> = dataStore.data.map(::hiddenCitiesFrom)
 
     /** Cities in the order the user added them. */
     suspend fun cities(): List<String> = dataStore.data.first().let(::citiesFrom)
@@ -60,6 +68,7 @@ class WeatherStore(context: Context) {
         dataStore.edit { prefs ->
             prefs[CITIES] = json.encodeToString(citiesFrom(prefs).filterNot { it == city })
             prefs[FORECASTS] = json.encodeToString(forecastsFrom(prefs).filterKeys { it != city })
+            prefs[HIDDEN_CITIES] = json.encodeToString(hiddenCitiesFrom(prefs) - city)
         }
     }
 
@@ -72,7 +81,17 @@ class WeatherStore(context: Context) {
         }
     }
 
+    /** Hide/show one city in the notification without removing it from the app. */
+    suspend fun setCityNotificationVisible(city: String, visible: Boolean) {
+        dataStore.edit { prefs ->
+            val next = updateNotificationVisibility(hiddenCitiesFrom(prefs), city, visible)
+            prefs[HIDDEN_CITIES] = json.encodeToString(next.toList())
+        }
+    }
+
     suspend fun forecasts(): Map<String, CityForecast> = dataStore.data.first().let(::forecastsFrom)
+
+    suspend fun hiddenCities(): Set<String> = dataStore.data.first().let(::hiddenCitiesFrom)
 
     /** Replace only the supplied cities; failed cities keep their last good forecast. */
     suspend fun saveForecasts(updates: List<CityForecast>) {
@@ -83,7 +102,7 @@ class WeatherStore(context: Context) {
     }
 
     suspend fun statuses(staleCities: Set<String> = emptySet()): List<CityStatus> =
-        buildStatuses(cities(), forecasts(), staleCities)
+        buildStatuses(cities(), forecasts(), staleCities, hiddenCities())
 
     fun format(forecast: Forecast): CityForecast = CityForecast(
         city = forecast.city,
@@ -124,6 +143,20 @@ class WeatherStore(context: Context) {
         emptyList()
     }
 
+    private fun hiddenCitiesFrom(prefs: Preferences): Set<String> =
+        prefs[HIDDEN_CITIES]?.let(::decodeHiddenCities) ?: emptySet()
+
+    private fun decodeHiddenCities(value: String): Set<String> = try {
+        json.decodeFromString<List<String>>(value)
+            .map(::normalizeCity)
+            .filter(::isValidCitySlug)
+            .toSet()
+    } catch (_: SerializationException) {
+        emptySet()
+    } catch (_: IllegalArgumentException) {
+        emptySet()
+    }
+
     private fun decodeForecasts(value: String): Map<String, CityForecast> = try {
         json.decodeFromString<Map<String, CityForecast>>(value)
     } catch (_: SerializationException) {
@@ -148,6 +181,7 @@ class WeatherStore(context: Context) {
     private companion object {
         val CITIES = stringPreferencesKey("cities")
         val FORECASTS = stringPreferencesKey("forecasts_by_city")
+        val HIDDEN_CITIES = stringPreferencesKey("hidden_from_notification")
         val ENABLED = booleanPreferencesKey("enabled")
 
         // Original single-city schema, read once for migration.
