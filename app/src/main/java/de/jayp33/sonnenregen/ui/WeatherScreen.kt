@@ -74,10 +74,27 @@ fun WeatherScreen() {
     }
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
-    ) { granted -> notificationGranted = granted }
+    ) { granted ->
+        notificationGranted = granted
+        if (granted) {
+            // Android only posts through WorkManager/BootReceiver otherwise, so
+            // granting permission mid-session would otherwise look like nothing
+            // happened until the next refresh.
+            scope.launch {
+                if (store.isEnabled()) {
+                    WeatherNotifier.show(context, store.statuses())
+                    WeatherScheduler.refreshNow(context)
+                }
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         enabled = store.isEnabled()
+        if (enabled) {
+            WeatherScheduler.schedule(context)
+            if (notificationGranted) WeatherNotifier.show(context, store.statuses())
+        }
         launch { store.citiesFlow.collect { cities = it } }
         launch { store.forecastsFlow.collect { forecasts = it } }
     }

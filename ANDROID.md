@@ -223,6 +223,10 @@ manual refreshes.
 - Channel `weather`, `IMPORTANCE_LOW`, category string `weather` (Android does
   not define a `CATEGORY_WEATHER` constant).
 - `setOngoing(true)`, small icon.
+- When `POST_NOTIFICATIONS` is granted mid-session, the app immediately reposts
+  from the last stored forecasts and enqueues a one-shot refresh; on startup it
+  also re-enables the periodic work when notifications are enabled. This avoids
+  the appearance that nothing happened until the next city edit or worker run.
 - With exactly one city, title = the real place name and the compact line as the
   notification body.
 - With two or more cities, title = app name and one `<place name>: <summary>`
