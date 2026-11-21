@@ -66,14 +66,10 @@ fun WeatherScreen() {
         ActivityResultContracts.RequestPermission(),
     ) { granted -> notificationGranted = granted }
 
-    suspend fun reload() {
-        cities = store.cities()
-        forecasts = store.forecasts()
-    }
-
     LaunchedEffect(Unit) {
-        reload()
         enabled = store.isEnabled()
+        launch { store.citiesFlow.collect { cities = it } }
+        launch { store.forecastsFlow.collect { forecasts = it } }
     }
 
     Surface(modifier = Modifier.fillMaxSize()) {
@@ -110,7 +106,6 @@ fun WeatherScreen() {
                             !store.addCity(city) -> context.getString(R.string.invalid_city)
                             else -> {
                                 cityInput = ""
-                                reload()
                                 WeatherScheduler.refreshNow(context)
                                 null
                             }
@@ -174,7 +169,6 @@ fun WeatherScreen() {
                         Button(onClick = {
                             scope.launch {
                                 store.removeCity(city)
-                                reload()
                                 if (enabled) WeatherNotifier.show(context, store.statuses())
                             }
                         }) {

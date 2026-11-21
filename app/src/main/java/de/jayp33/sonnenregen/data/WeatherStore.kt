@@ -14,7 +14,9 @@ import de.jayp33.sonnenregen.domain.isValidCitySlug
 import de.jayp33.sonnenregen.domain.normalizeCity
 import de.jayp33.sonnenregen.text.ForecastFormatter
 import de.jayp33.sonnenregen.text.ForecastPhrases
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
@@ -25,6 +27,10 @@ class WeatherStore(context: Context) {
     private val dataStore = appContext.weatherDataStore
     private val phrases = ForecastPhrases.from(appContext)
     private val json = Json { ignoreUnknownKeys = true }
+
+    /** Reactive views for the UI; worker updates flow through the same DataStore. */
+    val citiesFlow: Flow<List<String>> = dataStore.data.map(::citiesFrom)
+    val forecastsFlow: Flow<Map<String, CityForecast>> = dataStore.data.map(::forecastsFrom)
 
     /** Cities in the order the user added them. */
     suspend fun cities(): List<String> = dataStore.data.first().let(::citiesFrom)

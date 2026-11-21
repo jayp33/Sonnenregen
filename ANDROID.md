@@ -71,7 +71,9 @@ independently:
 
 Adding a city enqueues an immediate refresh; removing one reposts the notification
 without a network request. With no cities configured the notification shows an
-empty-state line.
+empty-state line. The Compose screen collects `citiesFlow` and `forecastsFlow`
+from the same DataStore, so worker writes and add/remove edits appear immediately
+without reopening the activity.
 
 ## 48-hour colour overview
 
