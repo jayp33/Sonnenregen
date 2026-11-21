@@ -41,6 +41,7 @@ fun hourlyCells(
     now: OffsetDateTime,
     hours: List<Slot>,
     current: Slot? = null,
+    daylight: List<Daylight> = emptyList(),
 ): List<HourCell> {
     val start = now.truncatedTo(ChronoUnit.HOURS)
     val slots = mutableListOf<Slot>()
@@ -55,9 +56,18 @@ fun hourlyCells(
     slots.addAll(hours.filter { !it.start.isBefore(start) }.take(48 - slots.size))
 
     return slots.take(48).map { slot ->
+        // WetterOnline labels a whole hour with a night symbol when it starts
+        // before sunrise. If sunrise/sunset falls inside it, use the matching
+        // day symbol for the colour grid too, so the cell agrees with the
+        // sun text. Hours fully inside daylight/night keep their raw symbol.
+        val overviewSlot = if (daylight.any { it.crosses(slot) }) {
+            slot.copy(symbol = slot.symbol.asDaySymbol())
+        } else {
+            slot
+        }
         HourCell(
             startEpochMillis = slot.start.toInstant().toEpochMilli(),
-            kind = classify(slot),
+            kind = classify(overviewSlot),
             zoneId = slot.start.offset.id,
         )
     }

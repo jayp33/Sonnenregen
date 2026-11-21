@@ -1,5 +1,6 @@
 package de.jayp33.sonnenregen
 
+import de.jayp33.sonnenregen.domain.Daylight
 import de.jayp33.sonnenregen.domain.HourCell
 import de.jayp33.sonnenregen.domain.HourKind
 import de.jayp33.sonnenregen.domain.Slot
@@ -71,6 +72,32 @@ class HourlyTest {
             ),
             cells.map { it.kind },
         )
+    }
+
+    @Test
+    fun night_symbol_at_sunrise_gets_the_day_colour() {
+        val daylight = listOf(
+            Daylight(
+                at("2026-11-21T07:41:00+01:00"),
+                at("2026-11-21T16:32:00+01:00"),
+            ),
+        )
+        val hours = listOf(
+            hour("2026-11-21T07:00:00+01:00", "mb____"),
+            hour("2026-11-21T08:00:00+01:00", "bw____"),
+            hour("2026-11-21T16:00:00+01:00", "so____"),
+            hour("2026-11-21T17:00:00+01:00", "md____"),
+        )
+        val now = at("2026-11-21T07:00:00+01:00")
+
+        assertEquals(HourKind.CLOUDY, hourlyCells(now, hours).first().kind)
+
+        val cells = hourlyCells(now, hours, daylight = daylight)
+
+        assertEquals(HourKind.PARTLY_SUN, cells[0].kind) // mb -> wb at sunrise
+        assertEquals(HourKind.CLOUDY, cells[1].kind) // bw stays cloudy
+        assertEquals(HourKind.SUN, cells[2].kind) // so stays bright at sunset
+        assertEquals(HourKind.CLOUDY, cells[3].kind) // md stays gray after sunset
     }
 
     @Test

@@ -66,6 +66,26 @@ class ForecastAnalyzerTest {
     }
 
     @Test
+    fun sunrise_hour_cell_uses_the_day_colour_too() {
+        val morning = TestData.sunnyMorningShortcast.replace(
+            """"date":"2026-11-21T07:00:00+01:00","symbol":"mo____"""",
+            """"date":"2026-11-21T07:00:00+01:00","symbol":"mb____"""",
+        )
+        val forecast = ForecastAnalyzer.analyze(
+            "berlin",
+            TestData.pageWith(morning, TestData.astroJson),
+            TestData.pageWith(morning),
+        )
+
+        val sunriseHour = OffsetDateTime.parse("2026-11-21T07:00:00+01:00").toInstant().toEpochMilli()
+        assertEquals(
+            HourKind.PARTLY_SUN,
+            forecast.hours.first { it.startEpochMillis == sunriseHour }.kind,
+        )
+        assertEquals(OffsetDateTime.parse("2026-11-21T07:38:00+01:00"), forecast.sun.at)
+    }
+
+    @Test
     fun cloudy_night_slot_still_delays_sunshine_until_a_sunny_slot() {
         val morning = TestData.sunnyMorningShortcast.replace(
             """"date":"2026-11-21T07:00:00+01:00","symbol":"mo____"""",

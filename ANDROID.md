@@ -133,17 +133,22 @@ Each `HourCell` stores that offset as `zoneId`, so even a DST change inside the
 48-hour window keeps the right local hours. Cells stored by older versions
 default to `Europe/Berlin` until the next refresh.
 
-The grid reads purely as weather at a glance. Night symbols (`m*`) never get a
-sun colour, so no pale yellow appears before sunrise or after sunset:
+The grid reads purely as weather at a glance. Night symbols (`m*`) normally get
+no sun colour, so no pale yellow appears before sunrise or after sunset. One
+exception: when sunrise or sunset falls inside a one-hour slot, WetterOnline
+labels that whole hour with a night symbol. The colour grid uses the matching
+day symbol for such boundary hours, so it agrees with the sun text — e.g. an
+`mb` hour straddling a 07:41 sunrise becomes pale yellow (`wb`/`PARTLY_SUN`).
 
 - bright/pale yellow — sunny (`so`) / partly sunny (`wb`), day symbols only;
-- very light gray — all clouds and every night symbol (`mo`, `mb`, `mw`, `md`);
+- very light gray — all clouds and night symbols outside those boundary hours;
 - light/medium/dark blue — light rain / rain / heavy rain.
 
-For example, `so` is bright yellow, `wb` is pale yellow, and all four night
-symbols are very light gray. Sunrise/sunset stay in the text line instead of
-being encoded as glyphs. No weather icons are drawn; the weekday prefix comes
-from localized `weekday_*` strings. Each cell carries a localized
+For example, `so` is bright yellow, `wb` is pale yellow, and the four night
+symbols are very light gray unless their hour straddles sunrise/sunset. Sunrise
+and sunset stay in the text line instead of being encoded as glyphs. No weather
+icons are drawn; the weekday prefix comes from localized `weekday_*`
+strings. Each cell carries a localized
 `contentDescription` for screen readers. The
 overview is stored as `CityForecast.hours` (defaulting to an empty list), so
 existing installs simply show no grid until their next refresh. Legacy night
