@@ -121,7 +121,9 @@ default and no "Show details" button is needed.
 
 Below the day rows, an optional `90` row shows the 90-minute nowcast as six
 15-minute cells with the same colours and a fixed-width prefix matching the
-weekday column. It is rendered only when at least one of those cells is rain.
+weekday column. These cells are taller than the hourly ones and print their
+start time (`21:15`, `21:30`, …) inside, in black on pale shades and white on
+the darker rain blues. It is rendered only when at least one of those cells is rain.
 The cells come from the raw `nowcast_trend` items (or the hourly page's nearcast
 as fallback), not from the stretched timeline slots. `CityForecast.nowcastCells`
 defaults to an empty list, so old installs simply have no extra row until the

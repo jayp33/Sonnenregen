@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import de.jayp33.sonnenregen.R
 import de.jayp33.sonnenregen.domain.CLOCK_TIME
@@ -93,13 +94,18 @@ fun NowcastOverview(city: String, cells: List<HourCell>, modifier: Modifier = Mo
             maxLines = 1,
         )
         cells.forEach { cell ->
-            Cell(cell, cell.timeLabel(), city)
+            Cell(cell, cell.timeLabel(), city, showTime = true)
         }
     }
 }
 
 @Composable
-private fun RowScope.Cell(cell: HourCell?, time: String, city: String) {
+private fun RowScope.Cell(
+    cell: HourCell?,
+    time: String,
+    city: String,
+    showTime: Boolean = false,
+) {
     val description = cell?.let {
         stringResource(
             R.string.hour_description,
@@ -108,7 +114,7 @@ private fun RowScope.Cell(cell: HourCell?, time: String, city: String) {
             stringResource(it.kind.label()),
         )
     }
-    val base = Modifier.weight(1f).height(12.dp)
+    val base = Modifier.weight(1f).height(if (showTime) 24.dp else 12.dp)
     Box(
         modifier = if (cell == null || description == null) {
             base
@@ -117,7 +123,25 @@ private fun RowScope.Cell(cell: HourCell?, time: String, city: String) {
                 .background(cell.kind.color(), RoundedCornerShape(2.dp))
                 .semantics(mergeDescendants = true) { contentDescription = description }
         },
-    )
+    ) {
+        if (showTime && cell != null) {
+            Text(
+                text = time,
+                modifier = Modifier.align(Alignment.Center),
+                style = MaterialTheme.typography.labelSmall,
+                color = cell.kind.onColor(),
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
+/** White on the darker rain blues, black on the pale sun/cloud shades. */
+private fun HourKind.onColor(): Color {
+    val background = color()
+    val luminance = 0.299 * background.red + 0.587 * background.green + 0.114 * background.blue
+    return if (luminance > 0.5) Color.Black else Color.White
 }
 
 private fun hourLabel(hour: Int): String = hour.toString().padStart(2, '0') + ":00"

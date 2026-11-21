@@ -58,6 +58,8 @@ class HourlyOverviewTest {
         }
 
         composeTestRule.onNodeWithText(prefix).assertIsDisplayed()
+        composeTestRule.onNodeWithText("21:15").assertIsDisplayed()
+        composeTestRule.onNodeWithText("22:30").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription(
             context.getString(R.string.hour_description, "Berlin", "21:15", context.getString(R.string.hour_rain)),
         ).assertIsDisplayed()
