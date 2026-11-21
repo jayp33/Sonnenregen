@@ -378,7 +378,11 @@ internal fun CityItem(
             if (forecast != null) {
                 HourlyOverview(label, forecast.hours)
                 if (forecast.nowcastCells.any { it.kind.isRain() }) {
-                    NowcastOverview(label, forecast.nowcastCells)
+                    NowcastOverview(
+                        label,
+                        forecast.nowcastCells,
+                        modifier = Modifier.padding(top = WeatherRowSpacing.beforeNowcast),
+                    )
                 }
             } else {
                 Text(stringResource(R.string.no_forecast))

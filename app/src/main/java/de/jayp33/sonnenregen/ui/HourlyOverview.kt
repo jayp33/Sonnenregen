@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -31,6 +32,19 @@ import java.time.DayOfWeek
 import java.time.Instant
 import java.time.ZoneId
 
+/** Vertical rhythm of the colour-grid rows. */
+internal object WeatherRowSpacing {
+    /** Day rows sit close together; the 90-minute row is clearly separated. */
+    val betweenHourRows = 2.dp
+    /** Extra space above the 90-minute row, on top of the city card's spacing. */
+    val beforeNowcast = 6.dp
+}
+
+internal object WeatherRowTags {
+    const val HOUR_ROW = "hour_row_"
+    const val NOWCAST_ROW = "nowcast_row"
+}
+
 /**
  * One row per calendar day in the forecast's own timezone, prefixed with that
  * day's short weekday. Each day is split into four blocks of six, separated by
@@ -42,10 +56,10 @@ fun HourlyOverview(city: String, hours: List<HourCell>, modifier: Modifier = Mod
 
     val byDay = groupHoursByDay(hours)
 
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        byDay.forEach { (date, byHour) ->
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(WeatherRowSpacing.betweenHourRows)) {
+        byDay.entries.forEachIndexed { index, (date, byHour) ->
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("${WeatherRowTags.HOUR_ROW}$index"),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -82,7 +96,7 @@ fun NowcastOverview(city: String, cells: List<HourCell>, modifier: Modifier = Mo
     if (cells.isEmpty()) return
 
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().testTag(WeatherRowTags.NOWCAST_ROW),
         horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

@@ -126,6 +126,9 @@ Below the day rows, an optional `90` row shows the 90-minute nowcast as six
 weekday column. These cells are taller than the hourly ones and print their
 start time (`21:15`, `21:30`, …) inside, in black on pale shades and white on
 the darker rain blues. It is rendered only when at least one of those cells is rain.
+Day rows use a tight 2 dp vertical gap, while the `90` row is separated by 10 dp
+in total (6 dp of extra padding on top of the card's 4 dp) so it reads as a
+distinct block; the values live in `WeatherRowSpacing`.
 The cells come from the raw `nowcast_trend` items (or the hourly page's nearcast
 as fallback), not from the stretched timeline slots. `CityForecast.nowcastCells`
 defaults to an empty list, so old installs simply have no extra row until the
