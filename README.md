@@ -81,6 +81,21 @@ Hamburg: Rain in 30 min, sun in 5 h
 The APK is written to `app/build/outputs/apk/debug/app-debug.apk`. See
 [ANDROID.md](ANDROID.md) for the full design and refresh behaviour.
 
+To share a debug build via GitHub, use the upload script:
+
+```bash
+# finds a JDK automatically (Android Studio's JBR on this machine)
+scripts/upload-debug-apk.sh                  # tag = local YYYYMMDD-HHMMSS
+scripts/upload-debug-apk.sh v0.1.0-debug     # or choose your own tag
+```
+
+It builds the APK, creates the pre-release if needed and uploads it as
+`sonnenregen-<tag>.apk`. Without an argument the timestamp includes seconds, so
+each run gets its own release. Reusing an explicit tag replaces that release's
+APK. Tags are free-form, so `v0.1.0-debug-2` and `20261121-211942` both work.
+New releases are created on GitHub's default branch; the script warns if local
+commits or edits are not on GitHub.
+
 ## How WetterOnline data is read
 
 Both the app and the Python helper use the same approach. The pages at

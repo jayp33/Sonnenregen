@@ -360,9 +360,24 @@ Then:
 ./gradlew :app:assembleDebug
 ```
 
-Use a JDK that provides `javac` (Android Studio's bundled JBR works). The unit
-tests reuse the trimmed real payload from `tests/fixtures/shortcast.json` and do
-not hit the network.
+Use a JDK that provides `javac` (Android Studio's bundled JBR works). The upload
+script picks one automatically: a valid `JAVA_HOME` first, then
+`/opt/android-studio/jbr`, then `javac` on `PATH`. The unit tests reuse the
+trimmed real payload from `tests/fixtures/shortcast.json` and do not hit the
+network.
+
+`scripts/upload-debug-apk.sh [tag]` builds the same debug APK and attaches it to
+a GitHub pre-release with `gh release upload`. With no argument it generates a
+local timestamp tag `YYYYMMDD-HHMMSS`, so every run creates a new release; an
+explicit tag can be any valid Git ref. The script creates the release on
+GitHub's default branch if the tag is new and overwrites the APK when the tag
+already exists; a local-only `HEAD` is never used as the target. Two useful
+explicit schemes are `v<version>-debug[-n]`
+(`v0.1.0-debug`, `v0.1.0-debug-2`, …) for version-aligned builds and
+`YYYYMMDD-HHMMSS` (`20261121-211942`) for timestamp builds, which sort
+chronologically. It requires an authenticated `gh` CLI and warns when the
+working tree is dirty or local commits are unpushed, since then the APK may not
+match the release commit. The APK is never committed to the repository.
 
 ## Open questions / out of scope
 
