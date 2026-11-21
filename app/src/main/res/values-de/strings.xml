@@ -6,6 +6,11 @@
     <string name="refresh">Aktualisieren</string>
     <string name="open_app">App öffnen</string>
     <string name="updated">Aktualisiert</string>
+    <string name="updated_just_now">Gerade aktualisiert</string>
+    <string name="updated_minutes_ago">Vor %1$d Min. aktualisiert</string>
+    <string name="updated_hours_ago">Vor %1$d Std. aktualisiert</string>
+    <string name="updated_day_ago">Vor 1 Tag aktualisiert</string>
+    <string name="updated_days_ago">Vor %1$d Tagen aktualisiert</string>
     <string name="weather_unavailable">Wetter nicht verfügbar</string>
 
     <string name="city">Ort: %1$s</string>

@@ -34,6 +34,8 @@ and German, selected by device locale.
   UI. Sunshine never starts before sunrise or continues past sunset.
 - **Offline-friendly**: each city keeps its last good forecast. A failed refresh
   marks only that city `Weather unavailable` instead of wiping the others.
+- **Freshness at a glance**: a global `Updated x min ago` under the title, plus a
+  per-city one inside each collapsed details block. Both tick live.
 - **Battery-friendly**: WorkManager refreshes every 15 minutes while connected.
   There is no foreground service and no exact unlock-event detection; Doze
   defers work and pending jobs catch up after unlock. The notification's

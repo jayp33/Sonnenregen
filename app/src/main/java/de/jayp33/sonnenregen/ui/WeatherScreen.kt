@@ -38,7 +38,10 @@ import de.jayp33.sonnenregen.domain.displayCity
 import de.jayp33.sonnenregen.domain.isValidCitySlug
 import de.jayp33.sonnenregen.domain.normalizeCity
 import de.jayp33.sonnenregen.notification.WeatherNotifier
+import de.jayp33.sonnenregen.text.AgeUnit
+import de.jayp33.sonnenregen.text.relativeAge
 import de.jayp33.sonnenregen.work.WeatherScheduler
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -50,6 +53,7 @@ fun WeatherScreen() {
     var cities by remember { mutableStateOf<List<String>>(emptyList()) }
     var forecasts by remember { mutableStateOf<Map<String, CityForecast>>(emptyMap()) }
     var expandedCities by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var nowMillis by remember { mutableStateOf(System.currentTimeMillis()) }
     var cityInput by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     var enabled by remember { mutableStateOf(true) }
@@ -72,6 +76,18 @@ fun WeatherScreen() {
         launch { store.forecastsFlow.collect { forecasts = it } }
     }
 
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(60_000L)
+            nowMillis = System.currentTimeMillis()
+        }
+    }
+
+    // Oldest successful fetch, matching the notification's global timestamp.
+    val oldestFetchedAt = forecasts.values.map { it.fetchedAtMillis }
+        .filter { it > 0L }
+        .minOrNull()
+
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -79,10 +95,15 @@ fun WeatherScreen() {
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(
-                stringResource(R.string.app_name),
-                style = MaterialTheme.typography.headlineMedium,
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    stringResource(R.string.app_name),
+                    style = MaterialTheme.typography.headlineMedium,
+                )
+                if (oldestFetchedAt != null) {
+                    UpdatedText(oldestFetchedAt, nowMillis)
+                }
+            }
 
             Text(stringResource(R.string.cities), style = MaterialTheme.typography.titleMedium)
 
@@ -151,6 +172,7 @@ fun WeatherScreen() {
                                 )
                             }
                             if (detailsExpanded) {
+                                UpdatedText(forecast.fetchedAtMillis, nowMillis)
                                 Text(stringResource(R.string.sun, forecast.sunSummary))
                                 Text(stringResource(R.string.rain, forecast.rainSummary))
                                 val sunrise = forecast.sunriseLabel?.let {
@@ -215,4 +237,20 @@ fun WeatherScreen() {
             }
         }
     }
+}
+
+@Composable
+private fun UpdatedText(fetchedAtMillis: Long, nowMillis: Long) {
+    val age = relativeAge(fetchedAtMillis, nowMillis) ?: return
+    val text = when (age.unit) {
+        AgeUnit.JUST_NOW -> stringResource(R.string.updated_just_now)
+        AgeUnit.MINUTES -> stringResource(R.string.updated_minutes_ago, age.value)
+        AgeUnit.HOURS -> stringResource(R.string.updated_hours_ago, age.value)
+        AgeUnit.DAYS -> if (age.value == 1L) {
+            stringResource(R.string.updated_day_ago)
+        } else {
+            stringResource(R.string.updated_days_ago, age.value)
+        }
+    }
+    Text(text, style = MaterialTheme.typography.labelSmall)
 }

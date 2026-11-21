@@ -75,6 +75,12 @@ empty-state line. The Compose screen collects `citiesFlow` and `forecastsFlow`
 from the same DataStore, so worker writes and add/remove edits appear immediately
 without reopening the activity.
 
+Freshness is shown in two places: a global `Updated x min ago` under the app
+title uses the oldest successful fetch across cities (the same rule as the
+notification), and each collapsed details block shows the same relative label for
+that city alone. Both tick once per minute while the screen is open; `just now`
+covers the first minute, then minutes/hours/days are abbreviated and localized.
+
 ## 48-hour colour overview
 
 Each city card also shows a colour-only forecast grid: 48 one-hour cells from the
