@@ -19,6 +19,10 @@ class CityTest {
     fun capitalizes_only_the_first_letter_for_display() {
         assertEquals("Berlin", displayCity("berlin"))
         assertEquals("Frankfurt-am-main", displayCity("frankfurt-am-main"))
+        assertEquals(
+            "Michelbach-an-der-bilz/Gschlachtenbretzingen",
+            displayCity("michelbach-an-der-bilz/gschlachtenbretzingen"),
+        )
         assertEquals("", displayCity(""))
     }
 
@@ -27,6 +31,7 @@ class CityTest {
         assertTrue(isValidCitySlug("berlin"))
         assertTrue(isValidCitySlug("frankfurt-am-main"))
         assertTrue(isValidCitySlug("a1"))
+        assertTrue(isValidCitySlug("michelbach-an-der-bilz/gschlachtenbretzingen"))
     }
 
     @Test
@@ -37,5 +42,9 @@ class CityTest {
         assertFalse(isValidCitySlug("../berlin"))
         assertFalse(isValidCitySlug("berlin?x=1"))
         assertFalse(isValidCitySlug("berlin--mitte"))
+        assertFalse(isValidCitySlug("/berlin"))
+        assertFalse(isValidCitySlug("berlin/"))
+        assertFalse(isValidCitySlug("berlin//mitte"))
+        assertFalse(isValidCitySlug("berlin/mitte?x=1"))
     }
 }

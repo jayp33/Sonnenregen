@@ -49,10 +49,15 @@ German durations use `Std.`/`Min.` instead of `h`/`min`:
 ## Multiple cities
 
 The user can add and remove WetterOnline city slugs in the app. `normalizeCity()`
-trims/lowercases input and `isValidCitySlug()` validates it with
-`^[a-z0-9]+(?:-[a-z0-9]+)*$` before any URL is built. Slugs remain lowercase in
-storage; `displayCity()` capitalises the first letter for the UI and notification
-(`berlin` → `Berlin`, `frankfurt-am-main` → `Frankfurt-am-main`). DataStore holds:
+trims/lowercases input and `isValidCitySlug()` validates each path segment with
+`^[a-z0-9]+(?:-[a-z0-9]+)*$` before any URL is built. Small places can have a
+two-part WetterOnline path: enter it exactly as the path after `/wetter/`, for
+example `michelbach-an-der-bilz/gschlachtenbretzingen` (not just
+`gschlachtenbretzingen`, with the `ch` after `schla`). Slugs remain
+lowercase in storage; `displayCity()` capitalises every segment for the UI and
+notification (`berlin` → `Berlin`,
+`michelbach-an-der-bilz/gschlachtenbretzingen` →
+`Michelbach-an-der-bilz/Gschlachtenbretzingen`). DataStore holds:
 
 - `cities`: a JSON array in the order the user added them;
 - `forecasts_by_city`: a JSON map from slug to the last good formatted forecast.
@@ -160,7 +165,9 @@ Then:
    carried on the forecast and shown in the app UI (not in the notification).
 
 City slugs are normalized and validated by the shared helpers in `domain/City.kt`
-before building URLs.
+before building URLs. Nested slugs such as
+`michelbach-an-der-bilz/gschlachtenbretzingen` are passed through as one path, so
+both `/wettertrend/<slug>` and `/90-minuten-wetter/<slug>` keep the parent.
 
 ## Refresh behaviour
 

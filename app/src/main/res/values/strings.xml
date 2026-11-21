@@ -38,10 +38,10 @@
     <string name="allow_notifications">Allow notifications</string>
 
     <string name="cities">Cities</string>
-    <string name="city_hint">City slug, e.g. hamburg</string>
+    <string name="city_hint">City slug, e.g. hamburg or region/city</string>
     <string name="add_city">Add city</string>
     <string name="remove">Remove</string>
-    <string name="invalid_city">Enter a valid city slug (letters, digits, hyphens).</string>
+    <string name="invalid_city">Enter a valid city slug (letters, digits, hyphens, /).</string>
     <string name="city_already_added">This city is already configured.</string>
     <string name="no_cities">No cities configured — add one above.</string>
     <string name="no_cities_notification">No cities configured</string>

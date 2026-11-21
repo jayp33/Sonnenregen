@@ -38,10 +38,10 @@
     <string name="allow_notifications">Benachrichtigungen erlauben</string>
 
     <string name="cities">Orte</string>
-    <string name="city_hint">Ort-Slug, z. B. hamburg</string>
+    <string name="city_hint">Ort-Slug, z. B. hamburg oder region/ort</string>
     <string name="add_city">Ort hinzufügen</string>
     <string name="remove">Entfernen</string>
-    <string name="invalid_city">Bitte einen gültigen Ort-Slug eingeben (Buchstaben, Zahlen, Bindestriche).</string>
+    <string name="invalid_city">Bitte einen gültigen Ort-Slug eingeben (Buchstaben, Zahlen, Bindestriche, /).</string>
     <string name="city_already_added">Dieser Ort ist bereits konfiguriert.</string>
     <string name="no_cities">Keine Orte konfiguriert – oben einen hinzufügen.</string>
     <string name="no_cities_notification">Keine Orte konfiguriert</string>

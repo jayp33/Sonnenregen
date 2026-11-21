@@ -22,8 +22,9 @@ and German, selected by device locale.
   header; with two or more cities a wrapping text block shows `City: summary`
   lines in the order you added them, so long city names don't hide the forecast.
 - **Multiple cities**: add or remove WetterOnline slugs (`berlin`, `hamburg`, …)
-  in the app. Slugs stay lowercase for URLs; the app capitalizes the first
-  letter for display.
+  in the app. Slugs stay lowercase for URLs; the app capitalizes them for
+  display. For places with a two-part WetterOnline path, enter the whole path,
+  e.g. `michelbach-an-der-bilz/gschlachtenbretzingen`.
 - **48-hour colour overview**: one label-free row per day, split into four
   six-hour blocks in the city's own local time. Yellow means sun, blue means
   rain, and one very light gray covers clouds and all night hours — so sun and
@@ -70,7 +71,9 @@ The APK is written to `app/build/outputs/apk/debug/app-debug.apk`. See
 
 Both the app and the Python helper use the same approach. The pages at
 `https://www.wetteronline.de/wettertrend/<city>` and
-`https://www.wetteronline.de/90-minuten-wetter/<city>` are Angular SSR apps whose
+`https://www.wetteronline.de/90-minuten-wetter/<city>` (where `<city>` can also be
+a nested slug such as `michelbach-an-der-bilz/gschlachtenbretzingen`) are Angular
+SSR apps whose
 HTML embeds an `ng-state` JSON payload with the original forecast data:
 
 - hourly slots for the next 48 hours (`hours`),

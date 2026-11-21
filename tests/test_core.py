@@ -7,6 +7,7 @@ from pathlib import Path
 
 from sonnenregen.core import (
     BASE_URL,
+    CITY_RE,
     HOURLY_PATH,
     NOWCAST_PATH,
     _slots_from_shortcast,
@@ -242,6 +243,13 @@ class AnalyzeTests(unittest.TestCase):
     def test_city_is_validated(self) -> None:
         with self.assertRaises(ValueError):
             analyze("../admin", fetcher=lambda url: "")
+        with self.assertRaises(ValueError):
+            analyze("berlin/", fetcher=lambda url: "")
+
+    def test_nested_city_slug_is_accepted(self) -> None:
+        self.assertIsNotNone(
+            CITY_RE.fullmatch("michelbach-an-der-bilz/gschlachtenbretzingen")
+        )
 
 
 if __name__ == "__main__":

@@ -29,7 +29,7 @@ REQUEST_TIMEOUT = 15.0
 CACHE_TTL = 300.0
 USER_AGENT = "sonnenregen/0.1 (weather forecast reader)"
 
-CITY_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+CITY_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*(?:/[a-z0-9]+(?:-[a-z0-9]+)*)*$")
 NG_STATE_RE = re.compile(
     r"<script[^>]*\bid=[\"']ng-state[\"'][^>]*>(.*?)</script>", re.IGNORECASE | re.DOTALL
 )
