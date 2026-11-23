@@ -3,6 +3,7 @@ package de.jayp33.sonnenregen.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import de.jayp33.sonnenregen.data.WeatherStore
 import de.jayp33.sonnenregen.notification.WeatherNotifier
 import de.jayp33.sonnenregen.work.WeatherScheduler
@@ -26,9 +27,15 @@ class BootReceiver : BroadcastReceiver() {
                 if (!store.isEnabled()) return@launch
                 WeatherScheduler.schedule(context)
                 WeatherNotifier.show(context, store.statuses())
+            } catch (exc: Exception) {
+                Log.w(TAG, "Could not restore weather notifications", exc)
             } finally {
                 pending.finish()
             }
         }
+    }
+
+    private companion object {
+        const val TAG = "BootReceiver"
     }
 }
