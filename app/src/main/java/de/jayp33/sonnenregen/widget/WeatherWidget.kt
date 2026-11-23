@@ -13,6 +13,7 @@ import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.provideContent
+import androidx.glance.appwidget.updateAll
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
@@ -60,6 +61,9 @@ class WeatherWidget : GlanceAppWidget() {
 class WeatherWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = WeatherWidget()
 }
+
+/** Redraw every placed widget from the currently stored forecasts. */
+suspend fun updateWeatherWidget(context: Context) = WeatherWidget().updateAll(context.applicationContext)
 
 private val widgetBackground = ColorProvider(Color(0xFF1B1B1B))
 private val primaryText = ColorProvider(Color.White)

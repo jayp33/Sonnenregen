@@ -12,6 +12,7 @@ import de.jayp33.sonnenregen.data.WetterOnlineClient
 import de.jayp33.sonnenregen.domain.ForecastAnalyzer
 import de.jayp33.sonnenregen.notification.AlertPlanner
 import de.jayp33.sonnenregen.notification.WeatherNotifier
+import de.jayp33.sonnenregen.widget.updateWeatherWidget
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Semaphore
@@ -61,6 +62,7 @@ class WeatherWorker(
         // Failed cities keep their last good forecast, shown as stale.
         val staleCities = outcomes.filterValues { it is Outcome.Failure }.keys
         notifier.show(applicationContext, store.statuses(staleCities))
+        updateWeatherWidget(applicationContext)
 
         return when {
             cities.isEmpty() -> Result.success()

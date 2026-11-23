@@ -71,6 +71,7 @@ import de.jayp33.sonnenregen.notification.BatteryOptimizations
 import de.jayp33.sonnenregen.notification.WeatherNotifier
 import de.jayp33.sonnenregen.text.AgeUnit
 import de.jayp33.sonnenregen.text.relativeAge
+import de.jayp33.sonnenregen.widget.updateWeatherWidget
 import de.jayp33.sonnenregen.work.WeatherScheduler
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -243,11 +244,13 @@ fun WeatherScreen() {
                                     if (enabled) {
                                         WeatherNotifier.show(context, store.statuses())
                                     }
+                                    updateWeatherWidget(context)
                                 }
                             },
                             onToggleWidget = { selected ->
                                 scope.launch {
                                     store.setWidgetCity(if (selected) city else null)
+                                    updateWeatherWidget(context)
                                 }
                             },
                             onToggleSunAlert = { on ->
@@ -310,6 +313,7 @@ fun WeatherScreen() {
                                     if (enabled) {
                                         WeatherNotifier.show(context, store.statuses())
                                     }
+                                    updateWeatherWidget(context)
                                 }
                             },
                             onRemove = {
@@ -329,6 +333,7 @@ fun WeatherScreen() {
                                     )
                                     expandedCities = expandedCities - city
                                     if (enabled) WeatherNotifier.show(context, store.statuses())
+                                    updateWeatherWidget(context)
                                 }
                             },
                         )
@@ -419,6 +424,7 @@ fun WeatherScreen() {
                         else -> {
                             dismissAddCity()
                             WeatherScheduler.refreshNow(context)
+                            updateWeatherWidget(context)
                             null
                         }
                     }
