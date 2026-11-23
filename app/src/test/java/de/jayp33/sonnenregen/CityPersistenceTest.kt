@@ -151,6 +151,15 @@ class CityPersistenceTest {
         )
     }
 
+    @Test
+    fun cleared_alert_states_survive_a_stale_plan() {
+        val id = AlertKey("berlin", AlertKind.SNOW).id
+        val previous = mapOf(id to AlertState(AlertStage.SCHEDULED, 1_000L))
+        val planned = mapOf(id to AlertState(AlertStage.SCHEDULED, 1_000L))
+
+        assertEquals(emptyMap<String, AlertState>(), mergeAlertStates(emptyMap(), previous, planned))
+    }
+
     private fun forecast(city: String) = CityForecast(
         city = city,
         compactSummary = "Sun in 2 h, no rain",

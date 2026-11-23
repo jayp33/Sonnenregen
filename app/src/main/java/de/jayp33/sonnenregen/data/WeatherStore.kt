@@ -278,6 +278,11 @@ class WeatherStore(context: Context) {
     suspend fun alertStates(): Map<String, AlertState> =
         dataStore.data.first().let { statesFrom(it) }
 
+    /** Forget every episode so re-enabling alerts never replays an old one. */
+    suspend fun clearAlertStates() {
+        dataStore.edit { prefs -> prefs[ALERT_STATES] = json.encodeToString(emptyMap<String, AlertState>()) }
+    }
+
     /** Save a plan only where its baseline still matches the stored state. */
     suspend fun saveAlertStates(
         previous: Map<String, AlertState>,

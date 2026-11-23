@@ -74,6 +74,8 @@ object WeatherScheduler {
     }
 
     fun cancel(context: Context) {
-        WorkManager.getInstance(context).cancelUniqueWork(PERIODIC_NAME)
+        val workManager = WorkManager.getInstance(context)
+        workManager.cancelUniqueWork(PERIODIC_NAME)
+        workManager.cancelUniqueWork(ONCE_NAME)
     }
 }

@@ -340,6 +340,7 @@ fun WeatherScreen() {
                                 WeatherScheduler.schedule(context)
                             } else {
                                 WeatherScheduler.cancel(context)
+                                store.clearAlertStates()
                                 (sunAlertCities + rainAlertCities + snowAlertCities)
                                     .forEach { city ->
                                         WeatherScheduler.cancelAlert(
