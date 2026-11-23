@@ -31,6 +31,13 @@ and German, selected by device locale.
   stays concise. If rain resumes inside the 90-minute window, the rain phrase
   gains `(again in 45 min)`. Tapping the notification opens the app directly;
   the only action is **Refresh**.
+- **Home-screen widget** (Jetpack Glance, 4×2 target): shows one city, chosen
+  with the per-city **Show in widget** switch and defaulting to the first visible
+  city. It has the compact summary, an absolute `Updated HH:MM`, the 48-hour
+  colour grid as two 24-hour rows, and the `90` quarter-hour row when relevant.
+  Sunrise/sunset markers are omitted because the cells are too small. Tapping
+  opens the app; the widget redraws after each refresh and on city/selection
+  changes. It is a snapshot, so elapsed cells only disappear at the next redraw.
 - **Per-city sun/rain/snow alerts**: each city's details offer optional **Notify
   when sun starts**, **Notify when rain starts** and **Notify when snow starts**
   switches, all off by default.

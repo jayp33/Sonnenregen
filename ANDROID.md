@@ -343,6 +343,40 @@ manual refreshes.
   Actions: **Refresh** only.
 - On Android 13+ request `POST_NOTIFICATIONS` on first launch.
 
+## Widget
+
+A Jetpack Glance (1.2.0) `GlanceAppWidget` is registered through
+`WeatherWidgetReceiver` with a 4×2 target size and a 30-minute system update
+floor as a fallback. It never fetches: `provideGlance()` reads the same DataStore
+forecasts as the UI and builds a `WidgetSnapshot` from the pure
+`widgetSnapshot()` mapper.
+
+- **City selection**: `widget_city` DataStore key, set by the per-city **Show in
+  widget** switch. It is single-select (choosing another city replaces the old
+  choice); clearing it and invalid/hidden/unknown values fall back to the first
+  visible city. Removing a city clears the key if it was the selected one.
+- **Content**: display name, compact summary, absolute `Updated HH:MM` (a
+  snapshot does not tick), the 48-hour grid as two 24-hour rows labelled with the
+  weekday of each row's first cell, and the `90` row when at least one future
+  cell is sun/rain/snow. Sunrise/sunset markers are omitted at this cell size.
+  Elapsed cells are filtered at render time; a fully elapsed grid or nowcast
+  shows the existing `48 h outdated` / `outdated` hints.
+- **Colours and descriptions**: `HourKind.color()`/`label()` live in
+  `WeatherPresentation.kt`, shared with the in-app grid so the widget cannot
+  drift. Each cell carries the same localized content description as the app.
+- **RemoteViews limit**: a Glance `Row`/`Column` may have at most ten children.
+  The hour rows therefore use one label plus four nested group columns, each
+  holding one row of six cells; the `90` row nests its cells the same way.
+- **Updates**: `updateWeatherWidget()` calls `updateAll()` after a successful
+  worker pass and after city add/remove, visibility, order or widget-city
+  changes. `WeatherWidgetReceiver.onUpdate()` also renders from stored state
+  when the widget is first placed. Tapping anywhere opens `MainActivity`; there
+  is no refresh action.
+- **Freshness trade-off**: the widget redraws on the 15-minute refresh cadence,
+  so past colours can linger for up to that long. Adding more frequent widget
+  work solely to blank cells would cost battery, so it is intentionally not
+  done.
+
 ## Lifecycle
 
 - A `BOOT_COMPLETED` / `MY_PACKAGE_REPLACED` receiver re-enqueues the periodic
@@ -384,11 +418,14 @@ app/src/main/java/de/jayp33/sonnenregen/
   receiver/BootReceiver.kt
   ui/HourlyOverview.kt
   ui/MainActivity.kt
+  ui/WeatherPresentation.kt
   ui/WeatherScreen.kt
+  widget/WeatherWidget.kt
+  widget/WidgetSnapshot.kt
 ```
 
 Key dependencies: WorkManager, OkHttp, kotlinx.serialization, DataStore,
-Jetpack Compose, AndroidX Core KTX.
+Jetpack Compose, Jetpack Glance, AndroidX Core KTX.
 
 ## Build and test
 
