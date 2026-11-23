@@ -53,6 +53,7 @@
     <string name="move_up">Move up</string>
     <string name="move_down">Move down</string>
     <string name="show_in_notification">Show in notification</string>
+    <string name="open_on_wetteronline">Open map on WetterOnline</string>
     <string name="additional_notifications">Additional notifications</string>
     <string name="sun_alert">Notify when sun starts</string>
     <string name="rain_alert">Notify when rain starts</string>

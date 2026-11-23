@@ -1,5 +1,6 @@
 package de.jayp33.sonnenregen
 
+import de.jayp33.sonnenregen.domain.cityWebsiteUrl
 import de.jayp33.sonnenregen.domain.displayCity
 import de.jayp33.sonnenregen.domain.displayNameFor
 import de.jayp33.sonnenregen.domain.isValidCitySlug
@@ -41,6 +42,15 @@ class CityTest {
         assertEquals("Neuenburg", displayNameFor("neuenburg", "Neuenburg"))
         assertEquals("Berlin", displayNameFor("berlin", null))
         assertEquals("Berlin", displayNameFor("berlin", ""))
+    }
+
+    @Test
+    fun builds_the_public_map_link_from_the_slug() {
+        assertEquals("https://www.wetteronline.de/wetter/berlin", cityWebsiteUrl("berlin"))
+        assertEquals(
+            "https://www.wetteronline.de/wetter/michelbach-an-der-bilz/gschlachtenbretzingen",
+            cityWebsiteUrl("michelbach-an-der-bilz/gschlachtenbretzingen"),
+        )
     }
 
     @Test

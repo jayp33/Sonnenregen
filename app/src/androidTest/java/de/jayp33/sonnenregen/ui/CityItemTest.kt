@@ -527,6 +527,36 @@ class CityItemTest {
         assertTrue(nowcastGap.value > hourGap.value)
     }
 
+    @Test
+    fun website_link_invokes_the_callback_from_expanded_details() {
+        var opened = false
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                CityItem(
+                    label = "Bützow",
+                    index = 0,
+                    cityCount = 1,
+                    forecast = null,
+                    detailsExpanded = true,
+                    hidden = false,
+                    onToggleExpanded = {},
+                    onToggleNotificationVisibility = {},
+                    onOpenWebsite = { opened = true },
+                    onMove = {},
+                    onRemove = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithTag(WeatherControlTags.OPEN_WEBSITE).assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText(context.getString(R.string.open_on_wetteronline))
+            .performClick()
+        assertTrue(opened)
+    }
+
     private fun forecastWith(nowcastKind: HourKind) = CityForecast(
         city = "berlin",
         compactSummary = "Rain for 15 min, sun in 2 h",

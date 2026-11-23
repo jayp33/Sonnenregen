@@ -50,3 +50,6 @@ fun displayNameFor(slug: String, providerName: String?): String {
         else -> value
     }
 }
+
+/** Public WetterOnline page with the map view, useful for verifying a slug. */
+fun cityWebsiteUrl(slug: String): String = "$BASE_URL/wetter/$slug"

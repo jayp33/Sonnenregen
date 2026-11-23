@@ -43,6 +43,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -54,6 +55,7 @@ import de.jayp33.sonnenregen.R
 import de.jayp33.sonnenregen.data.ALERT_LEAD_OPTIONS
 import de.jayp33.sonnenregen.data.CityForecast
 import de.jayp33.sonnenregen.data.WeatherStore
+import de.jayp33.sonnenregen.domain.cityWebsiteUrl
 import de.jayp33.sonnenregen.domain.currentOrFutureHours
 import de.jayp33.sonnenregen.domain.currentOrFutureNowcast
 import de.jayp33.sonnenregen.domain.displayCity
@@ -73,6 +75,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun WeatherScreen() {
     val context = LocalContext.current
+    val uriHandler = LocalUriHandler.current
     val store = remember { WeatherStore(context) }
     val scope = rememberCoroutineScope()
 
@@ -205,6 +208,7 @@ fun WeatherScreen() {
                             sunLeadMinutes = sunLeadMinutes[city] ?: 0,
                             rainLeadMinutes = rainLeadMinutes[city] ?: 0,
                             nowMillis = nowMillis,
+                            onOpenWebsite = { uriHandler.openUri(cityWebsiteUrl(city)) },
                             onToggleExpanded = {
                                 expandedCities = if (city in expandedCities) {
                                     expandedCities - city
@@ -416,6 +420,7 @@ internal object WeatherControlTags {
     const val RAIN_ALERT = "rain_alert_switch"
     const val SUN_LEAD = "sun_lead_selector"
     const val RAIN_LEAD = "rain_lead_selector"
+    const val OPEN_WEBSITE = "open_website_button"
 }
 
 /** Dropdown with the supported lead times; sun and rain use separate settings. */
@@ -458,6 +463,7 @@ internal fun CityItem(
     nowMillis: Long = 0L,
     onToggleExpanded: () -> Unit,
     onToggleNotificationVisibility: (Boolean) -> Unit,
+    onOpenWebsite: () -> Unit = {},
     onToggleSunAlert: (Boolean) -> Unit = {},
     onToggleRainAlert: (Boolean) -> Unit = {},
     onSetSunLeadMinutes: (Int) -> Unit = {},
@@ -582,6 +588,13 @@ internal fun CityItem(
                     tag = WeatherControlTags.RAIN_LEAD,
                     onSelect = onSetRainLeadMinutes,
                 )
+            }
+
+            TextButton(
+                onClick = onOpenWebsite,
+                modifier = Modifier.testTag(WeatherControlTags.OPEN_WEBSITE),
+            ) {
+                Text(stringResource(R.string.open_on_wetteronline))
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

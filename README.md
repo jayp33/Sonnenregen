@@ -41,9 +41,11 @@ and German, selected by device locale.
   in the app. Slugs stay lowercase for URLs; the app shows the real place name
   from WetterOnline (`frankfurt-oder` → `Frankfurt (Oder)`,
   `michelbach-an-der-bilz/gschlachtenbretzingen` → `Gschlachtenbretzingen`).
-  For places with a two-part WetterOnline path, enter the whole path. Use the
-  ↑/↓ controls in a city’s details to change the order used by the UI and the
-  notification.
+  For places with a two-part WetterOnline path, enter the whole path. Each
+  city’s details include **Open map on WetterOnline**, which opens
+  `https://www.wetteronline.de/wetter/<city>` so the added slug can be verified
+  on the provider's map view. Use the ↑/↓ controls in a city’s details to change
+  the order used by the UI and the notification.
 - **48-hour colour overview**: one row per day, prefixed with its short weekday
   (`Mo`/`Di`/…), split into four six-hour blocks in the city's own local time.
   Yellow means sun, blue means rain, and one very light gray covers clouds and
