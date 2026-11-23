@@ -36,6 +36,10 @@ class Handler(BaseHTTPRequestHandler):
             self._send(400, {"error": str(exc)})
         except (SourceError, RuntimeError) as exc:
             self._send(502, {"error": str(exc)})
+        except Exception as exc:
+            # Never let an unexpected bug close the connection without a reply.
+            self.log_error("Unhandled error while serving %s: %r", self.path, exc)
+            self._send(500, {"error": "Internal server error"})
         else:
             self._send(200, answer.as_dict())
 
