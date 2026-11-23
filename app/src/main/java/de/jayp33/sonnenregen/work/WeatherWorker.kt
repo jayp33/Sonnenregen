@@ -14,6 +14,8 @@ import de.jayp33.sonnenregen.notification.AlertPlanner
 import de.jayp33.sonnenregen.notification.WeatherNotifier
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 
 class WeatherWorker(
     context: Context,
@@ -23,13 +25,14 @@ class WeatherWorker(
     private val client = WetterOnlineClient()
     private val store = WeatherStore(applicationContext)
     private val notifier = WeatherNotifier
+    private val fetchLimit = Semaphore(MAX_CONCURRENT_FETCHES)
 
     override suspend fun doWork(): Result {
         if (!store.isEnabled()) return Result.success()
 
         val cities = store.cities()
         val outcomes = coroutineScope {
-            cities.associateWith { city -> async { fetch(city) } }
+            cities.associateWith { city -> async { fetchLimit.withPermit { fetch(city) } } }
                 .mapValues { (_, deferred) -> deferred.await() }
         }
 
@@ -89,5 +92,6 @@ class WeatherWorker(
 
     private companion object {
         const val TAG = "WeatherWorker"
+        const val MAX_CONCURRENT_FETCHES = 2
     }
 }

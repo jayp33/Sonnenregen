@@ -40,8 +40,16 @@ class WetterOnlineClient {
             if (!response.isSuccessful) {
                 throw SourceException("Could not fetch $url: HTTP ${response.code}")
             }
-            return response.body?.string()
+            val source = response.body?.source()
                 ?: throw SourceException("Empty response from $url")
+            if (source.request(MAX_RESPONSE_BYTES + 1)) {
+                throw SourceException("Oversized response from $url")
+            }
+            return source.readUtf8(MAX_RESPONSE_BYTES)
         }
+    }
+
+    private companion object {
+        const val MAX_RESPONSE_BYTES = 2L * 1024 * 1024
     }
 }
