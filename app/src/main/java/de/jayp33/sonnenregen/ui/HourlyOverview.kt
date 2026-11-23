@@ -100,17 +100,43 @@ fun NowcastOverview(city: String, cells: List<HourCell>, modifier: Modifier = Mo
         horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = stringResource(R.string.nowcast_prefix),
-            modifier = Modifier.width(24.dp),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-        )
+        NowcastPrefix()
         cells.forEach { cell ->
             Cell(cell, cell.timeLabel(), city, showTime = true)
         }
     }
+}
+
+/**
+ * Shown when every stored nowcast cell has elapsed. Keeping the prefixed row
+ * visible with an explicit hint avoids reading a missing row as "no sun/rain".
+ */
+@Composable
+internal fun StaleNowcastRow(modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.fillMaxWidth().testTag(WeatherRowTags.NOWCAST_ROW),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        NowcastPrefix()
+        Text(
+            text = stringResource(R.string.nowcast_stale),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
+private fun NowcastPrefix() {
+    Text(
+        text = stringResource(R.string.nowcast_prefix),
+        modifier = Modifier.width(24.dp),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 1,
+    )
 }
 
 @Composable

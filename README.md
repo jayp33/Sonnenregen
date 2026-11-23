@@ -44,7 +44,9 @@ and German, selected by device locale.
   its input field takes focus right away so typing can start immediately.
   When sun or rain is expected in the next 90 minutes, an extra six-cell row
   prefixed `90` appears underneath with 15-minute detail in the same colours; each cell
-  carries its start time (`21:15`, `21:30`, …).
+  carries its start time (`21:15`, `21:30`, …). Elapsed cells drop out as the clock
+  advances, even when the last refresh failed; once none remain, the row stays
+  visible with an `outdated` hint.
 - **Exact sunrise/sunset** from WetterOnline's own astro data, shown in the app
   UI. Sunshine never starts before sunrise or continues past sunset.
 - **Offline-friendly**: each city keeps its last good forecast. A failed refresh

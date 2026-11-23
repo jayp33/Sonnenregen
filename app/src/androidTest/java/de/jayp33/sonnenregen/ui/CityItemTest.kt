@@ -189,8 +189,9 @@ class CityItemTest {
 
     @Test
     fun nowcast_row_is_hidden_without_sun_or_rain_in_the_90_minutes() {
-        val prefix = InstrumentationRegistry.getInstrumentation()
-            .targetContext.getString(R.string.nowcast_prefix)
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val prefix = context.getString(R.string.nowcast_prefix)
+        val staleLabel = context.getString(R.string.nowcast_stale)
 
         composeTestRule.setContent {
             MaterialTheme {
@@ -211,6 +212,69 @@ class CityItemTest {
         }
 
         composeTestRule.onNodeWithText(prefix).assertDoesNotExist()
+        composeTestRule.onNodeWithText(staleLabel).assertDoesNotExist()
+    }
+
+    @Test
+    fun stale_nowcast_row_shows_an_outdated_hint_when_the_forecast_cannot_refresh() {
+        val staleLabel = InstrumentationRegistry.getInstrumentation()
+            .targetContext.getString(R.string.nowcast_stale)
+        val cellStart = OffsetDateTime.parse("2026-11-21T21:00:00+01:00")
+            .toInstant().toEpochMilli()
+        val forecast = forecastWith(HourKind.RAIN).copy(
+            nowcastCells = listOf(HourCell(cellStart, HourKind.RAIN, "+01:00")),
+        )
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                CityItem(
+                    label = "Berlin",
+                    index = 0,
+                    cityCount = 1,
+                    forecast = forecast,
+                    detailsExpanded = false,
+                    hidden = false,
+                    nowMillis = cellStart + 16 * 60_000L,
+                    onToggleExpanded = {},
+                    onToggleNotificationVisibility = {},
+                    onMove = {},
+                    onRemove = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(staleLabel).assertIsDisplayed()
+    }
+
+    @Test
+    fun current_nowcast_cell_stays_visible_when_the_forecast_cannot_refresh() {
+        val prefix = InstrumentationRegistry.getInstrumentation()
+            .targetContext.getString(R.string.nowcast_prefix)
+        val cellStart = OffsetDateTime.parse("2026-11-21T21:00:00+01:00")
+            .toInstant().toEpochMilli()
+        val forecast = forecastWith(HourKind.RAIN).copy(
+            nowcastCells = listOf(HourCell(cellStart, HourKind.RAIN, "+01:00")),
+        )
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                CityItem(
+                    label = "Berlin",
+                    index = 0,
+                    cityCount = 1,
+                    forecast = forecast,
+                    detailsExpanded = false,
+                    hidden = false,
+                    nowMillis = cellStart + 5 * 60_000L,
+                    onToggleExpanded = {},
+                    onToggleNotificationVisibility = {},
+                    onMove = {},
+                    onRemove = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(prefix).assertIsDisplayed()
     }
 
     @Test

@@ -2,6 +2,7 @@ package de.jayp33.sonnenregen
 
 import de.jayp33.sonnenregen.domain.Daylight
 import de.jayp33.sonnenregen.domain.HourCell
+import de.jayp33.sonnenregen.domain.currentOrFuture
 import de.jayp33.sonnenregen.domain.HourKind
 import de.jayp33.sonnenregen.domain.Slot
 import de.jayp33.sonnenregen.domain.SlotSource
@@ -174,6 +175,18 @@ class HourlyTest {
         assertEquals(HourKind.CLOUDY, cells.last().kind)
         assertEquals("+01:00", cells.first().zoneId)
         assertTrue(cells.any { it.kind.isRain() })
+    }
+
+    @Test
+    fun elapsed_nowcast_cells_are_dropped_but_the_current_one_stays() {
+        val now = at("2026-11-21T21:15:00+01:00").toInstant().toEpochMilli()
+        val old = HourCell(now - 30 * 60_000L, HourKind.RAIN)
+        val justEnded = HourCell(now - 15 * 60_000L, HourKind.SUN)
+        val current = HourCell(now, HourKind.RAIN)
+        val future = HourCell(now + 15 * 60_000L, HourKind.SUN)
+        val cells = listOf(old, justEnded, current, future)
+
+        assertEquals(listOf(current, future), cells.currentOrFuture(now))
     }
 
     @Test
