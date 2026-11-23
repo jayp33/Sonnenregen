@@ -131,7 +131,9 @@ It builds the APK, creates the pre-release if needed and uploads it as
 each run gets its own release. Reusing an explicit tag replaces that release's
 APK. Tags are free-form, so `v0.1.0-debug-2` and `20261121-211942` both work.
 New releases are created on GitHub's default branch; the script warns if local
-commits or edits are not on GitHub.
+commits or edits are not on GitHub. The uploaded APK is debug-signed and
+debuggable, so it is for ad-hoc testing only. For general distribution, build a
+signed release APK with a managed keystore instead.
 
 ## How WetterOnline data is read
 

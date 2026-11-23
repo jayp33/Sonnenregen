@@ -10,6 +10,7 @@
 set -euo pipefail
 
 tag="${1:-$(date +%Y%m%d-%H%M%S)}"
+echo "Note: this publishes a debug-signed, debuggable APK for testing only." >&2
 echo "Release tag: $tag"
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
