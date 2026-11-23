@@ -9,8 +9,20 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okio.BufferedSource
 
 class SourceException(message: String, cause: Throwable? = null) : Exception(message, cause)
+
+/**
+ * Reject bodies larger than [limit], then read everything that remains.
+ *
+ * `readUtf8(byteCount)` requires exactly that many bytes and throws EOFException
+ * for the normal case of a shorter response, so it must not be used for a cap.
+ */
+internal fun readBounded(source: BufferedSource, limit: Long): String {
+    if (source.request(limit + 1)) throw SourceException("Oversized response")
+    return source.readUtf8()
+}
 
 class WetterOnlineClient {
     private val client = OkHttpClient()
@@ -40,10 +52,11 @@ class WetterOnlineClient {
             }
             val source = response.body?.source()
                 ?: throw SourceException("Empty response from $url")
-            if (source.request(MAX_RESPONSE_BYTES + 1)) {
-                throw SourceException("Oversized response from $url")
+            return try {
+                readBounded(source, MAX_RESPONSE_BYTES)
+            } catch (exc: SourceException) {
+                throw SourceException("Oversized response from $url", exc)
             }
-            return source.readUtf8(MAX_RESPONSE_BYTES)
         }
     }
 
