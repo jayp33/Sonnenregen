@@ -41,6 +41,10 @@ data class Slot(
     val snowing: Boolean get() = isSnowSymbol(symbol)
 }
 
+/**
+ * A code such as "wbr1__" is both sunny and rainy: the sun can be visible
+ * between showers. This and [isRainSymbol] are intentionally not exclusive.
+ */
 fun isSunSymbol(symbol: String): Boolean =
     symbol.startsWith("so") || symbol.startsWith("wb")
 

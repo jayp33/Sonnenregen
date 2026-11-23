@@ -204,11 +204,13 @@ class ForecastAnalyzerTest {
     fun symbol_classification() {
         assertTrue(isSunSymbol("so____"))
         assertTrue(isSunSymbol("wb____"))
+        assertTrue(isSunSymbol("wbr1__")) // sun between showers
         assertFalse(isSunSymbol("bw____"))
 
         assertTrue(isRainSymbol("mdr1__"))
         assertTrue(isRainSymbol("mds1__"))
         assertTrue(isRainSymbol("bdr2__"))
+        assertTrue(isRainSymbol("wbr1__"))
         assertFalse(isRainSymbol("mdsn1_"))
         assertFalse(isRainSymbol("so____"))
 

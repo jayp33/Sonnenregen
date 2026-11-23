@@ -63,6 +63,10 @@ class SymbolTests(unittest.TestCase):
         slot = Slot(now, timedelta(minutes=15), "so____", "current", solar_elevation=-2.0)
         self.assertFalse(slot.sunny)
 
+    def test_sun_between_showers_matches_both_conditions(self) -> None:
+        self.assertTrue(is_sun_symbol("wbr1__"))
+        self.assertTrue(is_rain_symbol("wbr1__"))
+
     def test_rain_symbols(self) -> None:
         self.assertTrue(is_rain_symbol("mdr1__"))
         self.assertTrue(is_rain_symbol("mds1__"))

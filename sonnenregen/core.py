@@ -148,7 +148,11 @@ class Answer:
 
 
 def is_sun_symbol(symbol: str) -> bool:
-    """True for symbols that show the sun (clear or with a few clouds)."""
+    """True for symbols that show the sun (clear or with a few clouds).
+
+    A code such as ``wbr1__`` is both sunny and rainy: the sun can be visible
+    between showers. These predicates are intentionally not exclusive.
+    """
     return symbol.startswith(SUN_SYMBOL_PREFIXES)
 
 
