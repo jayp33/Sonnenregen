@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sonnenregen"
+dynamic = ["version"]
+description = "Read WetterOnline forecasts and answer when sun or rain is expected"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+sonnenregen = "sonnenregen.cli:main"
+
+[tool.setuptools]
+packages = ["sonnenregen"]
+
+[tool.setuptools.dynamic]
+version = { attr = "sonnenregen.core.__version__" }
