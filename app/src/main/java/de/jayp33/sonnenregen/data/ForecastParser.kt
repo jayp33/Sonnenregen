@@ -3,6 +3,8 @@ package de.jayp33.sonnenregen.data
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 
 class ParseException(message: String, cause: Throwable? = null) : Exception(message, cause)
@@ -17,6 +19,9 @@ data class PageData(
 )
 
 object ForecastParser {
+    private const val SHORTCAST_URL = "https://api-web.wo-cloud.com/blending/shortcast/v1?"
+    private const val ASTRO_URL = "https://api-web.wo-cloud.com/astro/days/v1?"
+
     private val ngStateRegex = Regex(
         """(?is)<script[^>]*\bid=["']ng-state["'][^>]*>(.*?)</script>""",
     )
@@ -38,6 +43,10 @@ object ForecastParser {
         """\s*-\s*WetterOnline\s*$""",
         RegexOption.IGNORE_CASE,
     )
+    private val genericNameRegex = Regex(
+        """^(?:wetter|startseite|navigation|menü|suche|login|home|wettertrend|90[ -]minuten[ -]wetter)$""",
+        RegexOption.IGNORE_CASE,
+    )
     /**
      * Some page variants append a descriptor after the place, e.g.
      * "Frankfurt (Oder) - 4 Tage Vorhersage". Only drop such a suffix when it
@@ -55,13 +64,20 @@ object ForecastParser {
      * The title is a fallback; neither is part of the machine-readable payload.
      */
     internal fun extractPlaceName(html: String): String? {
-        val fromHeading = h1Regex.find(html)?.groupValues?.get(1)?.let(::cleanName)
-        if (!fromHeading.isNullOrBlank()) return fromHeading
+        val fromHeading = h1Regex.findAll(html)
+            .mapNotNull { match -> cleanName(match.groupValues[1]).takeIf(::isPlaceName) }
+            .firstOrNull()
+        if (fromHeading != null) return fromHeading
 
-        return titleRegex.find(html)?.groupValues?.get(1)
-            ?.let(::cleanName)
-            ?.takeIf { it.isNotBlank() }
+        return titleRegex.findAll(html)
+            .mapNotNull { match -> cleanName(match.groupValues[1]).takeIf(::isPlaceName) }
+            .firstOrNull()
     }
+
+    private fun isPlaceName(name: String): Boolean =
+        name.isNotBlank() &&
+            !name.contains("WetterOnline", ignoreCase = true) &&
+            !genericNameRegex.matches(name)
 
     private fun cleanName(raw: String): String = tagRegex.replace(raw, " ")
         .let(::decodeEntities)
@@ -116,27 +132,28 @@ object ForecastParser {
         val state = json.parseToJsonElement(match.groupValues[1]) as? JsonObject
             ?: throw ParseException("Unexpected ng-state payload")
 
-        val shortcastEntry = state.entries.firstOrNull { it.key.contains("/blending/shortcast/v1?") }
+        val shortcastValue = state.usableEntry(SHORTCAST_URL, "hours")
             ?: throw ParseException("No shortcast data found in the ng-state payload")
         val shortcast = try {
-            json.decodeFromJsonElement(ShortcastDto.serializer(), shortcastEntry.value)
+            json.decodeFromJsonElement(ShortcastDto.serializer(), shortcastValue)
         } catch (exc: Exception) {
             throw ParseException("Invalid shortcast payload: ${exc.message}", exc)
         }
 
         // Sunrise/sunset is a bonus: a missing or malformed astro payload must
         // not make an otherwise usable forecast fail.
-        val astroEntry = state.entries.firstOrNull { it.key.contains("/astro/days/v1?") }
-        val astro = astroEntry?.let { entry ->
-            try {
-                json.decodeFromJsonElement(AstroDto.serializer(), entry.value)
-            } catch (_: Exception) {
-                null
-            }
+        val astro = state.usableEntry(ASTRO_URL, "days")?.let { value ->
+            runCatching { json.decodeFromJsonElement(AstroDto.serializer(), value) }.getOrNull()
         }
 
         return PageData(shortcast, astro, extractPlaceName(html), canonicalSlug(html))
     }
+
+    /** Prefer the first entry that has the expected shape, not just a matching URL. */
+    private fun JsonObject.usableEntry(urlPrefix: String, field: String): JsonElement? =
+        entries.firstOrNull { (key, value) ->
+            key.startsWith(urlPrefix) && value is JsonObject && value[field] is JsonArray
+        }?.value
 
     private fun canonicalSlug(html: String): String? = canonicalSlugRegex.findAll(html)
         .map { it.groupValues[1] }

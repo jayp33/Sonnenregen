@@ -89,6 +89,31 @@ class ForecastParserTest {
     }
 
     @Test
+    fun skips_generic_headings_and_boilerplate_titles() {
+        val fromHeading = "<h1>WetterOnline</h1><h1>Wetter Berlin</h1>" + TestData.page()
+        val fromTitle = "<title>WetterOnline - Wetter und Klima</title>" +
+            "<title>Wetter Berlin - WetterOnline</title>" + TestData.page()
+
+        assertEquals("Berlin", ForecastParser.parsePageData(fromHeading).placeName)
+        assertEquals("Berlin", ForecastParser.parsePageData(fromTitle).placeName)
+    }
+
+    @Test
+    fun picks_well_formed_state_entries() {
+        val page = """<script id="ng-state" type="application/json">{
+            "https://api-web.wo-cloud.com/blending/shortcast/v1?stale":{"unexpected":true},
+            "https://api-web.wo-cloud.com/blending/shortcast/v1?test":${TestData.shortcastJson},
+            "https://api-web.wo-cloud.com/astro/days/v1?stale":{"days":"not a list"},
+            "https://api-web.wo-cloud.com/astro/days/v1?test":${TestData.astroJson}
+        }</script>"""
+
+        val data = ForecastParser.parsePageData(page)
+
+        assertEquals(49, data.shortcast.hours.size)
+        assertEquals(3, data.astro!!.days.size)
+    }
+
+    @Test
     fun missing_or_broken_astro_does_not_break_the_forecast() {
         assertNull(ForecastParser.parsePageData(TestData.page()).astro)
 
