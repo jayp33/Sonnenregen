@@ -1,6 +1,7 @@
 package de.jayp33.sonnenregen.ui
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
@@ -460,6 +461,7 @@ class CityItemTest {
     fun widget_toggle_reports_selection_and_deselection() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         var selected: Boolean? = null
+        val widgetSelected = mutableStateOf(false)
 
         composeTestRule.setContent {
             MaterialTheme {
@@ -470,6 +472,7 @@ class CityItemTest {
                     forecast = null,
                     detailsExpanded = true,
                     hidden = false,
+                    widgetSelected = widgetSelected.value,
                     onToggleExpanded = {},
                     onToggleNotificationVisibility = {},
                     onToggleWidget = { selected = it },
@@ -485,25 +488,7 @@ class CityItemTest {
         composeTestRule.onNodeWithTag(WeatherControlTags.WIDGET).assertIsOff().performClick()
         assertEquals(true, selected)
 
-        composeTestRule.setContent {
-            MaterialTheme {
-                CityItem(
-                    label = "Berlin",
-                    index = 0,
-                    cityCount = 1,
-                    forecast = null,
-                    detailsExpanded = true,
-                    hidden = false,
-                    widgetSelected = true,
-                    onToggleExpanded = {},
-                    onToggleNotificationVisibility = {},
-                    onToggleWidget = { selected = it },
-                    onMove = {},
-                    onRemove = {},
-                )
-            }
-        }
-
+        composeTestRule.runOnIdle { widgetSelected.value = true }
         composeTestRule.onNodeWithTag(WeatherControlTags.WIDGET).assertIsOn().performClick()
         assertEquals(false, selected)
     }
