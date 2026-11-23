@@ -503,18 +503,20 @@ def analyze(
     city: str = DEFAULT_CITY,
     *,
     now: datetime | None = None,
-    fetcher: Callable[[str], str] = fetch_page,
+    fetcher: Callable[[str], str] | None = None,
 ) -> Answer:
     """Return sun/rain timings for a WetterOnline city slug."""
     city = (city or DEFAULT_CITY).strip().lower()
     if not CITY_RE.fullmatch(city):
         raise ValueError(f"Invalid city slug: {city!r}")
 
+    # Resolve at call time so patching core.fetch_page works as expected.
+    fetch = fetcher if fetcher is not None else fetch_page
     hourly_url = f"{BASE_URL}{HOURLY_PATH.format(city=city)}"
     nowcast_url = f"{BASE_URL}{NOWCAST_PATH.format(city=city)}"
     with ThreadPoolExecutor(max_workers=2) as pool:
-        hourly_future = pool.submit(fetcher, hourly_url)
-        nowcast_future = pool.submit(fetcher, nowcast_url)
+        hourly_future = pool.submit(fetch, hourly_url)
+        nowcast_future = pool.submit(fetch, nowcast_url)
         hourly_page = hourly_future.result()
         nowcast_page = nowcast_future.result()
 

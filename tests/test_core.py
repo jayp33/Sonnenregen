@@ -186,6 +186,13 @@ class AnalyzeTests(unittest.TestCase):
         self.assertIn("Rain starts in", answer.rain.summary)
         self.assertEqual(len(answer.as_dict()["sources"]), 2)
 
+    def test_default_fetcher_is_resolved_at_call_time(self) -> None:
+        with patch.object(core, "fetch_page", side_effect=lambda url: PAGES[url]) as fetch:
+            answer = analyze("berlin")
+
+        self.assertEqual(2, fetch.call_count)
+        self.assertEqual("2026-11-21T08:00:00+01:00", answer.sun.at.isoformat())
+
     def test_clear_night_symbol_starts_sunshine_at_exact_sunrise(self) -> None:
         page = make_state(
             hours=[
