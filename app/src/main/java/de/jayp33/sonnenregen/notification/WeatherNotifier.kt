@@ -60,16 +60,22 @@ object WeatherNotifier {
         }
     }
 
-    /** Post one independent, auto-cancelling alert per city/condition. */
-    fun showAlerts(context: Context, alerts: List<WeatherAlert>) {
+    /**
+     * Post one independent, auto-cancelling alert per city/condition.
+     * Returns false if any post was denied so callers can retry the episode.
+     */
+    fun showAlerts(context: Context, alerts: List<WeatherAlert>): Boolean {
         val manager = NotificationManagerCompat.from(context)
+        var allPosted = true
         alerts.forEach { alert ->
             try {
                 manager.notify(alertNotificationId(alert), buildAlertNotification(context, alert))
             } catch (exc: SecurityException) {
+                allPosted = false
                 Log.w(TAG, "Cannot post alert for ${alert.city}", exc)
             }
         }
+        return allPosted
     }
 
     internal fun alertNotificationId(alert: WeatherAlert): Int =

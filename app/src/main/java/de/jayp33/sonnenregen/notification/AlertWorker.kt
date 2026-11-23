@@ -35,7 +35,7 @@ class AlertWorker(
             return Result.success()
         }
 
-        WeatherNotifier.showAlerts(
+        val posted = WeatherNotifier.showAlerts(
             applicationContext,
             listOf(
                 WeatherAlert(
@@ -48,7 +48,9 @@ class AlertWorker(
                 ),
             ),
         )
-        store.markAlertNotified(key, eventAtMillis ?: -1L)
+        // Keep the episode SCHEDULED if the notification was denied; a later
+        // refresh can re-enqueue it once the user restores permission.
+        if (posted) store.markAlertNotified(key, eventAtMillis ?: -1L)
         return Result.success()
     }
 
