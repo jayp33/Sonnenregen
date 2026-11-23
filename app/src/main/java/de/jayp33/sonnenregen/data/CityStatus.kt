@@ -1,6 +1,7 @@
 package de.jayp33.sonnenregen.data
 
 import de.jayp33.sonnenregen.domain.displayCity
+import de.jayp33.sonnenregen.domain.displayNameFor
 
 /** One city's line in the notification, in configured city order. */
 data class CityStatus(
@@ -21,7 +22,7 @@ fun buildStatuses(
     when {
         forecast != null -> CityStatus(
             city = city,
-            displayName = forecast.displayName.ifBlank { displayCity(city) },
+            displayName = displayNameFor(city, forecast.displayName),
             compactSummary = forecast.compactSummary,
             fetchedAtMillis = forecast.fetchedAtMillis,
             stale = city in staleCities,

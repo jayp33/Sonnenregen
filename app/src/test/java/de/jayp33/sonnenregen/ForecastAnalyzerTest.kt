@@ -41,6 +41,17 @@ class ForecastAnalyzerTest {
     }
 
     @Test
+    fun repairs_mangled_place_names_using_the_city_slug() {
+        val page = "<title>Wetter Bï¿½tzow - 4 Tage Vorhersage - WetterOnline</title>" +
+            TestData.page()
+
+        val forecast = ForecastAnalyzer.analyze("buetzow", page, page)
+
+        assertEquals("buetzow", forecast.city)
+        assertEquals("Bützow", forecast.displayName)
+    }
+
+    @Test
     fun uses_exact_sunrise_and_reports_next_sun_times() {
         val morning = TestData.sunnyMorningShortcast
         val forecast = ForecastAnalyzer.analyze(

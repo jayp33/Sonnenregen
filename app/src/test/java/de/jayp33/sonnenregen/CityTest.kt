@@ -1,6 +1,7 @@
 package de.jayp33.sonnenregen
 
 import de.jayp33.sonnenregen.domain.displayCity
+import de.jayp33.sonnenregen.domain.displayNameFor
 import de.jayp33.sonnenregen.domain.isValidCitySlug
 import de.jayp33.sonnenregen.domain.normalizeCity
 import org.junit.Assert.assertEquals
@@ -24,6 +25,22 @@ class CityTest {
             displayCity("michelbach-an-der-bilz/gschlachtenbretzingen"),
         )
         assertEquals("", displayCity(""))
+    }
+
+    @Test
+    fun rebuilds_mangled_names_from_the_slug() {
+        assertEquals("Bützow", displayNameFor("buetzow", "Bï¿½tzow"))
+        assertEquals("Großenhain", displayNameFor("grossenhain", "Groï¿½enhain"))
+        assertEquals("Bad München", displayNameFor("bad-muenchen", "Bad Mï¿½nchen"))
+        assertEquals("Lübeck", displayNameFor("luebeck", "L\uFFFDbeck"))
+    }
+
+    @Test
+    fun keeps_clean_provider_names_and_falls_back_for_missing_ones() {
+        assertEquals("Frankfurt (Oder)", displayNameFor("frankfurt-oder", "Frankfurt (Oder)"))
+        assertEquals("Neuenburg", displayNameFor("neuenburg", "Neuenburg"))
+        assertEquals("Berlin", displayNameFor("berlin", null))
+        assertEquals("Berlin", displayNameFor("berlin", ""))
     }
 
     @Test

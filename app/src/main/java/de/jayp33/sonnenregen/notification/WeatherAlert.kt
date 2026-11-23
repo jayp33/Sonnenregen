@@ -2,7 +2,7 @@ package de.jayp33.sonnenregen.notification
 
 import de.jayp33.sonnenregen.data.CityForecast
 import de.jayp33.sonnenregen.domain.TIMEZONE
-import de.jayp33.sonnenregen.domain.displayCity
+import de.jayp33.sonnenregen.domain.displayNameFor
 import kotlinx.serialization.Serializable
 
 /** Which condition a per-city alert is about. */
@@ -107,7 +107,7 @@ object AlertPlanner {
             }
             val alert = WeatherAlert(
                 city = city,
-                displayName = forecast.displayName.ifBlank { displayCity(city) },
+                displayName = displayNameFor(city, forecast.displayName),
                 kind = kind,
                 leadMinutes = lead,
                 eventAtMillis = eventAt,

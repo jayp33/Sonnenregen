@@ -68,16 +68,38 @@ object ForecastParser {
         .trim()
         .takeIf { it.length in 1..120 } ?: ""
 
+    private val namedEntities = mapOf(
+        "nbsp" to " ",
+        "amp" to "&",
+        "quot" to "\"",
+        "apos" to "'",
+        "lt" to "<",
+        "gt" to ">",
+        "auml" to "ä",
+        "Auml" to "Ä",
+        "ouml" to "ö",
+        "Ouml" to "Ö",
+        "uuml" to "ü",
+        "Uuml" to "Ü",
+        "szlig" to "ß",
+    )
+
     private fun decodeEntities(value: String): String = entityRegex.replace(value) { match ->
-        when (val entity = match.groupValues[1].lowercase()) {
-            "nbsp" -> " "
-            "amp" -> "&"
-            "quot" -> "\""
-            "apos", "#39", "#x27" -> "'"
-            "lt" -> "<"
-            "gt" -> ">"
-            else -> match.value
+        val entity = match.groupValues[1]
+        when {
+            entity.startsWith("#") -> decodeNumericEntity(entity, match.value)
+            else -> namedEntities[entity] ?: match.value
         }
+    }
+
+    private fun decodeNumericEntity(entity: String, fallback: String): String {
+        val code = if (entity.startsWith("#x", ignoreCase = true)) {
+            entity.substring(2).toIntOrNull(16)
+        } else {
+            entity.substring(1).toIntOrNull()
+        }
+        return code?.let { value -> runCatching { Char(value).toString() }.getOrNull() }
+            ?: fallback
     }
 
     fun parsePage(html: String): ShortcastDto = parsePageData(html).shortcast

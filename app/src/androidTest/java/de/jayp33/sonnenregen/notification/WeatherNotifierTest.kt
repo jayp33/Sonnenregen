@@ -67,6 +67,27 @@ class WeatherNotifierTest {
     }
 
     @Test
+    fun umlauts_in_city_names_reach_the_notification_unchanged() {
+        val sun = WeatherNotifier.buildAlertNotification(
+            context,
+            WeatherAlert("buetzow", "Bützow", AlertKind.SUN),
+        )
+        val rain = WeatherNotifier.buildAlertNotification(
+            context,
+            WeatherAlert("grossenhain", "Großenhain", AlertKind.RAIN),
+        )
+
+        assertEquals(
+            context.getString(R.string.alert_sun, "Bützow"),
+            sun.extras.getCharSequence(Notification.EXTRA_TEXT).toString(),
+        )
+        assertEquals(
+            context.getString(R.string.alert_rain, "Großenhain"),
+            rain.extras.getCharSequence(Notification.EXTRA_TEXT).toString(),
+        )
+    }
+
+    @Test
     fun lead_time_alerts_announce_the_start_in_the_citys_timezone() {
         val sunStart = OffsetDateTime.parse("2026-11-23T11:30:00Z").toInstant().toEpochMilli()
         val sun = WeatherNotifier.buildAlertNotification(

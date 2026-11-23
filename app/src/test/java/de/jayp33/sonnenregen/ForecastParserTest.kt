@@ -73,6 +73,14 @@ class ForecastParserTest {
     }
 
     @Test
+    fun decodes_umlaut_entities_in_place_names() {
+        val page = "<h1>Wetter K&ouml;ln &amp; M&uuml;nchen &#223; &Uuml;berlingen</h1>" +
+            TestData.page()
+
+        assertEquals("Köln & München ß Überlingen", ForecastParser.parsePageData(page).placeName)
+    }
+
+    @Test
     fun missing_or_broken_astro_does_not_break_the_forecast() {
         assertNull(ForecastParser.parsePageData(TestData.page()).astro)
 
