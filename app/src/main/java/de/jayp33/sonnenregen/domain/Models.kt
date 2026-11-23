@@ -83,8 +83,6 @@ data class Forecast(
     /** Snow onset/end, mirroring [rain]; null in forecasts built without it. */
     val snow: Change? = null,
     val rainOutlook: RainOutlook = RainOutlook(),
-    val horizon: OffsetDateTime?,
-    val sources: List<String>,
     val fetchedAt: OffsetDateTime = OffsetDateTime.now(),
     val sunrise: OffsetDateTime? = null,
     val sunset: OffsetDateTime? = null,

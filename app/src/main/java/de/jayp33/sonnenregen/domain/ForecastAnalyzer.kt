@@ -63,11 +63,6 @@ object ForecastAnalyzer {
             rain = change(reference, timeline, { it.raining }, Condition.RAIN),
             snow = change(reference, timeline, { it.snowing }, Condition.SNOW),
             rainOutlook = rainOutlook,
-            horizon = timeline.last().end,
-            sources = listOf(
-                "$BASE_URL/wettertrend/$normalizedCity",
-                "$BASE_URL/90-minuten-wetter/$normalizedCity",
-            ),
             sunrise = windows.map { it.rise }.firstOrNull { !it.isBefore(reference) },
             sunset = windows.map { it.set }.firstOrNull { !it.isBefore(reference) },
             hours = hourlyCells(reference, hours, current, windows),
