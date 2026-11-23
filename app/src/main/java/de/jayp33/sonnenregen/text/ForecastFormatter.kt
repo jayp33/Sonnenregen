@@ -10,56 +10,56 @@ import kotlin.math.abs
 object ForecastFormatter {
     private val SUMMARY_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm xx")
 
-    /** One compact line for the notification: soonest event first. */
-    fun compact(forecast: Forecast, phrases: ForecastPhrases): String =
-        compact(
-            sun = forecast.sun,
-            rain = forecast.rain,
-            snow = forecast.snow,
-            phrases = phrases,
-            rainAgainInMinutes = forecast.rainOutlook.againInMinutes,
-        )
-
-    /** Two-condition form for callers without snow data. */
-    fun compact(
-        sun: Change,
-        rain: Change,
-        phrases: ForecastPhrases,
-        rainAgainInMinutes: Long? = null,
-    ): String = compact(sun, rain, null, phrases, rainAgainInMinutes)
-
     /**
-     * Snow is optional: forecasts stored before snow support have none. All three
-     * conditions compete for the line's two slots by onset time; on a tie sun
-     * keeps its existing win over rain, and rain wins over snow. So a mixed
-     * rain/snow forecast still names rain when only one of the two fits.
+     * One compact line for the notification. Sun is always present. Rain and snow
+     * each get a slot when they are forecast in the horizon, so both can appear
+     * together. When neither is forecast, the plain "no rain" phrase is used so
+     * the line never loses the sun information. Ties go sun > rain > snow.
      */
+    fun compact(forecast: Forecast, phrases: ForecastPhrases): String {
+        val rain = forecast.rain
+        val hasRain = rain.currently || rain.minutes != null
+        // Snow is optional: forecasts stored before snow support have none.
+        val snow = forecast.snow?.takeIf { it.currently || it.minutes != null }
+        val changes = buildList {
+            add(forecast.sun)
+            if (hasRain) add(rain)
+            if (snow != null) add(snow)
+            if (!hasRain && snow == null) add(rain) // renders as "no rain"
+        }
+        return compact(changes, phrases, forecast.rainOutlook.againInMinutes)
+    }
+
+    /** Two-condition form for callers without a whole forecast. */
     fun compact(
         sun: Change,
         rain: Change,
-        snow: Change?,
         phrases: ForecastPhrases,
         rainAgainInMinutes: Long? = null,
+    ): String = compact(listOf(sun, rain), phrases, rainAgainInMinutes)
+
+    private fun compact(
+        changes: List<Change>,
+        phrases: ForecastPhrases,
+        rainAgainInMinutes: Long?,
     ): String {
-        val ordered = listOfNotNull(sun, rain, snow).sortedWith(
+        val ordered = changes.sortedWith(
             compareBy<Change> { orderKey(it) }.thenBy { tieBreak(it.condition) },
         )
-        // Sun and rain are always present, so there are always two slots to fill.
-        val first = ordered[0]
-        val second = ordered[1]
-        val firstText = phrase(
-            first,
-            phrases,
-            rainAgainInMinutes.takeIf { first.condition == Condition.RAIN },
-        )
-        val secondText = phrase(
-            second,
-            phrases,
-            rainAgainInMinutes.takeIf { second.condition == Condition.RAIN },
-        ).let {
-            if (phrases.lowerCaseSecond) it.replaceFirstChar { char -> char.lowercase() } else it
+        val texts = ordered.mapIndexed { index, change ->
+            val text = phrase(
+                change,
+                phrases,
+                rainAgainInMinutes.takeIf { change.condition == Condition.RAIN },
+            )
+            if (index > 0 && phrases.lowerCaseTrailing) {
+                text.replaceFirstChar { it.lowercase() }
+            } else {
+                text
+            }
         }
-        return format(phrases.pair, firstText, secondText)
+        val template = if (texts.size == 3) phrases.triple else phrases.pair
+        return format(template, *texts.toTypedArray())
     }
 
     /** Verbose single-condition text for the app UI. */
@@ -152,7 +152,7 @@ object ForecastFormatter {
         return format(phrases.rainAgain, text, duration(againInMinutes, phrases))
     }
 
-    /** Sun keeps its old tie win; rain has precedence over snow. */
+    /** On equal onset times, keep the old sun-first rule and let rain beat snow. */
     private fun tieBreak(condition: Condition): Int = when (condition) {
         Condition.SUN -> 0
         Condition.RAIN -> 1

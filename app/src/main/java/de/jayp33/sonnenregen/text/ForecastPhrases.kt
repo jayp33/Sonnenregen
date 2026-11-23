@@ -4,8 +4,10 @@ import android.content.Context
 import de.jayp33.sonnenregen.R
 
 data class ForecastPhrases(
-    val lowerCaseSecond: Boolean,
+    /** Whether every phrase after the first is lowercased (English style). */
+    val lowerCaseTrailing: Boolean,
     val pair: String,
+    val triple: String,
     val durationHoursMinutes: String,
     val durationHours: String,
     val durationMinutes: String,
@@ -38,8 +40,9 @@ data class ForecastPhrases(
 ) {
     companion object {
         fun from(context: Context) = ForecastPhrases(
-            lowerCaseSecond = context.resources.getBoolean(R.bool.forecast_lowercase_second),
+            lowerCaseTrailing = context.resources.getBoolean(R.bool.forecast_lowercase_second),
             pair = context.getString(R.string.forecast_pair),
+            triple = context.getString(R.string.forecast_triple),
             durationHoursMinutes = context.getString(R.string.duration_hours_minutes),
             durationHours = context.getString(R.string.duration_hours),
             durationMinutes = context.getString(R.string.duration_minutes),

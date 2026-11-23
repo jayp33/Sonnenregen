@@ -290,12 +290,17 @@ manual refreshes.
   - `Rain now, no sun` / `Regen jetzt, keine Sonne`
   - `Rain for 10 min (again in 45 min), sun in 2 h` /
     `Regen noch 10 Min. (wieder in 45 Min.), Sonne in 2 Std.`
-  - `Snow in 30 min, sun in 5 h` / `Schnee in 30 Min., Sonne in 5 Std.`
-  Ordering uses the event's minutes from the provider's observation time.
-  Ongoing conditions sort first, events with no change sort last. Sun, rain and
-  snow compete for the two slots; ties are broken sun > rain > snow, so when
-  three conditions are present a same-time snow onset loses to rain. The second
-  phrase is lowercased so the line reads naturally. A second
+  - `Snow in 30 min, sun in 10 h 33 min` /
+    `Schnee in 30 Min., Sonne in 10 Std. 33 Min.` (without rain)
+  - `Snow in 5 min, rain in 30 min, sun in 10 h 33 min` /
+    `Schnee in 5 Min., Regen in 30 Min., Sonne in 10 Std. 33 Min.` (with both)
+  Sun is always one of the phrases. Rain and snow each get a phrase whenever they
+  have an onset/end in the horizon, so both can appear together in a three-part
+  line. If neither has one, the plain `no rain` phrase fills the second slot.
+  Ordering uses the event's minutes from the provider's observation time:
+  ongoing conditions sort first, events with no change sort last, and ties go
+  sun > rain > snow. Every phrase after the first is lowercased so the line reads
+  naturally. A second
   rain window inside WetterOnline's 90-minute nowcast is appended to the rain
   phrase as `(again in 45 min)`; hourly-only rain beyond that window never gets
   the hint. The verbose per-condition summaries remain in the app UI only and
@@ -303,8 +308,9 @@ manual refreshes.
 - One-shot onset alerts use the separate `weather_alerts` channel. Sun, rain and
   snow each have their own per-city enable flag, lead time, `AlertKey` state and
   WorkManager job name, so independent episodes never collide — a city with both
-  rain and snow forecast gets both alerts at their own onset times. Only the
-  shared compact line applies rain-over-snow precedence. Alert states and lead
+  rain and snow forecast gets both alerts at their own onset times. The shared
+  compact line merely lists all forecast conditions side by side; it never
+  suppresses an alert. Alert states and lead
   times are DataStore JSON with default-off/absent values for old installs.
 - Freshness: each city stores its own `fetchedAtMillis`. The notification uses
   the oldest of the shown timestamps via `setWhen()` and `setShowWhen(true)`.

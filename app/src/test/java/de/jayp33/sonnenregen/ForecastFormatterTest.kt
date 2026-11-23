@@ -113,54 +113,57 @@ class ForecastFormatterTest {
     }
 
     @Test
-    fun compact_includes_snow_but_rain_wins_ties() {
+    fun compact_shows_sun_rain_and_snow_together() {
+        val forecast = ForecastAnalyzer.analyze("berlin", TestData.page(), TestData.page()).copy(
+            rain = change(Condition.RAIN, minutes = 30),
+            snow = change(Condition.SNOW, minutes = 5),
+        )
+
+        // All three are in the horizon: three slots, ordered by onset, sun kept.
         assertEquals(
-            "Snow in 30 min, sun in 5 h",
-            ForecastFormatter.compact(
-                sun = change(Condition.SUN, minutes = 300),
-                rain = change(Condition.RAIN, minutes = 400),
-                snow = change(Condition.SNOW, minutes = 30),
-                phrases = english,
-            ),
+            "Snow in 5 min, rain in 30 min, sun in 10 h 33 min",
+            ForecastFormatter.compact(forecast, english),
         )
         assertEquals(
-            "Schnee in 30 Min., Sonne in 5 Std.",
-            ForecastFormatter.compact(
-                sun = change(Condition.SUN, minutes = 300),
-                rain = change(Condition.RAIN, minutes = 400),
-                snow = change(Condition.SNOW, minutes = 30),
-                phrases = german,
-            ),
+            "Schnee in 5 Min., Regen in 30 Min., Sonne in 10 Std. 33 Min.",
+            ForecastFormatter.compact(forecast, german),
+        )
+        // On a tie the old sun-first rule stays; rain still beats snow.
+        val tied = forecast.copy(
+            sun = change(Condition.SUN, minutes = 30),
+            rain = change(Condition.RAIN, minutes = 30),
+            snow = change(Condition.SNOW, minutes = 30),
         )
         assertEquals(
-            "Rain in 1 h, snow in 1 h",
-            ForecastFormatter.compact(
-                sun = change(Condition.SUN, minutes = 300),
-                rain = change(Condition.RAIN, minutes = 60),
-                snow = change(Condition.SNOW, minutes = 60),
-                phrases = english,
-            ),
-        )
-        // A later snow event drops out: the notification line still has two slots.
-        assertEquals(
-            "Sun in 2 h 10 min, rain in 5 h",
-            ForecastFormatter.compact(
-                sun = change(Condition.SUN, minutes = 130),
-                rain = change(Condition.RAIN, minutes = 300),
-                snow = change(Condition.SNOW, minutes = 400),
-                phrases = english,
-            ),
+            "Sun in 30 min, rain in 30 min, snow in 30 min",
+            ForecastFormatter.compact(tied, english),
         )
     }
 
     @Test
-    fun compact_uses_the_forecasts_snow_change() {
-        val forecast = ForecastAnalyzer.analyze("berlin", TestData.page(), TestData.page())
-            .copy(snow = change(Condition.SNOW, minutes = 30))
+    fun compact_omits_snow_without_an_onset() {
+        val base = ForecastAnalyzer.analyze("berlin", TestData.page(), TestData.page())
+        val snowy = base.copy(
+            rain = change(Condition.RAIN),
+            snow = change(Condition.SNOW, minutes = 30),
+        )
 
         assertEquals(
             "Snow in 30 min, sun in 10 h 33 min",
-            ForecastFormatter.compact(forecast, english),
+            ForecastFormatter.compact(snowy, english),
+        )
+        assertEquals(
+            "Schnee in 30 Min., Sonne in 10 Std. 33 Min.",
+            ForecastFormatter.compact(snowy, german),
+        )
+        // A snow change without an onset is not snow in the forecast window.
+        val noSnow = base.copy(
+            rain = change(Condition.RAIN),
+            snow = change(Condition.SNOW),
+        )
+        assertEquals(
+            "Sun in 10 h 33 min, no rain",
+            ForecastFormatter.compact(noSnow, english),
         )
     }
 
@@ -270,8 +273,9 @@ class ForecastFormatterTest {
     )
 
     private val english = ForecastPhrases(
-        lowerCaseSecond = true,
+        lowerCaseTrailing = true,
         pair = "%1\$s, %2\$s",
+        triple = "%1\$s, %2\$s, %3\$s",
         durationHoursMinutes = "%1\$d h %2\$d min",
         durationHours = "%1\$d h",
         durationMinutes = "%1\$d min",
@@ -304,7 +308,7 @@ class ForecastFormatterTest {
     )
 
     private val german = english.copy(
-        lowerCaseSecond = false,
+        lowerCaseTrailing = false,
         durationHoursMinutes = "%1\$d Std. %2\$d Min.",
         durationHours = "%1\$d Std.",
         durationMinutes = "%1\$d Min.",

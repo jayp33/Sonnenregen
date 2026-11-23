@@ -83,6 +83,7 @@
 
     <bool name="forecast_lowercase_second">false</bool>
     <string name="forecast_pair">%1$s, %2$s</string>
+    <string name="forecast_triple">%1$s, %2$s, %3$s</string>
     <string name="duration_hours_minutes">%1$d Std. %2$d Min.</string>
     <string name="duration_hours">%1$d Std.</string>
     <string name="duration_minutes">%1$d Min.</string>
