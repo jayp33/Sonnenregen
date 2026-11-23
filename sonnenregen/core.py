@@ -165,6 +165,27 @@ def _parse_timestamp(value: str) -> datetime:
     return parsed
 
 
+def _entries(value: object, field: str) -> list:
+    if not isinstance(value, list):
+        raise ParseError(f"Expected a list for {field!r}")
+    return value
+
+
+def _object(value: object, field: str) -> dict:
+    if not isinstance(value, dict):
+        raise ParseError(f"Expected an object for {field!r}")
+    return value
+
+
+def _timestamp(value: object, field: str) -> datetime:
+    if not isinstance(value, str):
+        raise ParseError(f"Expected a string timestamp for {field!r}")
+    try:
+        return _parse_timestamp(value)
+    except ValueError as exc:
+        raise ParseError(f"Invalid timestamp for {field!r}: {value!r}") from exc
+
+
 def _decode(response, max_bytes: int = MAX_RESPONSE_BYTES) -> str:
     charset = response.headers.get_content_charset() or "utf-8"
     raw = response.read(max_bytes + 1)
@@ -259,8 +280,9 @@ def extract_astro(state: dict) -> dict | None:
 
 def daylight_windows(astro: dict | None) -> list[tuple[datetime, datetime]]:
     windows: list[tuple[datetime, datetime]] = []
-    for day in (astro or {}).get("days") or []:
-        sun = day.get("sun") or {}
+    days = _object(astro or {}, "astro").get("days") or []
+    for day in _entries(days, "astro.days"):
+        sun = _object(_object(day, "astro.days[]").get("sun") or {}, "astro.days[].sun")
         if not sun.get("rise") or not sun.get("set"):
             continue  # polar day/night
         try:
@@ -316,45 +338,58 @@ def apply_daylight(
     return result
 
 
+def _text(entry: dict, field: str) -> str | None:
+    value = entry.get(field)
+    return value if isinstance(value, str) and value else None
+
+
 def _slots_from_shortcast(shortcast: dict) -> tuple[list[Slot], list[Slot], Slot | None]:
+    shortcast = _object(shortcast, "shortcast")
     hourly: list[Slot] = []
-    for hour in shortcast.get("hours") or []:
-        if not hour.get("date") or not hour.get("symbol"):
+    for hour in _entries(shortcast.get("hours") or [], "hours"):
+        hour = _object(hour, "hours[]")
+        date, symbol = _text(hour, "date"), _text(hour, "symbol")
+        if not date or not symbol:
             continue
         hourly.append(
             Slot(
-                start=_parse_timestamp(hour["date"]),
+                start=_timestamp(date, "hours[].date"),
                 duration=timedelta(hours=1),
-                symbol=hour["symbol"],
+                symbol=symbol,
                 source="hourly",
             )
         )
 
     nowcast: list[Slot] = []
-    trend = shortcast.get("nowcast_trend") or {}
-    for item in trend.get("items") or []:
-        if not item.get("date") or not item.get("symbol"):
+    trend = _object(shortcast.get("nowcast_trend") or {}, "nowcast_trend")
+    for item in _entries(trend.get("items") or [], "nowcast_trend.items"):
+        item = _object(item, "nowcast_trend.items[]")
+        date, symbol = _text(item, "date"), _text(item, "symbol")
+        if not date or not symbol:
             continue
-        night = item.get("weather_condition_image") == "night"
         nowcast.append(
             Slot(
-                start=_parse_timestamp(item["date"]),
+                start=_timestamp(date, "nowcast_trend.items[].date"),
                 duration=timedelta(minutes=15),
-                symbol=item["symbol"],
+                symbol=symbol,
                 source="nowcast",
-                night=night,
+                night=item.get("weather_condition_image") == "night",
             )
         )
 
-    current_data = shortcast.get("current") or {}
+    current_data = _object(shortcast.get("current") or {}, "current")
     current: Slot | None = None
-    if current_data.get("date") and current_data.get("symbol"):
+    date, symbol = _text(current_data, "date"), _text(current_data, "symbol")
+    if date and symbol:
+        elevation = current_data.get("solar_elevation")
+        if elevation is not None and not isinstance(elevation, (int, float)):
+            raise ParseError("Expected a number for current.solar_elevation")
         current = Slot(
-            start=_parse_timestamp(current_data["date"]),
+            start=_timestamp(date, "current.date"),
             duration=timedelta(minutes=15),
-            symbol=current_data["symbol"],
+            symbol=symbol,
             source="current",
-            solar_elevation=current_data.get("solar_elevation"),
+            solar_elevation=elevation,
             night=current_data.get("weather_condition_image") == "night",
         )
 

@@ -23,6 +23,7 @@ from sonnenregen.core import (
     extract_state,
     is_rain_symbol,
     is_sun_symbol,
+    ParseError,
     SourceError,
     Slot,
 )
@@ -85,6 +86,24 @@ class ParsingTests(unittest.TestCase):
         timeline = build_timeline(later, hours, nowcast, current)
         self.assertTrue(any(slot.source == "hourly" for slot in timeline))
         self.assertLessEqual(timeline[0].start, later)
+
+    def test_invalid_payload_shapes_raise_parse_errors(self) -> None:
+        malformed = [
+            {"hours": {"date": "2026-11-21T08:00:00+01:00", "symbol": "so____"}},
+            {"hours": [{"date": "not-a-date", "symbol": "so____"}]},
+            {"hours": [12]},
+            {"nowcast_trend": ["bad"]},
+            {"current": ["bad"]},
+            {"current": {"date": "2026-11-21T08:00:00+01:00", "symbol": "so____", "solar_elevation": "high"}},
+        ]
+        for payload in malformed:
+            with self.subTest(payload=payload), self.assertRaises(ParseError):
+                _slots_from_shortcast(payload)
+
+        with self.assertRaises(ParseError):
+            daylight_windows({"days": {"sun": {}}})
+        with self.assertRaises(ParseError):
+            extract_state('<script id="ng-state" type="application/json">{broken</script>')
 
     def test_timeline_is_continuous(self) -> None:
         hours, nowcast, current = _slots_from_shortcast(FIXTURE)
