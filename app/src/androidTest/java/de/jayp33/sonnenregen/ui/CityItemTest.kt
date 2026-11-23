@@ -425,6 +425,40 @@ class CityItemTest {
     }
 
     @Test
+    fun lead_time_selectors_appear_only_for_enabled_alerts() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        var sunLead: Int? = null
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                CityItem(
+                    label = "Berlin",
+                    index = 0,
+                    cityCount = 1,
+                    forecast = null,
+                    detailsExpanded = true,
+                    hidden = false,
+                    sunAlert = true,
+                    rainAlert = false,
+                    sunLeadMinutes = 30,
+                    onToggleExpanded = {},
+                    onToggleNotificationVisibility = {},
+                    onSetSunLeadMinutes = { sunLead = it },
+                    onMove = {},
+                    onRemove = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(context.getString(R.string.sun_lead, 30)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.rain_lead, 0)).assertDoesNotExist()
+        composeTestRule.onNodeWithTag(WeatherControlTags.SUN_LEAD).performClick()
+        composeTestRule.onNodeWithText(context.getString(R.string.lead_minutes, 15)).performClick()
+
+        assertEquals(15, sunLead)
+    }
+
+    @Test
     fun hour_rows_are_tighter_than_the_gap_before_the_nowcast_row() {
         val first = OffsetDateTime.parse("2026-11-21T00:00:00+01:00")
         val hours = (0 until 3).flatMap { day ->

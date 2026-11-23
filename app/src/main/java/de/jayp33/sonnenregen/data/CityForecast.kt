@@ -22,6 +22,9 @@ data class CityForecast(
     /** Structured onset state, used to detect sun/rain alerts. Defaults for old installs. */
     val sunCurrently: Boolean = false,
     val rainCurrently: Boolean = false,
+    /** Upcoming onset time, so alerts can be scheduled ahead of the refresh. */
+    val sunEventAtMillis: Long? = null,
+    val rainEventAtMillis: Long? = null,
 )
 
 /** Keep successful cities and retain the previous value for failed ones. */

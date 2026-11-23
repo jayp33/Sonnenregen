@@ -58,6 +58,9 @@
     <string name="rain_alert">Notify when rain starts</string>
     <string name="alert_sun">The sun is shining in %1$s.</string>
     <string name="alert_rain">It\'s raining in %1$s.</string>
+    <string name="sun_lead">Sun alert lead: %1$d min</string>
+    <string name="rain_lead">Rain alert lead: %1$d min</string>
+    <string name="lead_minutes">%1$d min</string>
     <string name="hidden_indicator">hidden</string>
     <string name="remove">Remove</string>
     <string name="invalid_city">Enter a valid city slug (letters, digits, hyphens, /).</string>

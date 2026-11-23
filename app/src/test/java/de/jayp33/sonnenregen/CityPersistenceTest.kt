@@ -1,10 +1,14 @@
 package de.jayp33.sonnenregen
 
 import de.jayp33.sonnenregen.data.CityForecast
+import de.jayp33.sonnenregen.data.decodeAlertStates
 import de.jayp33.sonnenregen.data.decodeCities
 import de.jayp33.sonnenregen.data.decodeCitySet
+import de.jayp33.sonnenregen.data.decodeLeadMinutes
 import de.jayp33.sonnenregen.data.decodeForecasts
 import de.jayp33.sonnenregen.data.decodeHiddenCities
+import de.jayp33.sonnenregen.notification.AlertStage
+import de.jayp33.sonnenregen.notification.AlertState
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
@@ -64,6 +68,26 @@ class CityPersistenceTest {
     fun malformed_forecast_map_decodes_to_empty() {
         assertEquals(emptyMap<String, CityForecast>(), decodeForecasts("[]", json))
         assertEquals(emptyMap<String, CityForecast>(), decodeForecasts("{", json))
+    }
+
+    @Test
+    fun lead_minutes_are_normalized_and_restricted_to_offered_values() {
+        val stored = """{"BERLIN":30,"hamburg":5,"":15}"""
+
+        assertEquals(mapOf("berlin" to 30), decodeLeadMinutes(stored, json))
+        assertEquals(emptyMap<String, Int>(), decodeLeadMinutes("not json", json))
+        assertEquals(emptyMap<String, Int>(), decodeLeadMinutes(null, json))
+    }
+
+    @Test
+    fun alert_states_survive_a_round_trip() {
+        val states = mapOf(
+            "berlin|SUN" to AlertState(AlertStage.SCHEDULED, 5_000L),
+            "berlin|RAIN" to AlertState(AlertStage.NOTIFIED, 9_000L, episodeEnded = true),
+        )
+
+        assertEquals(states, decodeAlertStates(json.encodeToString(states), json))
+        assertEquals(emptyMap<String, AlertState>(), decodeAlertStates("not json", json))
     }
 
     @Test

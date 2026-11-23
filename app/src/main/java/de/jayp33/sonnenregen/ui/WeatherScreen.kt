@@ -7,6 +7,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,6 +18,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -48,6 +51,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import de.jayp33.sonnenregen.R
+import de.jayp33.sonnenregen.data.ALERT_LEAD_OPTIONS
 import de.jayp33.sonnenregen.data.CityForecast
 import de.jayp33.sonnenregen.data.WeatherStore
 import de.jayp33.sonnenregen.domain.currentOrFutureHours
@@ -57,6 +61,7 @@ import de.jayp33.sonnenregen.domain.isRain
 import de.jayp33.sonnenregen.domain.isSun
 import de.jayp33.sonnenregen.domain.isValidCitySlug
 import de.jayp33.sonnenregen.domain.normalizeCity
+import de.jayp33.sonnenregen.notification.AlertKey
 import de.jayp33.sonnenregen.notification.AlertKind
 import de.jayp33.sonnenregen.notification.WeatherNotifier
 import de.jayp33.sonnenregen.text.AgeUnit
@@ -76,6 +81,8 @@ fun WeatherScreen() {
     var hiddenCities by remember { mutableStateOf<Set<String>>(emptySet()) }
     var sunAlertCities by remember { mutableStateOf<Set<String>>(emptySet()) }
     var rainAlertCities by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var sunLeadMinutes by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
+    var rainLeadMinutes by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
     var expandedCities by remember { mutableStateOf<Set<String>>(emptySet()) }
     var nowMillis by remember { mutableStateOf(System.currentTimeMillis()) }
     var showAddCityDialog by remember { mutableStateOf(false) }
@@ -119,6 +126,8 @@ fun WeatherScreen() {
         launch { store.hiddenCitiesFlow.collect { hiddenCities = it } }
         launch { store.sunAlertCitiesFlow.collect { sunAlertCities = it } }
         launch { store.rainAlertCitiesFlow.collect { rainAlertCities = it } }
+        launch { store.sunLeadMinutesFlow.collect { sunLeadMinutes = it } }
+        launch { store.rainLeadMinutesFlow.collect { rainLeadMinutes = it } }
     }
 
     LaunchedEffect(Unit) {
@@ -193,6 +202,8 @@ fun WeatherScreen() {
                             hidden = city in hiddenCities,
                             sunAlert = city in sunAlertCities,
                             rainAlert = city in rainAlertCities,
+                            sunLeadMinutes = sunLeadMinutes[city] ?: 0,
+                            rainLeadMinutes = rainLeadMinutes[city] ?: 0,
                             nowMillis = nowMillis,
                             onToggleExpanded = {
                                 expandedCities = if (city in expandedCities) {
@@ -209,11 +220,41 @@ fun WeatherScreen() {
                                     }
                                 }
                             },
-                            onToggleSunAlert = { enabled ->
-                                scope.launch { store.setCityAlert(city, AlertKind.SUN, enabled) }
+                            onToggleSunAlert = { on ->
+                                scope.launch {
+                                    store.setCityAlert(city, AlertKind.SUN, on)
+                                    if (!on) {
+                                        WeatherScheduler.cancelAlert(
+                                            context,
+                                            AlertKey(city, AlertKind.SUN),
+                                        )
+                                    }
+                                    WeatherScheduler.refreshNow(context)
+                                }
                             },
-                            onToggleRainAlert = { enabled ->
-                                scope.launch { store.setCityAlert(city, AlertKind.RAIN, enabled) }
+                            onToggleRainAlert = { on ->
+                                scope.launch {
+                                    store.setCityAlert(city, AlertKind.RAIN, on)
+                                    if (!on) {
+                                        WeatherScheduler.cancelAlert(
+                                            context,
+                                            AlertKey(city, AlertKind.RAIN),
+                                        )
+                                    }
+                                    WeatherScheduler.refreshNow(context)
+                                }
+                            },
+                            onSetSunLeadMinutes = { minutes ->
+                                scope.launch {
+                                    store.setAlertLead(city, AlertKind.SUN, minutes)
+                                    WeatherScheduler.refreshNow(context)
+                                }
+                            },
+                            onSetRainLeadMinutes = { minutes ->
+                                scope.launch {
+                                    store.setAlertLead(city, AlertKind.RAIN, minutes)
+                                    WeatherScheduler.refreshNow(context)
+                                }
                             },
                             onMove = { offset ->
                                 scope.launch {
@@ -226,6 +267,14 @@ fun WeatherScreen() {
                             onRemove = {
                                 scope.launch {
                                     store.removeCity(city)
+                                    WeatherScheduler.cancelAlert(
+                                        context,
+                                        AlertKey(city, AlertKind.SUN),
+                                    )
+                                    WeatherScheduler.cancelAlert(
+                                        context,
+                                        AlertKey(city, AlertKind.RAIN),
+                                    )
                                     expandedCities = expandedCities - city
                                     if (enabled) WeatherNotifier.show(context, store.statuses())
                                 }
@@ -247,6 +296,16 @@ fun WeatherScreen() {
                                 WeatherScheduler.schedule(context)
                             } else {
                                 WeatherScheduler.cancel(context)
+                                (sunAlertCities + rainAlertCities).forEach { city ->
+                                    WeatherScheduler.cancelAlert(
+                                        context,
+                                        AlertKey(city, AlertKind.SUN),
+                                    )
+                                    WeatherScheduler.cancelAlert(
+                                        context,
+                                        AlertKey(city, AlertKind.RAIN),
+                                    )
+                                }
                                 WeatherNotifier.cancel(context)
                             }
                             enabled = next
@@ -355,6 +414,33 @@ internal fun AddCityDialog(
 internal object WeatherControlTags {
     const val SUN_ALERT = "sun_alert_switch"
     const val RAIN_ALERT = "rain_alert_switch"
+    const val SUN_LEAD = "sun_lead_selector"
+    const val RAIN_LEAD = "rain_lead_selector"
+}
+
+/** Dropdown with the supported lead times; sun and rain use separate settings. */
+@Composable
+private fun LeadTimeSelector(label: String, tag: String, onSelect: (Int) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        TextButton(
+            onClick = { expanded = true },
+            modifier = Modifier.testTag(tag),
+        ) {
+            Text(label)
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            ALERT_LEAD_OPTIONS.forEach { minutes ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.lead_minutes, minutes)) },
+                    onClick = {
+                        expanded = false
+                        onSelect(minutes)
+                    },
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -367,11 +453,15 @@ internal fun CityItem(
     hidden: Boolean,
     sunAlert: Boolean = false,
     rainAlert: Boolean = false,
+    sunLeadMinutes: Int = 0,
+    rainLeadMinutes: Int = 0,
     nowMillis: Long = 0L,
     onToggleExpanded: () -> Unit,
     onToggleNotificationVisibility: (Boolean) -> Unit,
     onToggleSunAlert: (Boolean) -> Unit = {},
     onToggleRainAlert: (Boolean) -> Unit = {},
+    onSetSunLeadMinutes: (Int) -> Unit = {},
+    onSetRainLeadMinutes: (Int) -> Unit = {},
     onMove: (Int) -> Unit,
     onRemove: () -> Unit,
 ) {
@@ -468,6 +558,13 @@ internal fun CityItem(
                 )
                 Text(stringResource(R.string.sun_alert))
             }
+            if (sunAlert) {
+                LeadTimeSelector(
+                    label = stringResource(R.string.sun_lead, sunLeadMinutes),
+                    tag = WeatherControlTags.SUN_LEAD,
+                    onSelect = onSetSunLeadMinutes,
+                )
+            }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -478,6 +575,13 @@ internal fun CityItem(
                     modifier = Modifier.testTag(WeatherControlTags.RAIN_ALERT),
                 )
                 Text(stringResource(R.string.rain_alert))
+            }
+            if (rainAlert) {
+                LeadTimeSelector(
+                    label = stringResource(R.string.rain_lead, rainLeadMinutes),
+                    tag = WeatherControlTags.RAIN_LEAD,
+                    onSelect = onSetRainLeadMinutes,
+                )
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

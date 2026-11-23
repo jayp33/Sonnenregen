@@ -8,6 +8,10 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import androidx.work.workDataOf
+import de.jayp33.sonnenregen.notification.AlertKey
+import de.jayp33.sonnenregen.notification.AlertWorker
+import de.jayp33.sonnenregen.notification.ScheduledAlert
 import java.util.concurrent.TimeUnit
 
 object WeatherScheduler {
@@ -40,6 +44,31 @@ object WeatherScheduler {
             ExistingWorkPolicy.REPLACE,
             request,
         )
+    }
+
+    /** Post an alert at its calculated time, independent of the 15-minute poll. */
+    fun scheduleAlert(context: Context, scheduled: ScheduledAlert) {
+        val input = workDataOf(
+            AlertWorker.KEY_CITY to scheduled.key.city,
+            AlertWorker.KEY_KIND to scheduled.key.kind.name,
+            AlertWorker.KEY_DISPLAY_NAME to scheduled.alert.displayName,
+            AlertWorker.KEY_EVENT_AT to scheduled.eventAtMillis,
+        )
+        val delayMillis = maxOf(0L, scheduled.notifyAtMillis - System.currentTimeMillis())
+        val request = OneTimeWorkRequestBuilder<AlertWorker>()
+            .setInputData(input)
+            .setInitialDelay(delayMillis, TimeUnit.MILLISECONDS)
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            scheduled.key.workName,
+            ExistingWorkPolicy.REPLACE,
+            request,
+        )
+    }
+
+    fun cancelAlert(context: Context, key: AlertKey) {
+        WorkManager.getInstance(context).cancelUniqueWork(key.workName)
     }
 
     fun cancel(context: Context) {

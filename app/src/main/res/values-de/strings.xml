@@ -58,6 +58,9 @@
     <string name="rain_alert">Bei Regenbeginn benachrichtigen</string>
     <string name="alert_sun">In %1$s scheint die Sonne.</string>
     <string name="alert_rain">Es regnet in %1$s.</string>
+    <string name="sun_lead">Sonnen-Vorlauf: %1$d Min.</string>
+    <string name="rain_lead">Regen-Vorlauf: %1$d Min.</string>
+    <string name="lead_minutes">%1$d Min.</string>
     <string name="hidden_indicator">ausgeblendet</string>
     <string name="remove">Entfernen</string>
     <string name="invalid_city">Bitte einen gültigen Ort-Slug eingeben (Buchstaben, Zahlen, Bindestriche, /).</string>
