@@ -112,7 +112,11 @@ Köln: Snow in 1 h 30 min, sun in 8 h
 ```
 
 The APK is written to `app/build/outputs/apk/debug/app-debug.apk`. See
-[ANDROID.md](ANDROID.md) for the full design and refresh behaviour.
+[ANDROID.md](ANDROID.md) for the full design and refresh behaviour. Dependency
+checksums are pinned in `gradle/verification-metadata.xml`; after changing a
+dependency, regenerate it with
+`./gradlew --write-verification-metadata sha256 :app:testDebugUnitTest :app:assembleDebug`
+and commit the result.
 
 To share a debug build via GitHub, use the upload script:
 
