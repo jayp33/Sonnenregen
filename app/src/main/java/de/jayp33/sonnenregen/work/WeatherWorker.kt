@@ -41,8 +41,10 @@ class WeatherWorker(
             forecasts = successful,
             sunAlertCities = store.sunAlertCities(),
             rainAlertCities = store.rainAlertCities(),
+            snowAlertCities = store.snowAlertCities(),
             sunLeadMinutes = store.sunLeadMinutes(),
             rainLeadMinutes = store.rainLeadMinutes(),
+            snowLeadMinutes = store.snowLeadMinutes(),
         )
         plan.cancelled.forEach { WeatherScheduler.cancelAlert(applicationContext, it) }
         plan.scheduled.forEach { WeatherScheduler.scheduleAlert(applicationContext, it) }

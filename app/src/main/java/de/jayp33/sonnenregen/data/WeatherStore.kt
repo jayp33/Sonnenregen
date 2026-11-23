@@ -148,10 +148,13 @@ class WeatherStore(context: Context) {
     val hiddenCitiesFlow: Flow<Set<String>> = dataStore.data.map(::hiddenCitiesFrom)
     val sunAlertCitiesFlow: Flow<Set<String>> = dataStore.data.map { citySetFrom(it, SUN_ALERTS) }
     val rainAlertCitiesFlow: Flow<Set<String>> = dataStore.data.map { citySetFrom(it, RAIN_ALERTS) }
+    val snowAlertCitiesFlow: Flow<Set<String>> = dataStore.data.map { citySetFrom(it, SNOW_ALERTS) }
     val sunLeadMinutesFlow: Flow<Map<String, Int>> =
         dataStore.data.map { decodeLeadMinutes(it[SUN_LEAD_MINUTES]) }
     val rainLeadMinutesFlow: Flow<Map<String, Int>> =
         dataStore.data.map { decodeLeadMinutes(it[RAIN_LEAD_MINUTES]) }
+    val snowLeadMinutesFlow: Flow<Map<String, Int>> =
+        dataStore.data.map { decodeLeadMinutes(it[SNOW_LEAD_MINUTES]) }
 
     /** Cities in the order the user added them. */
     suspend fun cities(): List<String> = dataStore.data.first().let(::citiesFrom)
@@ -176,10 +179,13 @@ class WeatherStore(context: Context) {
             prefs[HIDDEN_CITIES] = json.encodeToString(hiddenCitiesFrom(prefs) - city)
             prefs[SUN_ALERTS] = json.encodeToString(citySetFrom(prefs, SUN_ALERTS) - city)
             prefs[RAIN_ALERTS] = json.encodeToString(citySetFrom(prefs, RAIN_ALERTS) - city)
+            prefs[SNOW_ALERTS] = json.encodeToString(citySetFrom(prefs, SNOW_ALERTS) - city)
             prefs[SUN_LEAD_MINUTES] =
                 json.encodeToString(decodeLeadMinutes(prefs[SUN_LEAD_MINUTES]) - city)
             prefs[RAIN_LEAD_MINUTES] =
                 json.encodeToString(decodeLeadMinutes(prefs[RAIN_LEAD_MINUTES]) - city)
+            prefs[SNOW_LEAD_MINUTES] =
+                json.encodeToString(decodeLeadMinutes(prefs[SNOW_LEAD_MINUTES]) - city)
             val states = statesFrom(prefs).toMutableMap()
             AlertKind.entries.forEach { kind -> states -= AlertKey(city, kind).id }
             prefs[ALERT_STATES] = json.encodeToString(states.toMap())
@@ -203,11 +209,12 @@ class WeatherStore(context: Context) {
         }
     }
 
-    /** Enable or disable one per-city sun/rain alert. Off by default for every city. */
+    /** Enable or disable one per-city sun/rain/snow alert. Off by default for every city. */
     suspend fun setCityAlert(city: String, kind: AlertKind, enabled: Boolean) {
         val key = when (kind) {
             AlertKind.SUN -> SUN_ALERTS
             AlertKind.RAIN -> RAIN_ALERTS
+            AlertKind.SNOW -> SNOW_ALERTS
         }
         dataStore.edit { prefs ->
             val next = updateCityInSet(citySetFrom(prefs, key), city, enabled)
@@ -221,6 +228,7 @@ class WeatherStore(context: Context) {
         val key = when (kind) {
             AlertKind.SUN -> SUN_LEAD_MINUTES
             AlertKind.RAIN -> RAIN_LEAD_MINUTES
+            AlertKind.SNOW -> SNOW_LEAD_MINUTES
         }
         dataStore.edit { prefs ->
             val next = decodeLeadMinutes(prefs[key]).toMutableMap().apply { put(city, minutes) }
@@ -257,11 +265,16 @@ class WeatherStore(context: Context) {
 
     suspend fun rainAlertCities(): Set<String> = dataStore.data.first().let { citySetFrom(it, RAIN_ALERTS) }
 
+    suspend fun snowAlertCities(): Set<String> = dataStore.data.first().let { citySetFrom(it, SNOW_ALERTS) }
+
     suspend fun sunLeadMinutes(): Map<String, Int> =
         dataStore.data.first().let { decodeLeadMinutes(it[SUN_LEAD_MINUTES]) }
 
     suspend fun rainLeadMinutes(): Map<String, Int> =
         dataStore.data.first().let { decodeLeadMinutes(it[RAIN_LEAD_MINUTES]) }
+
+    suspend fun snowLeadMinutes(): Map<String, Int> =
+        dataStore.data.first().let { decodeLeadMinutes(it[SNOW_LEAD_MINUTES]) }
 
     /** Replace only the supplied cities; failed cities keep their last good forecast. */
     suspend fun saveForecasts(updates: List<CityForecast>) {
@@ -295,11 +308,15 @@ class WeatherStore(context: Context) {
         sunEvents = forecast.sunEvents,
         sunCurrently = forecast.sun.currently,
         rainCurrently = forecast.rain.currently,
+        // Older stored forecasts have no snow change at all.
+        snowCurrently = forecast.snow?.currently ?: false,
         // `at` is the next onset only while the condition is inactive; when it
         // is active the field describes the end, which is not an alert event.
         sunEventAtMillis = forecast.sun.at?.takeIf { !forecast.sun.currently }
             ?.toInstant()?.toEpochMilli(),
         rainEventAtMillis = forecast.rain.at?.takeIf { !forecast.rain.currently }
+            ?.toInstant()?.toEpochMilli(),
+        snowEventAtMillis = forecast.snow?.at?.takeIf { !forecast.snow.currently }
             ?.toInstant()?.toEpochMilli(),
     )
 
@@ -355,8 +372,10 @@ class WeatherStore(context: Context) {
         val HIDDEN_CITIES = stringPreferencesKey("hidden_from_notification")
         val SUN_ALERTS = stringPreferencesKey("sun_alert_cities")
         val RAIN_ALERTS = stringPreferencesKey("rain_alert_cities")
+        val SNOW_ALERTS = stringPreferencesKey("snow_alert_cities")
         val SUN_LEAD_MINUTES = stringPreferencesKey("sun_alert_lead_minutes")
         val RAIN_LEAD_MINUTES = stringPreferencesKey("rain_alert_lead_minutes")
+        val SNOW_LEAD_MINUTES = stringPreferencesKey("snow_alert_lead_minutes")
         val ALERT_STATES = stringPreferencesKey("alert_states")
         val ENABLED = booleanPreferencesKey("enabled")
 

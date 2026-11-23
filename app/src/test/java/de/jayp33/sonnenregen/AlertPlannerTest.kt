@@ -14,6 +14,7 @@ class AlertPlannerTest {
     private val now = 1_000_000_000_000L
     private val minute = 60_000L
     private val sunKey = AlertKey("berlin", AlertKind.SUN).id
+    private val snowKey = AlertKey("berlin", AlertKind.SNOW).id
 
     @Test
     fun schedules_a_fresh_event_at_event_minus_lead() {
@@ -194,28 +195,95 @@ class AlertPlannerTest {
         assertEquals("Mitte", plan.scheduled.first().alert.displayName)
     }
 
+    @Test
+    fun snow_alert_uses_its_own_event_time_and_lead() {
+        val event = now + 90 * minute
+        val plan = plan(
+            forecasts = listOf(forecast(snowEventAt = event)),
+            sunAlertCities = emptySet(),
+            snowAlertCities = setOf("berlin"),
+            snowLead = 30,
+        )
+
+        assertEquals(1, plan.scheduled.size)
+        val scheduled = plan.scheduled.single()
+        assertEquals(AlertKind.SNOW, scheduled.key.kind)
+        assertEquals(event - 30 * minute, scheduled.notifyAtMillis)
+        assertEquals(event, scheduled.alert.eventAtMillis)
+        assertEquals(AlertStage.SCHEDULED, plan.states[AlertKey("berlin", AlertKind.SNOW).id]?.stage)
+        assertTrue(plan.alerts.isEmpty())
+    }
+
+    @Test
+    fun rain_and_snow_alerts_are_independent_for_the_same_city() {
+        // A city can have rain and snow in the same forecast; neither suppresses
+        // the other, and each keeps its own episode state and lead time.
+        val rainEvent = now + 60 * minute
+        val snowEvent = now + 180 * minute
+        val plan = plan(
+            forecasts = listOf(forecast(rainEventAt = rainEvent, snowEventAt = snowEvent)),
+            rainAlertCities = setOf("berlin"),
+            snowAlertCities = setOf("berlin"),
+            rainLead = 15,
+            snowLead = 45,
+        )
+
+        assertEquals(
+            mapOf(
+                AlertKind.RAIN to rainEvent - 15 * minute,
+                AlertKind.SNOW to snowEvent - 45 * minute,
+            ),
+            plan.scheduled.associate { it.key.kind to it.notifyAtMillis },
+        )
+        assertEquals(
+            setOf(AlertKey("berlin", AlertKind.RAIN), AlertKey("berlin", AlertKind.SNOW)),
+            plan.scheduled.map { it.key }.toSet(),
+        )
+        assertTrue(plan.cancelled.isEmpty())
+        assertTrue(plan.alerts.isEmpty())
+    }
+
+    @Test
+    fun ongoing_snow_closes_the_episode_without_alerting() {
+        val plan = plan(
+            forecasts = listOf(forecast(snowCurrently = true)),
+            snowAlertCities = setOf("berlin"),
+        )
+
+        assertTrue(plan.alerts.isEmpty())
+        assertTrue(plan.cancelled.isEmpty())
+        assertEquals(AlertStage.NOTIFIED, plan.states[snowKey]?.stage)
+        assertEquals(true, plan.states[snowKey]?.episodeEnded)
+    }
+
     private fun plan(
         states: Map<String, AlertState> = emptyMap(),
         forecasts: List<CityForecast> = emptyList(),
         sunAlertCities: Set<String> = setOf("berlin"),
         rainAlertCities: Set<String> = emptySet(),
+        snowAlertCities: Set<String> = emptySet(),
         sunLead: Int = 0,
         rainLead: Int = 0,
+        snowLead: Int = 0,
     ) = AlertPlanner.plan(
         states = states,
         forecasts = forecasts,
         sunAlertCities = sunAlertCities,
         rainAlertCities = rainAlertCities,
+        snowAlertCities = snowAlertCities,
         sunLeadMinutes = if (sunLead == 0) emptyMap() else mapOf("berlin" to sunLead),
         rainLeadMinutes = if (rainLead == 0) emptyMap() else mapOf("berlin" to rainLead),
+        snowLeadMinutes = if (snowLead == 0) emptyMap() else mapOf("berlin" to snowLead),
         nowMillis = now,
     )
 
     private fun forecast(
         sunCurrently: Boolean = false,
         rainCurrently: Boolean = false,
+        snowCurrently: Boolean = false,
         sunEventAt: Long? = null,
         rainEventAt: Long? = null,
+        snowEventAt: Long? = null,
     ) = CityForecast(
         city = "berlin",
         compactSummary = "",
@@ -225,7 +293,9 @@ class AlertPlannerTest {
         displayName = "",
         sunCurrently = sunCurrently,
         rainCurrently = rainCurrently,
+        snowCurrently = snowCurrently,
         sunEventAtMillis = sunEventAt,
         rainEventAtMillis = rainEventAt,
+        snowEventAtMillis = snowEventAt,
     )
 }

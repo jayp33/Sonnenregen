@@ -127,11 +127,18 @@ object WeatherNotifier {
                     remaining,
                     time,
                 )
+                AlertKind.SNOW -> context.getString(
+                    R.string.alert_snow_in,
+                    alert.displayName,
+                    remaining,
+                    time,
+                )
             }
         }
         return when (alert.kind) {
             AlertKind.SUN -> context.getString(R.string.alert_sun, alert.displayName)
             AlertKind.RAIN -> context.getString(R.string.alert_rain, alert.displayName)
+            AlertKind.SNOW -> context.getString(R.string.alert_snow, alert.displayName)
         }
     }
 

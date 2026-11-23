@@ -2,9 +2,9 @@
 <resources>
     <string name="app_name">Sonnenregen</string>
     <string name="notification_channel_name">Wettervorhersage</string>
-    <string name="notification_channel_description">Laufende Sonnen- und Regenvorhersage</string>
+    <string name="notification_channel_description">Laufende Sonnen-, Regen- und Schneevorhersage</string>
     <string name="notification_alert_channel_name">Wetterbenachrichtigungen</string>
-    <string name="notification_alert_channel_description">Benachrichtigungen bei Sonnen- und Regenbeginn</string>
+    <string name="notification_alert_channel_description">Benachrichtigungen bei Sonnen-, Regen- und Schneebeginn</string>
     <string name="refresh">Aktualisieren</string>
     <string name="updated">Aktualisiert</string>
     <string name="updated_just_now">Gerade aktualisiert</string>
@@ -62,12 +62,16 @@
     <string name="additional_notifications">Zusätzliche Benachrichtigungen</string>
     <string name="sun_alert">Bei Sonnenbeginn benachrichtigen</string>
     <string name="rain_alert">Bei Regenbeginn benachrichtigen</string>
+    <string name="snow_alert">Bei Schneebeginn benachrichtigen</string>
     <string name="alert_sun">In %1$s scheint die Sonne.</string>
     <string name="alert_rain">Es regnet in %1$s.</string>
+    <string name="alert_snow">Es schneit in %1$s.</string>
     <string name="alert_sun_in">Die Sonne scheint in %1$s in %2$d Minuten (%3$s Uhr).</string>
     <string name="alert_rain_in">Es regnet in %1$s in %2$d Minuten (%3$s Uhr).</string>
+    <string name="alert_snow_in">Es schneit in %1$s in %2$d Minuten (%3$s Uhr).</string>
     <string name="sun_lead">Sonnen-Vorlauf: %1$d Min.</string>
     <string name="rain_lead">Regen-Vorlauf: %1$d Min.</string>
+    <string name="snow_lead">Schnee-Vorlauf: %1$d Min.</string>
     <string name="lead_minutes">%1$d Min.</string>
     <string name="hidden_indicator">ausgeblendet</string>
     <string name="remove">Entfernen</string>

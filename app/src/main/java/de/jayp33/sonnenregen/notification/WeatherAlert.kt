@@ -6,7 +6,7 @@ import de.jayp33.sonnenregen.domain.displayNameFor
 import kotlinx.serialization.Serializable
 
 /** Which condition a per-city alert is about. */
-enum class AlertKind { SUN, RAIN }
+enum class AlertKind { SUN, RAIN, SNOW }
 
 /** One per-city, per-condition alert. */
 data class WeatherAlert(
@@ -68,8 +68,10 @@ object AlertPlanner {
         forecasts: List<CityForecast>,
         sunAlertCities: Set<String>,
         rainAlertCities: Set<String>,
+        snowAlertCities: Set<String> = emptySet(),
         sunLeadMinutes: Map<String, Int> = emptyMap(),
         rainLeadMinutes: Map<String, Int> = emptyMap(),
+        snowLeadMinutes: Map<String, Int> = emptyMap(),
         nowMillis: Long = System.currentTimeMillis(),
     ): AlertPlan {
         val byCity = forecasts.associateBy { it.city }
@@ -84,6 +86,7 @@ object AlertPlanner {
             val enabled = when (kind) {
                 AlertKind.SUN -> city in sunAlertCities
                 AlertKind.RAIN -> city in rainAlertCities
+                AlertKind.SNOW -> city in snowAlertCities
             }
             if (!enabled) {
                 if (state.stage != AlertStage.ARMED) cancelled += key
@@ -95,16 +98,18 @@ object AlertPlanner {
             val currently = when (kind) {
                 AlertKind.SUN -> forecast.sunCurrently
                 AlertKind.RAIN -> forecast.rainCurrently
+                AlertKind.SNOW -> forecast.snowCurrently
             }
             val lead = when (kind) {
                 AlertKind.SUN -> sunLeadMinutes[city] ?: 0
                 AlertKind.RAIN -> rainLeadMinutes[city] ?: 0
+                AlertKind.SNOW -> snowLeadMinutes[city] ?: 0
             }
-            val eventAt = when {
-                currently -> null
-                kind == AlertKind.SUN -> forecast.sunEventAtMillis
-                else -> forecast.rainEventAtMillis
-            }
+            val eventAt = when (kind) {
+                AlertKind.SUN -> forecast.sunEventAtMillis
+                AlertKind.RAIN -> forecast.rainEventAtMillis
+                AlertKind.SNOW -> forecast.snowEventAtMillis
+            }.takeIf { !currently }
             val alert = WeatherAlert(
                 city = city,
                 displayName = displayNameFor(city, forecast.displayName),
@@ -161,10 +166,15 @@ object AlertPlanner {
             }
         }
 
-        (byCity.keys + sunAlertCities + rainAlertCities).distinct().forEach { city ->
-            handle(city, AlertKind.SUN)
-            handle(city, AlertKind.RAIN)
-        }
+        // Each kind keeps its own key, state and job: rain and snow can both be
+        // forecast for one city at different times, so neither suppresses the other.
+        (byCity.keys + sunAlertCities + rainAlertCities + snowAlertCities)
+            .distinct()
+            .forEach { city ->
+                handle(city, AlertKind.SUN)
+                handle(city, AlertKind.RAIN)
+                handle(city, AlertKind.SNOW)
+            }
 
         return AlertPlan(alerts, scheduled, cancelled, nextStates)
     }

@@ -421,6 +421,7 @@ class CityItemTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         var sunEnabled: Boolean? = null
         var rainEnabled: Boolean? = null
+        var snowEnabled: Boolean? = null
 
         composeTestRule.setContent {
             MaterialTheme {
@@ -435,6 +436,7 @@ class CityItemTest {
                     onToggleNotificationVisibility = {},
                     onToggleSunAlert = { sunEnabled = it },
                     onToggleRainAlert = { rainEnabled = it },
+                    onToggleSnowAlert = { snowEnabled = it },
                     onMove = {},
                     onRemove = {},
                 )
@@ -443,17 +445,21 @@ class CityItemTest {
 
         composeTestRule.onNodeWithText(context.getString(R.string.sun_alert)).assertIsDisplayed()
         composeTestRule.onNodeWithText(context.getString(R.string.rain_alert)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.snow_alert)).assertIsDisplayed()
         composeTestRule.onNodeWithTag(WeatherControlTags.SUN_ALERT).assertIsOff().performClick()
         composeTestRule.onNodeWithTag(WeatherControlTags.RAIN_ALERT).assertIsOff().performClick()
+        composeTestRule.onNodeWithTag(WeatherControlTags.SNOW_ALERT).assertIsOff().performClick()
 
         assertEquals(true, sunEnabled)
         assertEquals(true, rainEnabled)
+        assertEquals(true, snowEnabled)
     }
 
     @Test
     fun lead_time_selectors_appear_only_for_enabled_alerts() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         var sunLead: Int? = null
+        var snowLead: Int? = null
 
         composeTestRule.setContent {
             MaterialTheme {
@@ -466,10 +472,13 @@ class CityItemTest {
                     hidden = false,
                     sunAlert = true,
                     rainAlert = false,
+                    snowAlert = true,
                     sunLeadMinutes = 30,
+                    snowLeadMinutes = 15,
                     onToggleExpanded = {},
                     onToggleNotificationVisibility = {},
                     onSetSunLeadMinutes = { sunLead = it },
+                    onSetSnowLeadMinutes = { snowLead = it },
                     onMove = {},
                     onRemove = {},
                 )
@@ -478,10 +487,14 @@ class CityItemTest {
 
         composeTestRule.onNodeWithText(context.getString(R.string.sun_lead, 30)).assertIsDisplayed()
         composeTestRule.onNodeWithText(context.getString(R.string.rain_lead, 0)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(context.getString(R.string.snow_lead, 15)).assertIsDisplayed()
         composeTestRule.onNodeWithTag(WeatherControlTags.SUN_LEAD).performClick()
         composeTestRule.onNodeWithText(context.getString(R.string.lead_minutes, 15)).performClick()
+        composeTestRule.onNodeWithTag(WeatherControlTags.SNOW_LEAD).performClick()
+        composeTestRule.onNodeWithText(context.getString(R.string.lead_minutes, 30)).performClick()
 
         assertEquals(15, sunLead)
+        assertEquals(30, snowLead)
     }
 
     @Test

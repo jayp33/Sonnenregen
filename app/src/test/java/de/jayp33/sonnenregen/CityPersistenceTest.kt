@@ -84,10 +84,19 @@ class CityPersistenceTest {
         val states = mapOf(
             "berlin|SUN" to AlertState(AlertStage.SCHEDULED, 5_000L),
             "berlin|RAIN" to AlertState(AlertStage.NOTIFIED, 9_000L, episodeEnded = true),
+            "berlin|SNOW" to AlertState(AlertStage.SCHEDULED, 13_000L),
         )
 
         assertEquals(states, decodeAlertStates(json.encodeToString(states), json))
         assertEquals(emptyMap<String, AlertState>(), decodeAlertStates("not json", json))
+    }
+
+    @Test
+    fun snow_onset_fields_survive_a_round_trip() {
+        val forecast = forecast("berlin").copy(snowEventAtMillis = 99_000L)
+        val stored = json.encodeToString(mapOf("berlin" to forecast))
+
+        assertEquals(forecast, decodeForecasts(stored, json)["berlin"])
     }
 
     @Test

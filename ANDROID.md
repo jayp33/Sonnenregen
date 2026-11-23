@@ -290,13 +290,22 @@ manual refreshes.
   - `Rain now, no sun` / `Regen jetzt, keine Sonne`
   - `Rain for 10 min (again in 45 min), sun in 2 h` /
     `Regen noch 10 Min. (wieder in 45 Min.), Sonne in 2 Std.`
+  - `Snow in 30 min, sun in 5 h` / `Schnee in 30 Min., Sonne in 5 Std.`
   Ordering uses the event's minutes from the provider's observation time.
-  Ongoing conditions sort first, events with no change sort last, and sun wins
-  ties. The second phrase is lowercased so the line reads naturally. A second
+  Ongoing conditions sort first, events with no change sort last. Sun, rain and
+  snow compete for the two slots; ties are broken sun > rain > snow, so when
+  three conditions are present a same-time snow onset loses to rain. The second
+  phrase is lowercased so the line reads naturally. A second
   rain window inside WetterOnline's 90-minute nowcast is appended to the rain
   phrase as `(again in 45 min)`; hourly-only rain beyond that window never gets
   the hint. The verbose per-condition summaries remain in the app UI only and
   carry the same hint as a separate sentence.
+- One-shot onset alerts use the separate `weather_alerts` channel. Sun, rain and
+  snow each have their own per-city enable flag, lead time, `AlertKey` state and
+  WorkManager job name, so independent episodes never collide — a city with both
+  rain and snow forecast gets both alerts at their own onset times. Only the
+  shared compact line applies rain-over-snow precedence. Alert states and lead
+  times are DataStore JSON with default-off/absent values for old installs.
 - Freshness: each city stores its own `fetchedAtMillis`. The notification uses
   the oldest of the shown timestamps via `setWhen()` and `setShowWhen(true)`.
   For a live "time since update" indicator, also use `setUsesChronometer(true)`:

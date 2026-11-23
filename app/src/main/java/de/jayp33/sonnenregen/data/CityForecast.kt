@@ -25,12 +25,14 @@ data class CityForecast(
     val displayName: String = "",
     /** Sunrise/sunset markers for the hourly grid; empty in old installs. */
     val sunEvents: List<SunEvent> = emptyList(),
-    /** Structured onset state, used to detect sun/rain alerts. Defaults for old installs. */
+    /** Structured onset state, used to detect sun/rain/snow alerts. Defaults for old installs. */
     val sunCurrently: Boolean = false,
     val rainCurrently: Boolean = false,
+    val snowCurrently: Boolean = false,
     /** Upcoming onset time, so alerts can be scheduled ahead of the refresh. */
     val sunEventAtMillis: Long? = null,
     val rainEventAtMillis: Long? = null,
+    val snowEventAtMillis: Long? = null,
     /** Zone of the forecast's clock times, used to render alert event times. */
     val timezone: String = TIMEZONE,
 )

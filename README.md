@@ -18,7 +18,9 @@ and German, selected by device locale.
 **Highlights**
 
 - **Permanent notification** with a compact `Sun in 2 h 10 min, no rain` line.
-  The sooner event comes first. With one city the place name is the notification
+  Sun, rain and snow compete for its two slots by onset time; on a tie sun wins
+  over rain and rain wins over snow, so mixed precipitation still names rain.
+  With one city the place name is the notification
   header; with two or more cities a wrapping text block shows `City: summary`
   lines in your chosen city order. The body always wraps, so long city names or
   summaries don't hide the forecast on narrow screens. Per-city **Show in
@@ -26,11 +28,14 @@ and German, selected by device locale.
   stays concise. If rain resumes inside the 90-minute window, the rain phrase
   gains `(again in 45 min)`. Tapping the notification opens the app directly;
   the only action is **Refresh**.
-- **Per-city sun/rain alerts**: each city's details offer optional **Notify when
-  sun starts** and **Notify when rain starts** switches, both off by default.
+- **Per-city sun/rain/snow alerts**: each city's details offer optional **Notify
+  when sun starts**, **Notify when rain starts** and **Notify when snow starts**
+  switches, all off by default.
   They post separate, auto-cancelling notifications on a dedicated channel when
-  a fresh forecast changes from no sun/rain to sun/rain; ongoing conditions never
-  re-alert. Each condition has its own lead time (0, 15, 30 or 60 minutes), so a
+  a fresh forecast changes from no sun/rain/snow to sun/rain/snow; ongoing
+  conditions never re-alert. Rain and snow are independent: a city can forecast
+  both at different times, and neither suppresses the other's alert. Each
+  condition has its own lead time (0, 15, 30 or 60 minutes), so a
   notification can arrive before the event instead of at the next poll: the
   onset time is saved and a one-shot job posts at `event − lead`. Those early
   alerts announce the start (`The sun will be shining in Berlin in 15 minutes
@@ -88,6 +93,7 @@ Sun in 2 h 10 min, no rain
 Sonnenregen
 Berlin: Sun in 2 h 10 min, no rain
 Hamburg: Rain in 30 min, sun in 5 h
+Köln: Snow in 1 h 30 min, sun in 8 h
 ```
 
 ### Build and install

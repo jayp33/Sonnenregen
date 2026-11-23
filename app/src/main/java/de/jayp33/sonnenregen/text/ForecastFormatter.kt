@@ -12,23 +12,41 @@ object ForecastFormatter {
 
     /** One compact line for the notification: soonest event first. */
     fun compact(forecast: Forecast, phrases: ForecastPhrases): String =
-        compact(forecast.sun, forecast.rain, phrases, forecast.rainOutlook.againInMinutes)
+        compact(
+            sun = forecast.sun,
+            rain = forecast.rain,
+            snow = forecast.snow,
+            phrases = phrases,
+            rainAgainInMinutes = forecast.rainOutlook.againInMinutes,
+        )
 
+    /** Two-condition form for callers without snow data. */
     fun compact(
         sun: Change,
         rain: Change,
         phrases: ForecastPhrases,
         rainAgainInMinutes: Long? = null,
+    ): String = compact(sun, rain, null, phrases, rainAgainInMinutes)
+
+    /**
+     * Snow is optional: forecasts stored before snow support have none. All three
+     * conditions compete for the line's two slots by onset time; on a tie sun
+     * keeps its existing win over rain, and rain wins over snow. So a mixed
+     * rain/snow forecast still names rain when only one of the two fits.
+     */
+    fun compact(
+        sun: Change,
+        rain: Change,
+        snow: Change?,
+        phrases: ForecastPhrases,
+        rainAgainInMinutes: Long? = null,
     ): String {
-        val first: Change
-        val second: Change
-        if (comesBefore(rain, sun)) {
-            first = rain
-            second = sun
-        } else {
-            first = sun
-            second = rain
-        }
+        val ordered = listOfNotNull(sun, rain, snow).sortedWith(
+            compareBy<Change> { orderKey(it) }.thenBy { tieBreak(it.condition) },
+        )
+        // Sun and rain are always present, so there are always two slots to fill.
+        val first = ordered[0]
+        val second = ordered[1]
         val firstText = phrase(
             first,
             phrases,
@@ -134,8 +152,12 @@ object ForecastFormatter {
         return format(phrases.rainAgain, text, duration(againInMinutes, phrases))
     }
 
-    private fun comesBefore(candidate: Change, other: Change): Boolean =
-        orderKey(candidate) < orderKey(other)
+    /** Sun keeps its old tie win; rain has precedence over snow. */
+    private fun tieBreak(condition: Condition): Int = when (condition) {
+        Condition.SUN -> 0
+        Condition.RAIN -> 1
+        Condition.SNOW -> 2
+    }
 
     private fun orderKey(change: Change): Long = when {
         change.currently -> Long.MIN_VALUE

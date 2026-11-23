@@ -2,9 +2,9 @@
 <resources>
     <string name="app_name">Sonnenregen</string>
     <string name="notification_channel_name">Weather forecast</string>
-    <string name="notification_channel_description">Ongoing sun and rain forecast</string>
+    <string name="notification_channel_description">Ongoing sun, rain and snow forecast</string>
     <string name="notification_alert_channel_name">Weather alerts</string>
-    <string name="notification_alert_channel_description">Sun and rain onset alerts</string>
+    <string name="notification_alert_channel_description">Sun, rain and snow onset alerts</string>
     <string name="refresh">Refresh</string>
     <string name="updated">Updated</string>
     <string name="updated_just_now">Updated just now</string>
@@ -62,12 +62,16 @@
     <string name="additional_notifications">Additional notifications</string>
     <string name="sun_alert">Notify when sun starts</string>
     <string name="rain_alert">Notify when rain starts</string>
+    <string name="snow_alert">Notify when snow starts</string>
     <string name="alert_sun">The sun is shining in %1$s.</string>
     <string name="alert_rain">It\'s raining in %1$s.</string>
+    <string name="alert_snow">It\'s snowing in %1$s.</string>
     <string name="alert_sun_in">The sun will be shining in %1$s in %2$d minutes (%3$s).</string>
     <string name="alert_rain_in">It will rain in %1$s in %2$d minutes (%3$s).</string>
+    <string name="alert_snow_in">It will snow in %1$s in %2$d minutes (%3$s).</string>
     <string name="sun_lead">Sun alert lead: %1$d min</string>
     <string name="rain_lead">Rain alert lead: %1$d min</string>
+    <string name="snow_lead">Snow alert lead: %1$d min</string>
     <string name="lead_minutes">%1$d min</string>
     <string name="hidden_indicator">hidden</string>
     <string name="remove">Remove</string>

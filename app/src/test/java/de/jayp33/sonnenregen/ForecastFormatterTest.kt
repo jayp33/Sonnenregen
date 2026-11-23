@@ -113,6 +113,58 @@ class ForecastFormatterTest {
     }
 
     @Test
+    fun compact_includes_snow_but_rain_wins_ties() {
+        assertEquals(
+            "Snow in 30 min, sun in 5 h",
+            ForecastFormatter.compact(
+                sun = change(Condition.SUN, minutes = 300),
+                rain = change(Condition.RAIN, minutes = 400),
+                snow = change(Condition.SNOW, minutes = 30),
+                phrases = english,
+            ),
+        )
+        assertEquals(
+            "Schnee in 30 Min., Sonne in 5 Std.",
+            ForecastFormatter.compact(
+                sun = change(Condition.SUN, minutes = 300),
+                rain = change(Condition.RAIN, minutes = 400),
+                snow = change(Condition.SNOW, minutes = 30),
+                phrases = german,
+            ),
+        )
+        assertEquals(
+            "Rain in 1 h, snow in 1 h",
+            ForecastFormatter.compact(
+                sun = change(Condition.SUN, minutes = 300),
+                rain = change(Condition.RAIN, minutes = 60),
+                snow = change(Condition.SNOW, minutes = 60),
+                phrases = english,
+            ),
+        )
+        // A later snow event drops out: the notification line still has two slots.
+        assertEquals(
+            "Sun in 2 h 10 min, rain in 5 h",
+            ForecastFormatter.compact(
+                sun = change(Condition.SUN, minutes = 130),
+                rain = change(Condition.RAIN, minutes = 300),
+                snow = change(Condition.SNOW, minutes = 400),
+                phrases = english,
+            ),
+        )
+    }
+
+    @Test
+    fun compact_uses_the_forecasts_snow_change() {
+        val forecast = ForecastAnalyzer.analyze("berlin", TestData.page(), TestData.page())
+            .copy(snow = change(Condition.SNOW, minutes = 30))
+
+        assertEquals(
+            "Snow in 30 min, sun in 10 h 33 min",
+            ForecastFormatter.compact(forecast, english),
+        )
+    }
+
+    @Test
     fun verbose_summaries_are_localized() {
         val page = TestData.page()
         val forecast = ForecastAnalyzer.analyze("berlin", page, page)

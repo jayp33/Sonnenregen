@@ -67,6 +67,55 @@ class WeatherNotifierTest {
     }
 
     @Test
+    fun snow_alerts_have_their_own_text_and_id() {
+        val snow = WeatherNotifier.buildAlertNotification(
+            context,
+            WeatherAlert("berlin", "Berlin", AlertKind.SNOW),
+        )
+        val snowStart = OffsetDateTime.parse("2026-11-23T11:30:00Z").toInstant().toEpochMilli()
+        val snowIn = WeatherNotifier.buildAlertNotification(
+            context,
+            WeatherAlert(
+                city = "berlin",
+                displayName = "Berlin",
+                kind = AlertKind.SNOW,
+                leadMinutes = 15,
+                eventAtMillis = snowStart,
+                zoneId = "+01:00",
+            ),
+            nowMillis = snowStart - 15 * 60_000L,
+        )
+
+        assertEquals(
+            context.getString(R.string.alert_snow, "Berlin"),
+            snow.extras.getCharSequence(Notification.EXTRA_TEXT).toString(),
+        )
+        assertEquals(
+            context.getString(R.string.alert_snow_in, "Berlin", 15, "12:30"),
+            snowIn.extras.getCharSequence(Notification.EXTRA_TEXT).toString(),
+        )
+        val ids = setOf(
+            WeatherNotifier.alertNotificationId(WeatherAlert("berlin", "Berlin", AlertKind.SUN)),
+            WeatherNotifier.alertNotificationId(WeatherAlert("berlin", "Berlin", AlertKind.RAIN)),
+            WeatherNotifier.alertNotificationId(WeatherAlert("berlin", "Berlin", AlertKind.SNOW)),
+        )
+        assertEquals(3, ids.size)
+    }
+
+    @Test
+    fun the_persistent_notification_shows_a_snow_summary() {
+        val notification = WeatherNotifier.buildNotification(
+            context,
+            listOf(CityStatus("berlin", "Berlin", "Snow in 30 min, sun in 5 h", 20L, false)),
+        )
+
+        assertTrue(
+            notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString()
+                .contains("Snow in 30 min"),
+        )
+    }
+
+    @Test
     fun umlauts_in_city_names_reach_the_notification_unchanged() {
         val sun = WeatherNotifier.buildAlertNotification(
             context,

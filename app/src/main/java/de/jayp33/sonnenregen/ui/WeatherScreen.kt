@@ -85,8 +85,10 @@ fun WeatherScreen() {
     var hiddenCities by remember { mutableStateOf<Set<String>>(emptySet()) }
     var sunAlertCities by remember { mutableStateOf<Set<String>>(emptySet()) }
     var rainAlertCities by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var snowAlertCities by remember { mutableStateOf<Set<String>>(emptySet()) }
     var sunLeadMinutes by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
     var rainLeadMinutes by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
+    var snowLeadMinutes by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
     var expandedCities by remember { mutableStateOf<Set<String>>(emptySet()) }
     var nowMillis by remember { mutableStateOf(System.currentTimeMillis()) }
     var showAddCityDialog by remember { mutableStateOf(false) }
@@ -130,8 +132,10 @@ fun WeatherScreen() {
         launch { store.hiddenCitiesFlow.collect { hiddenCities = it } }
         launch { store.sunAlertCitiesFlow.collect { sunAlertCities = it } }
         launch { store.rainAlertCitiesFlow.collect { rainAlertCities = it } }
+        launch { store.snowAlertCitiesFlow.collect { snowAlertCities = it } }
         launch { store.sunLeadMinutesFlow.collect { sunLeadMinutes = it } }
         launch { store.rainLeadMinutesFlow.collect { rainLeadMinutes = it } }
+        launch { store.snowLeadMinutesFlow.collect { snowLeadMinutes = it } }
     }
 
     LaunchedEffect(Unit) {
@@ -206,8 +210,10 @@ fun WeatherScreen() {
                             hidden = city in hiddenCities,
                             sunAlert = city in sunAlertCities,
                             rainAlert = city in rainAlertCities,
+                            snowAlert = city in snowAlertCities,
                             sunLeadMinutes = sunLeadMinutes[city] ?: 0,
                             rainLeadMinutes = rainLeadMinutes[city] ?: 0,
+                            snowLeadMinutes = snowLeadMinutes[city] ?: 0,
                             nowMillis = nowMillis,
                             onOpenWebsite = { uriHandler.openUri(cityWebsiteUrl(city)) },
                             onToggleExpanded = {
@@ -261,6 +267,24 @@ fun WeatherScreen() {
                                     WeatherScheduler.refreshNow(context)
                                 }
                             },
+                            onToggleSnowAlert = { on ->
+                                scope.launch {
+                                    store.setCityAlert(city, AlertKind.SNOW, on)
+                                    if (!on) {
+                                        WeatherScheduler.cancelAlert(
+                                            context,
+                                            AlertKey(city, AlertKind.SNOW),
+                                        )
+                                    }
+                                    WeatherScheduler.refreshNow(context)
+                                }
+                            },
+                            onSetSnowLeadMinutes = { minutes ->
+                                scope.launch {
+                                    store.setAlertLead(city, AlertKind.SNOW, minutes)
+                                    WeatherScheduler.refreshNow(context)
+                                }
+                            },
                             onMove = { offset ->
                                 scope.launch {
                                     store.moveCity(city, offset)
@@ -279,6 +303,10 @@ fun WeatherScreen() {
                                     WeatherScheduler.cancelAlert(
                                         context,
                                         AlertKey(city, AlertKind.RAIN),
+                                    )
+                                    WeatherScheduler.cancelAlert(
+                                        context,
+                                        AlertKey(city, AlertKind.SNOW),
                                     )
                                     expandedCities = expandedCities - city
                                     if (enabled) WeatherNotifier.show(context, store.statuses())
@@ -301,16 +329,21 @@ fun WeatherScreen() {
                                 WeatherScheduler.schedule(context)
                             } else {
                                 WeatherScheduler.cancel(context)
-                                (sunAlertCities + rainAlertCities).forEach { city ->
-                                    WeatherScheduler.cancelAlert(
-                                        context,
-                                        AlertKey(city, AlertKind.SUN),
-                                    )
-                                    WeatherScheduler.cancelAlert(
-                                        context,
-                                        AlertKey(city, AlertKind.RAIN),
-                                    )
-                                }
+                                (sunAlertCities + rainAlertCities + snowAlertCities)
+                                    .forEach { city ->
+                                        WeatherScheduler.cancelAlert(
+                                            context,
+                                            AlertKey(city, AlertKind.SUN),
+                                        )
+                                        WeatherScheduler.cancelAlert(
+                                            context,
+                                            AlertKey(city, AlertKind.RAIN),
+                                        )
+                                        WeatherScheduler.cancelAlert(
+                                            context,
+                                            AlertKey(city, AlertKind.SNOW),
+                                        )
+                                    }
                                 WeatherNotifier.cancel(context)
                             }
                             enabled = next
@@ -419,12 +452,14 @@ internal fun AddCityDialog(
 internal object WeatherControlTags {
     const val SUN_ALERT = "sun_alert_switch"
     const val RAIN_ALERT = "rain_alert_switch"
+    const val SNOW_ALERT = "snow_alert_switch"
     const val SUN_LEAD = "sun_lead_selector"
     const val RAIN_LEAD = "rain_lead_selector"
+    const val SNOW_LEAD = "snow_lead_selector"
     const val OPEN_WEBSITE = "open_website_button"
 }
 
-/** Dropdown with the supported lead times; sun and rain use separate settings. */
+/** Dropdown with the supported lead times; each condition uses its own setting. */
 @Composable
 private fun LeadTimeSelector(label: String, tag: String, onSelect: (Int) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
@@ -459,16 +494,20 @@ internal fun CityItem(
     hidden: Boolean,
     sunAlert: Boolean = false,
     rainAlert: Boolean = false,
+    snowAlert: Boolean = false,
     sunLeadMinutes: Int = 0,
     rainLeadMinutes: Int = 0,
+    snowLeadMinutes: Int = 0,
     nowMillis: Long = 0L,
     onToggleExpanded: () -> Unit,
     onToggleNotificationVisibility: (Boolean) -> Unit,
     onOpenWebsite: () -> Unit = {},
     onToggleSunAlert: (Boolean) -> Unit = {},
     onToggleRainAlert: (Boolean) -> Unit = {},
+    onToggleSnowAlert: (Boolean) -> Unit = {},
     onSetSunLeadMinutes: (Int) -> Unit = {},
     onSetRainLeadMinutes: (Int) -> Unit = {},
+    onSetSnowLeadMinutes: (Int) -> Unit = {},
     onMove: (Int) -> Unit,
     onRemove: () -> Unit,
 ) {
@@ -591,6 +630,24 @@ internal fun CityItem(
                     label = stringResource(R.string.rain_lead, rainLeadMinutes),
                     tag = WeatherControlTags.RAIN_LEAD,
                     onSelect = onSetRainLeadMinutes,
+                )
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Switch(
+                    checked = snowAlert,
+                    onCheckedChange = onToggleSnowAlert,
+                    modifier = Modifier.testTag(WeatherControlTags.SNOW_ALERT),
+                )
+                Text(stringResource(R.string.snow_alert))
+            }
+            if (snowAlert) {
+                LeadTimeSelector(
+                    label = stringResource(R.string.snow_lead, snowLeadMinutes),
+                    tag = WeatherControlTags.SNOW_LEAD,
+                    onSelect = onSetSnowLeadMinutes,
                 )
             }
 
