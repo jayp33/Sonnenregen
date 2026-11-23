@@ -37,7 +37,8 @@ class ServerTests(unittest.TestCase):
             with urlopen(f"{self.base}/?city=berlin") as response:
                 payload = json.load(response)
                 self.assertEqual(response.headers["Content-Type"], "application/json; charset=utf-8")
-                self.assertEqual(response.headers["Access-Control-Allow-Origin"], "*")
+                self.assertEqual(response.headers["Server"], "sonnenregen")
+                self.assertNotIn("Access-Control-Allow-Origin", response.headers)
         analyze.assert_called_once_with("berlin")
         self.assertEqual(payload["sun"]["minutes"], 60)
         self.assertFalse(payload["rain"]["currently"])

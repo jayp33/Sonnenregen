@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
@@ -17,7 +18,12 @@ _VALID_PATHS = {"/", "/weather", "/health"}
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "sonnenregen/0.1"
+    server_version = "sonnenregen"
+    sys_version = ""
+    timeout = 15  # close idle connections instead of holding threads forever
+
+    def version_string(self) -> str:
+        return self.server_version
 
     def do_GET(self) -> None:  # noqa: N802 - stdlib naming
         parsed = urlparse(self.path)
@@ -48,7 +54,6 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(body)
 
@@ -59,6 +64,13 @@ class Handler(BaseHTTPRequestHandler):
 def main() -> None:
     host = os.environ.get("HOST", "127.0.0.1")
     port = int(os.environ.get("PORT", "8080"))
+    if host not in ("127.0.0.1", "::1", "localhost"):
+        print(
+            "Warning: this unauthenticated, rate-unlimited service is bound to "
+            f"{host!r}; keep it on loopback unless access is restricted.",
+            file=sys.stderr,
+            flush=True,
+        )
     with ThreadingHTTPServer((host, port), Handler) as server:
         print(f"sonnenregen listening on http://{host}:{port}", flush=True)
         server.serve_forever()

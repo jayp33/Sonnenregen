@@ -175,15 +175,16 @@ does not call it.** Pages are cached in memory for 5 minutes
 
 ```bash
 python -m sonnenregen.server                 # http://127.0.0.1:8080/?city=berlin
-HOST=0.0.0.0 PORT=9000 python -m sonnenregen.server
-
 python -m sonnenregen.cli berlin             # pretty JSON
 python -m sonnenregen.cli berlin --human     # two human-readable lines
 ```
 
 The HTTP service exposes `GET /` (alias `/weather`) with `?city=<slug>`, and
 `GET /health`. The default city is `berlin`. Errors are returned as JSON
-(`400` for an invalid slug, `502` if the provider cannot be read).
+(`400` for an invalid slug, `502` if the provider cannot be read, `500` for
+unexpected errors). It binds to loopback by default and has no authentication,
+rate limiting or CORS support; if you set `HOST=0.0.0.0` to expose it, a warning
+is printed and you are responsible for restricting access.
 
 Example response (abbreviated):
 
