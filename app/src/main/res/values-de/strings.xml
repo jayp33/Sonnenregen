@@ -37,8 +37,6 @@
     <string name="hour_partly_sun">teilweise sonnig</string>
     <string name="hour_cloudy">wolkig</string>
     <string name="hour_overcast">bedeckt</string>
-    <string name="hour_clear_night">klare Nacht</string>
-    <string name="hour_cloudy_night">bewölkte Nacht</string>
     <string name="hour_light_rain">leichter Regen</string>
     <string name="hour_rain">Regen</string>
     <string name="hour_heavy_rain">starker Regen</string>

@@ -37,8 +37,6 @@
     <string name="hour_partly_sun">partly sunny</string>
     <string name="hour_cloudy">cloudy</string>
     <string name="hour_overcast">overcast</string>
-    <string name="hour_clear_night">clear night</string>
-    <string name="hour_cloudy_night">cloudy night</string>
     <string name="hour_light_rain">light rain</string>
     <string name="hour_rain">rain</string>
     <string name="hour_heavy_rain">heavy rain</string>

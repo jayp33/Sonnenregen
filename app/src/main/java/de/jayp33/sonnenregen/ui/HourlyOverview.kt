@@ -284,14 +284,11 @@ internal fun DayOfWeek.weekdayLabel(): Int = when (this) {
     DayOfWeek.SUNDAY -> R.string.weekday_sunday
 }
 
-@Suppress("DEPRECATION")
 private fun HourKind.color(): Color = when (this) {
     HourKind.SUN -> Color(0xFFF2C230)
     HourKind.PARTLY_SUN -> Color(0xFFF7DE8C)
     HourKind.CLOUDY,
     HourKind.OVERCAST,
-    HourKind.CLOUDY_NIGHT,
-    HourKind.CLEAR_NIGHT,
     -> Color(0xFFE0E0E0)
     HourKind.LIGHT_RAIN -> Color(0xFFA9D2F2)
     HourKind.RAIN -> Color(0xFF4C9BD6)
@@ -300,13 +297,14 @@ private fun HourKind.color(): Color = when (this) {
     HourKind.LIGHT_SNOW -> Color(0xFFFFC2FF)
     HourKind.SNOW -> Color(0xFFF969BF)
     HourKind.HEAVY_SNOW -> Color(0xFFEA39A1)
+    // Legacy night values stored by older installs render like plain cloud.
+    else -> Color(0xFFE0E0E0)
 }
 
-@Suppress("DEPRECATION")
 private fun HourKind.label(): Int = when (this) {
     HourKind.SUN -> R.string.hour_sun
     HourKind.PARTLY_SUN -> R.string.hour_partly_sun
-    HourKind.CLOUDY, HourKind.CLOUDY_NIGHT, HourKind.CLEAR_NIGHT -> R.string.hour_cloudy
+    HourKind.CLOUDY -> R.string.hour_cloudy
     HourKind.OVERCAST -> R.string.hour_overcast
     HourKind.LIGHT_RAIN -> R.string.hour_light_rain
     HourKind.RAIN -> R.string.hour_rain
@@ -314,4 +312,5 @@ private fun HourKind.label(): Int = when (this) {
     HourKind.LIGHT_SNOW -> R.string.hour_light_snow
     HourKind.SNOW -> R.string.hour_snow
     HourKind.HEAVY_SNOW -> R.string.hour_heavy_snow
+    else -> R.string.hour_cloudy
 }
