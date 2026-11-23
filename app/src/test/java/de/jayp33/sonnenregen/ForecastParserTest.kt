@@ -73,6 +73,14 @@ class ForecastParserTest {
     }
 
     @Test
+    fun reads_the_canonical_slug_from_page_links() {
+        val page = """<a href="/wetterradar/waren-mueritz">radar</a>
+            <a href="/wetterdaten/waren-mueritz">data</a>""" + TestData.page()
+
+        assertEquals("waren-mueritz", ForecastParser.parsePageData(page).canonicalSlug)
+    }
+
+    @Test
     fun decodes_umlaut_entities_in_place_names() {
         val page = "<h1>Wetter K&ouml;ln &amp; M&uuml;nchen &#223; &Uuml;berlingen</h1>" +
             TestData.page()

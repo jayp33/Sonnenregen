@@ -28,25 +28,66 @@ fun displayCity(slug: String): String = slug
  * reliable source of the spelling than the mangled heading.
  */
 private val mojibakeRegex = Regex("\uFFFD|ï¿½|Ã[¤¶¼]")
+private val umlautDigraphs = listOf("ae" to "ä", "oe" to "ö", "ue" to "ü", "ss" to "ß")
+private const val MANGLED = '\u0000'
 
 private fun nameFromSlug(slug: String): String = slug
     .split('/')
     .joinToString("/") { segment ->
         segment.split('-').joinToString(" ") { word ->
-            word.replace("ae", "ä")
-                .replace("oe", "ö")
-                .replace("ue", "ü")
-                .replace("ss", "ß")
-                .replaceFirstChar { char -> char.uppercase() }
+            umlautDigraphs.fold(word) { text, (digraph, letter) ->
+                text.replace(digraph, letter)
+            }.replaceFirstChar { char -> char.uppercase() }
         }
     }
 
-/** Prefer the source page's name, but rebuild it from the slug when it is mangled. */
+/** The slug's spelling with digraphs expanded, reduced to comparable letters. */
+private fun expectedSkeleton(slug: String): String {
+    val expanded = umlautDigraphs.fold(slug.lowercase()) { text, (digraph, letter) ->
+        text.replace(digraph, letter)
+    }
+    return expanded.filter { it.isLetter() }
+}
+
+/** The page name reduced to letters, with each broken umlaut kept as one slot. */
+private fun actualSkeleton(name: String): String = buildString {
+    var cursor = 0
+    mojibakeRegex.findAll(name).forEach { match ->
+        append(name.substring(cursor, match.range.first).filterLetters())
+        append(MANGLED)
+        cursor = match.range.last + 1
+    }
+    append(name.substring(cursor).filterLetters())
+}
+
+private fun String.filterLetters(): String = lowercase().filter { it.isLetter() }
+
+/**
+ * Replace only the broken characters, keeping the page's punctuation and casing:
+ * "Waren (Mï¿½ritz)" + "waren-mueritz" becomes "Waren (Müritz)".
+ */
+private fun repairName(name: String, slug: String): String {
+    val expected = expectedSkeleton(slug)
+    val actual = actualSkeleton(name)
+    if (actual.length == expected.length) {
+        val replacements = actual.indices.mapNotNull { index ->
+            if (actual[index] == MANGLED) expected[index] else null
+        }
+        if (replacements.isNotEmpty() && replacements.none { it == MANGLED }) {
+            var index = 0
+            return mojibakeRegex.replace(name) { replacements[index++].toString() }
+        }
+    }
+    // No usable alignment (e.g. a legacy slug without the umlaut digraph).
+    return nameFromSlug(slug)
+}
+
+/** Prefer the source page's name, but repair broken umlauts using the slug. */
 fun displayNameFor(slug: String, providerName: String?): String {
     val value = providerName?.trim().orEmpty()
     return when {
         value.isEmpty() -> displayCity(slug)
-        mojibakeRegex.containsMatchIn(value) -> nameFromSlug(slug)
+        mojibakeRegex.containsMatchIn(value) -> repairName(value, slug)
         else -> value
     }
 }

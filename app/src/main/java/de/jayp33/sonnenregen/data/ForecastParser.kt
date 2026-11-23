@@ -12,6 +12,8 @@ data class PageData(
     val astro: AstroDto?,
     /** Human-readable place name from the page, e.g. "Frankfurt (Oder)". */
     val placeName: String? = null,
+    /** Canonical slug from the page's own links, which resolves aliases like "waren". */
+    val canonicalSlug: String? = null,
 )
 
 object ForecastParser {
@@ -20,6 +22,9 @@ object ForecastParser {
     )
     private val h1Regex = Regex("""(?is)<h1[^>]*>(.*?)</h1>""")
     private val titleRegex = Regex("""(?is)<title[^>]*>(.*?)</title>""")
+    private val canonicalSlugRegex = Regex(
+        """/(?:wetterdaten|wetterradar)/([a-z0-9]+(?:-[a-z0-9]+)*(?:/[a-z0-9]+(?:-[a-z0-9]+)*)*)""",
+    )
     private val tagRegex = Regex("""<[^>]+>""")
     private val entityRegex = Regex(
         """&(#(?:x[0-9a-f]+|[0-9]+)|[a-z]+);""",
@@ -130,8 +135,15 @@ object ForecastParser {
             }
         }
 
-        return PageData(shortcast, astro, extractPlaceName(html))
+        return PageData(shortcast, astro, extractPlaceName(html), canonicalSlug(html))
     }
+
+    private fun canonicalSlug(html: String): String? = canonicalSlugRegex.findAll(html)
+        .map { it.groupValues[1] }
+        .groupingBy { it }
+        .eachCount()
+        .maxByOrNull { it.value }
+        ?.key
 }
 
 @Serializable

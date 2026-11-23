@@ -29,11 +29,12 @@ class CityTest {
     }
 
     @Test
-    fun rebuilds_mangled_names_from_the_slug() {
+    fun repairs_only_the_broken_character_and_keeps_punctuation() {
         assertEquals("Bützow", displayNameFor("buetzow", "Bï¿½tzow"))
         assertEquals("Großenhain", displayNameFor("grossenhain", "Groï¿½enhain"))
         assertEquals("Bad München", displayNameFor("bad-muenchen", "Bad Mï¿½nchen"))
         assertEquals("Lübeck", displayNameFor("luebeck", "L\uFFFDbeck"))
+        assertEquals("Waren (Müritz)", displayNameFor("waren-mueritz", "Waren (Mï¿½ritz)"))
     }
 
     @Test

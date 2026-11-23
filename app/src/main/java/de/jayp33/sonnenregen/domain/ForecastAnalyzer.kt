@@ -28,6 +28,9 @@ object ForecastAnalyzer {
         val nowcastPage = ForecastParser.parsePageData(nowcastHtml)
         val hourlyShortcast = hourlyPage.shortcast
         val nowcastShortcast = nowcastPage.shortcast
+        // Aliases such as "waren" redirect to "waren-mueritz"; the page links
+        // carry the canonical spelling needed to repair its mangled umlaut.
+        val displaySlug = hourlyPage.canonicalSlug ?: normalizedCity
 
         val (hours, nearcast, hourlyCurrent) = slotsFrom(hourlyShortcast)
         val (_, nowcastItems, nowcastCurrent) = slotsFrom(nowcastShortcast)
@@ -53,7 +56,7 @@ object ForecastAnalyzer {
 
         return Forecast(
             city = normalizedCity,
-            displayName = displayNameFor(normalizedCity, hourlyPage.placeName),
+            displayName = displayNameFor(displaySlug, hourlyPage.placeName),
             now = reference,
             timezone = hours.firstOrNull()?.start?.offset?.id ?: TIMEZONE,
             sun = change(reference, sunTimeline, { it.sunny }, Condition.SUN),

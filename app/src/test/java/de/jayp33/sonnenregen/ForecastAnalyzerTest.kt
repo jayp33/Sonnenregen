@@ -52,6 +52,17 @@ class ForecastAnalyzerTest {
     }
 
     @Test
+    fun resolves_a_redirect_alias_to_the_canonical_place_name() {
+        val page = "<title>Wetter Waren (Mï¿½ritz) - 4 Tage Vorhersage - WetterOnline</title>" +
+            """<a href="/wetterdaten/waren-mueritz">data</a>""" + TestData.page()
+
+        val forecast = ForecastAnalyzer.analyze("waren", page, page)
+
+        assertEquals("waren", forecast.city)
+        assertEquals("Waren (Müritz)", forecast.displayName)
+    }
+
+    @Test
     fun uses_exact_sunrise_and_reports_next_sun_times() {
         val morning = TestData.sunnyMorningShortcast
         val forecast = ForecastAnalyzer.analyze(
