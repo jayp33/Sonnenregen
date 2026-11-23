@@ -19,9 +19,7 @@ import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
-import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
-import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
@@ -91,7 +89,15 @@ private fun WeatherWidgetContent(snapshot: WidgetSnapshot) {
                 style = summaryStyle,
             )
         } else {
-            Text(text = snapshot.displayName, style = titleStyle)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = snapshot.displayName, style = titleStyle)
+                if (snapshot.fetchedAtMillis > 0L) {
+                    Text(
+                        text = string(R.string.widget_updated, formatTime(snapshot.fetchedAtMillis)),
+                        style = smallStyle,
+                    )
+                }
+            }
             Text(
                 text = if (snapshot.compactSummary.isEmpty()) {
                     string(R.string.widget_no_forecast)
@@ -100,34 +106,29 @@ private fun WeatherWidgetContent(snapshot: WidgetSnapshot) {
                 },
                 style = summaryStyle,
             )
-            if (snapshot.fetchedAtMillis > 0L) {
-                Text(
-                    text = string(R.string.widget_updated, formatTime(snapshot.fetchedAtMillis)),
-                    style = smallStyle,
-                )
-            }
 
-            snapshot.days.forEach { day ->
-                Spacer(GlanceModifier.height(2.dp))
-                HourRow(day, snapshot.displayName)
-            }
+            snapshot.days.forEach { day -> HourRow(day, snapshot.displayName) }
             if (snapshot.hoursStale) {
                 Text(text = string(R.string.hourly_stale), style = smallStyle)
             }
 
-            Spacer(GlanceModifier.height(3.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = GlanceModifier.padding(top = 3.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Text(
                     text = string(R.string.nowcast_prefix),
                     style = smallStyle,
                     modifier = GlanceModifier.width(20.dp),
                 )
-                if (snapshot.nowcastStale) {
-                    Text(text = string(R.string.nowcast_stale), style = smallStyle)
-                } else {
-                    snapshot.nowcastCells.forEach { cell ->
-                        Cell(cell, snapshot.displayName)
-                        Spacer(GlanceModifier.width(1.dp))
+                // RemoteViews rows cap at 10 children, so nest the six cells.
+                Column {
+                    Row {
+                        if (snapshot.nowcastStale) {
+                            Text(text = string(R.string.nowcast_stale), style = smallStyle)
+                        } else {
+                            snapshot.nowcastCells.forEach { cell -> Cell(cell, snapshot.displayName) }
+                        }
                     }
                 }
             }
@@ -137,17 +138,29 @@ private fun WeatherWidgetContent(snapshot: WidgetSnapshot) {
 
 @Composable
 private fun HourRow(day: WidgetDay, city: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    // RemoteViews rows cap at 10 children: one label + four nested groups.
+    Row(
+        modifier = GlanceModifier.padding(top = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Text(
             text = string(day.day.weekdayLabel()),
             style = smallStyle,
             modifier = GlanceModifier.width(20.dp),
         )
         (0..3).forEach { group ->
-            if (group > 0) Spacer(GlanceModifier.width(3.dp))
-            (0..5).forEach { index ->
-                Cell(day.cells.getOrNull(group * 6 + index), city)
-                Spacer(GlanceModifier.width(1.dp))
+            Column(
+                modifier = if (group == 0) {
+                    GlanceModifier
+                } else {
+                    GlanceModifier.padding(start = 3.dp)
+                },
+            ) {
+                Row {
+                    (0..5).forEach { index ->
+                        Cell(day.cells.getOrNull(group * 6 + index), city)
+                    }
+                }
             }
         }
     }
