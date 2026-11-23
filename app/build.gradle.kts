@@ -55,7 +55,7 @@ dependencies {
 
     implementation("androidx.work:work-runtime-ktx:2.12.0")
     implementation("androidx.datastore:datastore-preferences:1.3.0")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.13.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
