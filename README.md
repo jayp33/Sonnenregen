@@ -32,9 +32,11 @@ and German, selected by device locale.
   a fresh forecast changes from no sun/rain to sun/rain; ongoing conditions never
   re-alert. Each condition has its own lead time (0, 15, 30 or 60 minutes), so a
   notification can arrive before the event instead of at the next poll: the
-  onset time is saved and a one-shot job posts at `event − lead`. Shifting event
-  times reschedule that job without posting twice, and a failed refresh leaves
-  it untouched.
+  onset time is saved and a one-shot job posts at `event − lead`. Those early
+  alerts announce the start (`The sun will be shining in Berlin in 15 minutes
+  (12:30).`) using the city's timezone; with no lead the wording stays present
+  tense. Shifting event times reschedule the job without posting twice, and a
+  failed refresh leaves it untouched.
 - **Multiple cities**: add or remove WetterOnline slugs (`berlin`, `hamburg`, …)
   in the app. Slugs stay lowercase for URLs; the app shows the real place name
   from WetterOnline (`frankfurt-oder` → `Frankfurt (Oder)`,

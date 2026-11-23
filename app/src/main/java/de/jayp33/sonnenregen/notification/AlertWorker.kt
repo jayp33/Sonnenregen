@@ -18,16 +18,27 @@ class AlertWorker(
             AlertKind.valueOf(inputData.getString(KEY_KIND).orEmpty())
         }.getOrNull() ?: return Result.failure()
         val displayName = inputData.getString(KEY_DISPLAY_NAME) ?: displayCity(city)
-        val eventAtMillis = inputData.getLong(KEY_EVENT_AT, -1L)
+        val eventAtMillis = inputData.getLong(KEY_EVENT_AT, -1L).takeIf { it > 0L }
+        val leadMinutes = inputData.getInt(KEY_LEAD_MINUTES, 0)
+        val zoneId = inputData.getString(KEY_ZONE_ID).orEmpty()
 
         val store = WeatherStore(applicationContext)
         if (!store.isEnabled()) return Result.success()
 
         WeatherNotifier.showAlerts(
             applicationContext,
-            listOf(WeatherAlert(city, displayName, kind)),
+            listOf(
+                WeatherAlert(
+                    city = city,
+                    displayName = displayName,
+                    kind = kind,
+                    leadMinutes = leadMinutes,
+                    eventAtMillis = eventAtMillis,
+                    zoneId = zoneId,
+                ),
+            ),
         )
-        store.markAlertNotified(AlertKey(city, kind), eventAtMillis)
+        store.markAlertNotified(AlertKey(city, kind), eventAtMillis ?: -1L)
         return Result.success()
     }
 
@@ -36,5 +47,7 @@ class AlertWorker(
         const val KEY_KIND = "alert_kind"
         const val KEY_DISPLAY_NAME = "alert_display_name"
         const val KEY_EVENT_AT = "alert_event_at"
+        const val KEY_LEAD_MINUTES = "alert_lead_minutes"
+        const val KEY_ZONE_ID = "alert_zone_id"
     }
 }

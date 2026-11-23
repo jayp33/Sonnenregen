@@ -58,6 +58,8 @@
     <string name="rain_alert">Notify when rain starts</string>
     <string name="alert_sun">The sun is shining in %1$s.</string>
     <string name="alert_rain">It\'s raining in %1$s.</string>
+    <string name="alert_sun_in">The sun will be shining in %1$s in %2$d minutes (%3$s).</string>
+    <string name="alert_rain_in">It will rain in %1$s in %2$d minutes (%3$s).</string>
     <string name="sun_lead">Sun alert lead: %1$d min</string>
     <string name="rain_lead">Rain alert lead: %1$d min</string>
     <string name="lead_minutes">%1$d min</string>

@@ -1,6 +1,7 @@
 package de.jayp33.sonnenregen.data
 
 import de.jayp33.sonnenregen.domain.HourCell
+import de.jayp33.sonnenregen.domain.TIMEZONE
 import kotlinx.serialization.Serializable
 
 /** The last good forecast for one city, already formatted in the active locale. */
@@ -25,6 +26,8 @@ data class CityForecast(
     /** Upcoming onset time, so alerts can be scheduled ahead of the refresh. */
     val sunEventAtMillis: Long? = null,
     val rainEventAtMillis: Long? = null,
+    /** Zone of the forecast's clock times, used to render alert event times. */
+    val timezone: String = TIMEZONE,
 )
 
 /** Keep successful cities and retain the previous value for failed ones. */

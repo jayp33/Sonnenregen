@@ -1,6 +1,7 @@
 package de.jayp33.sonnenregen.notification
 
 import de.jayp33.sonnenregen.data.CityForecast
+import de.jayp33.sonnenregen.domain.TIMEZONE
 import de.jayp33.sonnenregen.domain.displayCity
 import kotlinx.serialization.Serializable
 
@@ -12,6 +13,10 @@ data class WeatherAlert(
     val city: String,
     val displayName: String,
     val kind: AlertKind,
+    /** Configured lead; a positive value makes the notification announce the start. */
+    val leadMinutes: Int = 0,
+    val eventAtMillis: Long? = null,
+    val zoneId: String = TIMEZONE,
 )
 
 /** Stable identity for an alert's settings, state, and WorkManager job. */
@@ -100,7 +105,14 @@ object AlertPlanner {
                 kind == AlertKind.SUN -> forecast.sunEventAtMillis
                 else -> forecast.rainEventAtMillis
             }
-            val alert = WeatherAlert(city, forecast.displayName.ifBlank { displayCity(city) }, kind)
+            val alert = WeatherAlert(
+                city = city,
+                displayName = forecast.displayName.ifBlank { displayCity(city) },
+                kind = kind,
+                leadMinutes = lead,
+                eventAtMillis = eventAt,
+                zoneId = forecast.timezone,
+            )
 
             when {
                 currently -> when (state.stage) {

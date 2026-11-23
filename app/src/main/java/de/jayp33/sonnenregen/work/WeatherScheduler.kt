@@ -53,6 +53,8 @@ object WeatherScheduler {
             AlertWorker.KEY_KIND to scheduled.key.kind.name,
             AlertWorker.KEY_DISPLAY_NAME to scheduled.alert.displayName,
             AlertWorker.KEY_EVENT_AT to scheduled.eventAtMillis,
+            AlertWorker.KEY_LEAD_MINUTES to scheduled.alert.leadMinutes,
+            AlertWorker.KEY_ZONE_ID to scheduled.alert.zoneId,
         )
         val delayMillis = maxOf(0L, scheduled.notifyAtMillis - System.currentTimeMillis())
         val request = OneTimeWorkRequestBuilder<AlertWorker>()

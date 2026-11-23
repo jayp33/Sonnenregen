@@ -26,6 +26,9 @@ class AlertPlannerTest {
         assertEquals(1, plan.scheduled.size)
         assertEquals(now + 30 * minute, plan.scheduled.single().notifyAtMillis)
         assertEquals(event, plan.scheduled.single().eventAtMillis)
+        assertEquals(30, plan.scheduled.single().alert.leadMinutes)
+        assertEquals(event, plan.scheduled.single().alert.eventAtMillis)
+        assertEquals("Europe/Berlin", plan.scheduled.single().alert.zoneId)
         assertEquals(AlertStage.SCHEDULED, plan.states[sunKey]?.stage)
         assertTrue(plan.alerts.isEmpty())
     }

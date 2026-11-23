@@ -12,6 +12,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.time.OffsetDateTime
 
 @RunWith(AndroidJUnit4::class)
 class WeatherNotifierTest {
@@ -55,14 +56,74 @@ class WeatherNotifierTest {
         )
 
         assertEquals(
-            "The sun is shining in Berlin.",
+            context.getString(R.string.alert_sun, "Berlin"),
             sun.extras.getCharSequence(Notification.EXTRA_TEXT).toString(),
         )
         assertEquals(
-            "It's raining in Berlin.",
+            context.getString(R.string.alert_rain, "Berlin"),
             rain.extras.getCharSequence(Notification.EXTRA_TEXT).toString(),
         )
         assertTrue(sun.flags and Notification.FLAG_AUTO_CANCEL != 0)
+    }
+
+    @Test
+    fun lead_time_alerts_announce_the_start_in_the_citys_timezone() {
+        val sunStart = OffsetDateTime.parse("2026-11-23T11:30:00Z").toInstant().toEpochMilli()
+        val sun = WeatherNotifier.buildAlertNotification(
+            context,
+            WeatherAlert(
+                city = "berlin",
+                displayName = "Berlin",
+                kind = AlertKind.SUN,
+                leadMinutes = 15,
+                eventAtMillis = sunStart,
+                zoneId = "+01:00",
+            ),
+            nowMillis = sunStart - 15 * 60_000L,
+        )
+        val rainStart = OffsetDateTime.parse("2026-11-23T14:15:00Z").toInstant().toEpochMilli()
+        val rain = WeatherNotifier.buildAlertNotification(
+            context,
+            WeatherAlert(
+                city = "hamburg",
+                displayName = "Hamburg",
+                kind = AlertKind.RAIN,
+                leadMinutes = 60,
+                eventAtMillis = rainStart,
+                zoneId = "+01:00",
+            ),
+            nowMillis = rainStart - 60 * 60_000L,
+        )
+
+        assertEquals(
+            context.getString(R.string.alert_sun_in, "Berlin", 15, "12:30"),
+            sun.extras.getCharSequence(Notification.EXTRA_TEXT).toString(),
+        )
+        assertEquals(
+            context.getString(R.string.alert_rain_in, "Hamburg", 60, "15:15"),
+            rain.extras.getCharSequence(Notification.EXTRA_TEXT).toString(),
+        )
+    }
+
+    @Test
+    fun a_zero_lead_keeps_the_present_tense_even_with_an_event_time() {
+        val event = OffsetDateTime.parse("2026-11-23T11:30:00Z").toInstant().toEpochMilli()
+        val notification = WeatherNotifier.buildAlertNotification(
+            context,
+            WeatherAlert(
+                city = "berlin",
+                displayName = "Berlin",
+                kind = AlertKind.SUN,
+                eventAtMillis = event,
+                zoneId = "+01:00",
+            ),
+            nowMillis = event,
+        )
+
+        assertEquals(
+            context.getString(R.string.alert_sun, "Berlin"),
+            notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString(),
+        )
     }
 
     @Test

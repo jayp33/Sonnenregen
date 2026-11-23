@@ -12,8 +12,12 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import de.jayp33.sonnenregen.R
 import de.jayp33.sonnenregen.data.CityStatus
+import de.jayp33.sonnenregen.domain.CLOCK_TIME
+import de.jayp33.sonnenregen.domain.TIMEZONE
 import de.jayp33.sonnenregen.receiver.RefreshReceiver
 import de.jayp33.sonnenregen.ui.MainActivity
+import java.time.Instant
+import java.time.ZoneId
 
 object WeatherNotifier {
     private const val CHANNEL_ID = "weather"
@@ -74,11 +78,12 @@ object WeatherNotifier {
         ALERT_NOTIFICATION_ID + (alert.city + alert.kind.name).hashCode() and 0x7FFF
 
     /** Separate from posting so alert content and IDs can be tested on a device. */
-    internal fun buildAlertNotification(context: Context, alert: WeatherAlert): Notification {
-        val text = when (alert.kind) {
-            AlertKind.SUN -> context.getString(R.string.alert_sun, alert.displayName)
-            AlertKind.RAIN -> context.getString(R.string.alert_rain, alert.displayName)
-        }
+    internal fun buildAlertNotification(
+        context: Context,
+        alert: WeatherAlert,
+        nowMillis: Long = System.currentTimeMillis(),
+    ): Notification {
+        val text = alertText(context, alert, nowMillis)
         val openPendingIntent = PendingIntent.getActivity(
             context,
             ALERT_OPEN_REQUEST_CODE,
@@ -95,6 +100,39 @@ object WeatherNotifier {
             .setAutoCancel(true)
             .setContentIntent(openPendingIntent)
             .build()
+    }
+
+    /**
+     * With a lead time, announce the upcoming start (remaining minutes plus the
+     * local clock time) instead of claiming the condition is already here.
+     */
+    private fun alertText(context: Context, alert: WeatherAlert, nowMillis: Long): String {
+        val eventAt = alert.eventAtMillis?.takeIf { it > 0L }
+        if (alert.leadMinutes > 0 && eventAt != null) {
+            val remaining = ((eventAt - nowMillis + 30_000L) / 60_000L)
+                .toInt().coerceAtLeast(0)
+            val zone = runCatching { ZoneId.of(alert.zoneId.ifBlank { TIMEZONE }) }
+                .getOrDefault(ZoneId.of(TIMEZONE))
+            val time = Instant.ofEpochMilli(eventAt).atZone(zone).toLocalTime().format(CLOCK_TIME)
+            return when (alert.kind) {
+                AlertKind.SUN -> context.getString(
+                    R.string.alert_sun_in,
+                    alert.displayName,
+                    remaining,
+                    time,
+                )
+                AlertKind.RAIN -> context.getString(
+                    R.string.alert_rain_in,
+                    alert.displayName,
+                    remaining,
+                    time,
+                )
+            }
+        }
+        return when (alert.kind) {
+            AlertKind.SUN -> context.getString(R.string.alert_sun, alert.displayName)
+            AlertKind.RAIN -> context.getString(R.string.alert_rain, alert.displayName)
+        }
     }
 
     /** Also used by tests to verify the notification's content intent. */
