@@ -78,33 +78,39 @@ object ForecastAnalyzer {
 
     fun slotsFrom(dto: ShortcastDto): Triple<List<Slot>, List<Slot>, Slot?> {
         val hours = dto.hours.mapNotNull { hour ->
-            Slot(
-                start = parseTimestamp(hour.date),
-                duration = Duration.ofMinutes(60),
-                symbol = hour.symbol,
-                source = SlotSource.HOURLY,
-            )
+            parseTimestampOrNull(hour.date)?.let { start ->
+                Slot(
+                    start = start,
+                    duration = Duration.ofMinutes(60),
+                    symbol = hour.symbol,
+                    source = SlotSource.HOURLY,
+                )
+            }
         }.sortedBy { it.start }
 
         val nowcast = dto.nowcastTrend?.items.orEmpty().mapNotNull { item ->
-            Slot(
-                start = parseTimestamp(item.date),
-                duration = Duration.ofMinutes(15),
-                symbol = item.symbol,
-                source = SlotSource.NOWCAST,
-                night = item.weatherConditionImage == "night",
-            )
+            parseTimestampOrNull(item.date)?.let { start ->
+                Slot(
+                    start = start,
+                    duration = Duration.ofMinutes(15),
+                    symbol = item.symbol,
+                    source = SlotSource.NOWCAST,
+                    night = item.weatherConditionImage == "night",
+                )
+            }
         }.sortedBy { it.start }
 
-        val current = dto.current?.let { it ->
-            Slot(
-                start = parseTimestamp(it.date),
-                duration = Duration.ofMinutes(15),
-                symbol = it.symbol,
-                source = SlotSource.CURRENT,
-                solarElevation = it.solarElevation,
-                night = it.weatherConditionImage == "night",
-            )
+        val current = dto.current?.let { item ->
+            parseTimestampOrNull(item.date)?.let { start ->
+                Slot(
+                    start = start,
+                    duration = Duration.ofMinutes(15),
+                    symbol = item.symbol,
+                    source = SlotSource.CURRENT,
+                    solarElevation = item.solarElevation,
+                    night = item.weatherConditionImage == "night",
+                )
+            }
         }
 
         return Triple(hours, nowcast, current)

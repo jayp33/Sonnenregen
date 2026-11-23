@@ -1,6 +1,11 @@
 package de.jayp33.sonnenregen
 
+import de.jayp33.sonnenregen.data.CurrentDto
 import de.jayp33.sonnenregen.data.ForecastParser
+import de.jayp33.sonnenregen.data.HourDto
+import de.jayp33.sonnenregen.data.ItemDto
+import de.jayp33.sonnenregen.data.NowcastDto
+import de.jayp33.sonnenregen.data.ShortcastDto
 import de.jayp33.sonnenregen.domain.ForecastAnalyzer
 import de.jayp33.sonnenregen.domain.HourKind
 import de.jayp33.sonnenregen.domain.SunEvent
@@ -170,6 +175,29 @@ class ForecastAnalyzerTest {
         for (index in 1 until timeline.size) {
             assertEquals(timeline[index - 1].end, timeline[index].start)
         }
+    }
+
+    @Test
+    fun malformed_slot_timestamps_are_skipped() {
+        val shortcast = ShortcastDto(
+            hours = listOf(
+                HourDto("not-a-timestamp", "so____"),
+                HourDto("2026-11-21T08:00:00+01:00", "so____"),
+            ),
+            nowcastTrend = NowcastDto(
+                items = listOf(
+                    ItemDto("not-a-timestamp", "so____"),
+                    ItemDto("2026-11-21T08:15:00+01:00", "so____"),
+                ),
+            ),
+            current = CurrentDto("not-a-timestamp", "so____"),
+        )
+
+        val (hours, nowcast, current) = ForecastAnalyzer.slotsFrom(shortcast)
+
+        assertEquals(1, hours.size)
+        assertEquals(1, nowcast.size)
+        assertEquals(null, current)
     }
 
     @Test
