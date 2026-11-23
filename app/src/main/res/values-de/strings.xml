@@ -59,6 +59,7 @@
     <string name="move_up">Nach oben</string>
     <string name="move_down">Nach unten</string>
     <string name="show_in_notification">In Benachrichtigung anzeigen</string>
+    <string name="show_in_widget">Im Widget anzeigen</string>
     <string name="open_on_wetteronline">Karte auf WetterOnline öffnen</string>
     <string name="additional_notifications">Zusätzliche Benachrichtigungen</string>
     <string name="sun_alert">Bei Sonnenbeginn benachrichtigen</string>

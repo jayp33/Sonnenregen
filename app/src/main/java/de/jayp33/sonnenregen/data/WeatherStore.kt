@@ -41,6 +41,10 @@ internal fun updateCityInSet(
     enabled: Boolean,
 ): Set<String> = if (enabled) cities + city else cities - city
 
+/** Only a valid slug can be the widget city; absent/corrupt values use the default. */
+internal fun decodeWidgetCity(value: String?): String? =
+    value?.let(::normalizeCity)?.takeIf(::isValidCitySlug)
+
 /** Add/remove one city from the notification-only hide list. */
 internal fun updateNotificationVisibility(
     hidden: Set<String>,
@@ -164,6 +168,7 @@ class WeatherStore(context: Context) {
     val citiesFlow: Flow<List<String>> = dataStore.data.map(::citiesFrom)
     val forecastsFlow: Flow<Map<String, CityForecast>> = dataStore.data.map(::forecastsFrom)
     val hiddenCitiesFlow: Flow<Set<String>> = dataStore.data.map(::hiddenCitiesFrom)
+    val widgetCityFlow: Flow<String?> = dataStore.data.map { widgetCityFrom(it) }
     val sunAlertCitiesFlow: Flow<Set<String>> = dataStore.data.map { citySetFrom(it, SUN_ALERTS) }
     val rainAlertCitiesFlow: Flow<Set<String>> = dataStore.data.map { citySetFrom(it, RAIN_ALERTS) }
     val snowAlertCitiesFlow: Flow<Set<String>> = dataStore.data.map { citySetFrom(it, SNOW_ALERTS) }
@@ -195,6 +200,7 @@ class WeatherStore(context: Context) {
             prefs[CITIES] = json.encodeToString(citiesFrom(prefs).filterNot { it == city })
             prefs[FORECASTS] = json.encodeToString(forecastsFrom(prefs).filterKeys { it != city })
             prefs[HIDDEN_CITIES] = json.encodeToString(hiddenCitiesFrom(prefs) - city)
+            if (widgetCityFrom(prefs) == city) prefs.remove(WIDGET_CITY)
             prefs[SUN_ALERTS] = json.encodeToString(citySetFrom(prefs, SUN_ALERTS) - city)
             prefs[RAIN_ALERTS] = json.encodeToString(citySetFrom(prefs, RAIN_ALERTS) - city)
             prefs[SNOW_ALERTS] = json.encodeToString(citySetFrom(prefs, SNOW_ALERTS) - city)
@@ -298,6 +304,20 @@ class WeatherStore(context: Context) {
 
     suspend fun hiddenCities(): Set<String> = dataStore.data.first().let(::hiddenCitiesFrom)
 
+    suspend fun widgetCity(): String? = dataStore.data.first().let(::widgetCityFrom)
+
+    /** One city is shown in the widget; passing null restores the default choice. */
+    suspend fun setWidgetCity(city: String?) {
+        val normalized = decodeWidgetCity(city)
+        dataStore.edit { prefs ->
+            if (normalized == null) {
+                prefs.remove(WIDGET_CITY)
+            } else {
+                prefs[WIDGET_CITY] = normalized
+            }
+        }
+    }
+
     suspend fun sunAlertCities(): Set<String> = dataStore.data.first().let { citySetFrom(it, SUN_ALERTS) }
 
     suspend fun rainAlertCities(): Set<String> = dataStore.data.first().let { citySetFrom(it, RAIN_ALERTS) }
@@ -376,6 +396,8 @@ class WeatherStore(context: Context) {
     private fun hiddenCitiesFrom(prefs: Preferences): Set<String> =
         prefs[HIDDEN_CITIES]?.let(::decodeHiddenCities) ?: emptySet()
 
+    private fun widgetCityFrom(prefs: Preferences): String? = decodeWidgetCity(prefs[WIDGET_CITY])
+
     private fun citySetFrom(prefs: Preferences, key: Preferences.Key<String>): Set<String> =
         prefs[key]?.let(::decodeCitySet) ?: emptySet()
 
@@ -407,6 +429,7 @@ class WeatherStore(context: Context) {
         val CITIES = stringPreferencesKey("cities")
         val FORECASTS = stringPreferencesKey("forecasts_by_city")
         val HIDDEN_CITIES = stringPreferencesKey("hidden_from_notification")
+        val WIDGET_CITY = stringPreferencesKey("widget_city")
         val SUN_ALERTS = stringPreferencesKey("sun_alert_cities")
         val RAIN_ALERTS = stringPreferencesKey("rain_alert_cities")
         val SNOW_ALERTS = stringPreferencesKey("snow_alert_cities")

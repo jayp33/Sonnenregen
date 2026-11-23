@@ -85,6 +85,7 @@ fun WeatherScreen() {
     var cities by remember { mutableStateOf<List<String>>(emptyList()) }
     var forecasts by remember { mutableStateOf<Map<String, CityForecast>>(emptyMap()) }
     var hiddenCities by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var widgetCity by remember { mutableStateOf<String?>(null) }
     var sunAlertCities by remember { mutableStateOf<Set<String>>(emptySet()) }
     var rainAlertCities by remember { mutableStateOf<Set<String>>(emptySet()) }
     var snowAlertCities by remember { mutableStateOf<Set<String>>(emptySet()) }
@@ -141,6 +142,7 @@ fun WeatherScreen() {
         launch { store.citiesFlow.collect { cities = it } }
         launch { store.forecastsFlow.collect { forecasts = it } }
         launch { store.hiddenCitiesFlow.collect { hiddenCities = it } }
+        launch { store.widgetCityFlow.collect { widgetCity = it } }
         launch { store.sunAlertCitiesFlow.collect { sunAlertCities = it } }
         launch { store.rainAlertCitiesFlow.collect { rainAlertCities = it } }
         launch { store.snowAlertCitiesFlow.collect { snowAlertCities = it } }
@@ -219,6 +221,7 @@ fun WeatherScreen() {
                             forecast = forecast,
                             detailsExpanded = city in expandedCities,
                             hidden = city in hiddenCities,
+                            widgetSelected = widgetCity == city,
                             sunAlert = city in sunAlertCities,
                             rainAlert = city in rainAlertCities,
                             snowAlert = city in snowAlertCities,
@@ -240,6 +243,11 @@ fun WeatherScreen() {
                                     if (enabled) {
                                         WeatherNotifier.show(context, store.statuses())
                                     }
+                                }
+                            },
+                            onToggleWidget = { selected ->
+                                scope.launch {
+                                    store.setWidgetCity(if (selected) city else null)
                                 }
                             },
                             onToggleSunAlert = { on ->
@@ -494,6 +502,7 @@ internal fun AddCityDialog(
 }
 
 internal object WeatherControlTags {
+    const val WIDGET = "widget_switch"
     const val SUN_ALERT = "sun_alert_switch"
     const val RAIN_ALERT = "rain_alert_switch"
     const val SNOW_ALERT = "snow_alert_switch"
@@ -537,6 +546,7 @@ internal fun CityItem(
     forecast: CityForecast?,
     detailsExpanded: Boolean,
     hidden: Boolean,
+    widgetSelected: Boolean = false,
     sunAlert: Boolean = false,
     rainAlert: Boolean = false,
     snowAlert: Boolean = false,
@@ -546,6 +556,7 @@ internal fun CityItem(
     nowMillis: Long = 0L,
     onToggleExpanded: () -> Unit,
     onToggleNotificationVisibility: (Boolean) -> Unit,
+    onToggleWidget: (Boolean) -> Unit = {},
     onOpenWebsite: () -> Unit = {},
     onToggleSunAlert: (Boolean) -> Unit = {},
     onToggleRainAlert: (Boolean) -> Unit = {},
@@ -635,6 +646,17 @@ internal fun CityItem(
                     onCheckedChange = onToggleNotificationVisibility,
                 )
                 Text(stringResource(R.string.show_in_notification))
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Switch(
+                    checked = widgetSelected,
+                    onCheckedChange = onToggleWidget,
+                    modifier = Modifier.testTag(WeatherControlTags.WIDGET),
+                )
+                Text(stringResource(R.string.show_in_widget))
             }
 
             Text(

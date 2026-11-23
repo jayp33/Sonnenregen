@@ -3,6 +3,7 @@ package de.jayp33.sonnenregen.ui
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -453,6 +454,58 @@ class CityItemTest {
         assertEquals(true, sunEnabled)
         assertEquals(true, rainEnabled)
         assertEquals(true, snowEnabled)
+    }
+
+    @Test
+    fun widget_toggle_reports_selection_and_deselection() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        var selected: Boolean? = null
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                CityItem(
+                    label = "Berlin",
+                    index = 0,
+                    cityCount = 1,
+                    forecast = null,
+                    detailsExpanded = true,
+                    hidden = false,
+                    onToggleExpanded = {},
+                    onToggleNotificationVisibility = {},
+                    onToggleWidget = { selected = it },
+                    onMove = {},
+                    onRemove = {},
+                )
+            }
+        }
+
+        composeTestRule
+            .onNodeWithText(context.getString(R.string.show_in_widget))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithTag(WeatherControlTags.WIDGET).assertIsOff().performClick()
+        assertEquals(true, selected)
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                CityItem(
+                    label = "Berlin",
+                    index = 0,
+                    cityCount = 1,
+                    forecast = null,
+                    detailsExpanded = true,
+                    hidden = false,
+                    widgetSelected = true,
+                    onToggleExpanded = {},
+                    onToggleNotificationVisibility = {},
+                    onToggleWidget = { selected = it },
+                    onMove = {},
+                    onRemove = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithTag(WeatherControlTags.WIDGET).assertIsOn().performClick()
+        assertEquals(false, selected)
     }
 
     @Test

@@ -7,6 +7,7 @@ import de.jayp33.sonnenregen.data.decodeCitySet
 import de.jayp33.sonnenregen.data.decodeLeadMinutes
 import de.jayp33.sonnenregen.data.decodeForecasts
 import de.jayp33.sonnenregen.data.decodeHiddenCities
+import de.jayp33.sonnenregen.data.decodeWidgetCity
 import de.jayp33.sonnenregen.data.mergeAlertStates
 import de.jayp33.sonnenregen.notification.AlertKey
 import de.jayp33.sonnenregen.notification.AlertKind
@@ -30,6 +31,13 @@ class CityPersistenceTest {
     @Test
     fun malformed_city_list_decodes_to_empty() {
         assertEquals(emptyList<String>(), decodeCities("not json", json))
+    }
+
+    @Test
+    fun widget_city_accepts_only_normalized_valid_slugs() {
+        assertEquals("berlin", decodeWidgetCity(" BERLIN "))
+        assertEquals(null, decodeWidgetCity("bad slug"))
+        assertEquals(null, decodeWidgetCity(null))
     }
 
     @Test
