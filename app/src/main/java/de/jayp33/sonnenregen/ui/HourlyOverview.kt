@@ -43,12 +43,14 @@ internal object WeatherRowSpacing {
 internal object WeatherRowTags {
     const val HOUR_ROW = "hour_row_"
     const val NOWCAST_ROW = "nowcast_row"
+    const val STALE_HOURLY = "stale_hourly"
 }
 
 /**
  * One row per calendar day in the forecast's own timezone, prefixed with that
  * day's short weekday. Each day is split into four blocks of six, separated by
- * a small gap for orientation.
+ * a small gap for orientation. Callers pass only current/future cells; missing
+ * hours render as empty placeholders so the remaining hours keep their slots.
  */
 @Composable
 fun HourlyOverview(city: String, hours: List<HourCell>, modifier: Modifier = Modifier) {
@@ -126,6 +128,21 @@ internal fun StaleNowcastRow(modifier: Modifier = Modifier) {
             maxLines = 1,
         )
     }
+}
+
+/**
+ * Shown when every stored hourly cell has elapsed. An empty grid alone could
+ * be read as "no weather", so the staleness is stated explicitly.
+ */
+@Composable
+internal fun StaleHourlyOverview(modifier: Modifier = Modifier) {
+    Text(
+        text = stringResource(R.string.hourly_stale),
+        modifier = modifier.testTag(WeatherRowTags.STALE_HOURLY),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 1,
+    )
 }
 
 @Composable

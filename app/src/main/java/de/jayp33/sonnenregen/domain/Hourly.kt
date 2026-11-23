@@ -86,11 +86,19 @@ fun nowcastCells(now: OffsetDateTime, slots: List<Slot>, limit: Int = 6): List<H
         )
     }
 
-/** Keep only nowcast cells that are still current or in the future at [nowMillis]. */
-internal fun List<HourCell>.currentOrFuture(nowMillis: Long): List<HourCell> =
-    filter { it.startEpochMillis + NOWCAST_CELL_MILLIS > nowMillis }
+/** Keep nowcast cells that are still current or in the future at [nowMillis]. */
+internal fun List<HourCell>.currentOrFutureNowcast(nowMillis: Long): List<HourCell> =
+    notYetElapsed(nowMillis, NOWCAST_CELL_MILLIS)
+
+/** Keep hourly cells that are still current or in the future at [nowMillis]. */
+internal fun List<HourCell>.currentOrFutureHours(nowMillis: Long): List<HourCell> =
+    notYetElapsed(nowMillis, HOUR_CELL_MILLIS)
+
+private fun List<HourCell>.notYetElapsed(nowMillis: Long, cellMillis: Long): List<HourCell> =
+    filter { it.startEpochMillis + cellMillis > nowMillis }
 
 private const val NOWCAST_CELL_MILLIS = 15L * 60 * 1_000
+private const val HOUR_CELL_MILLIS = 60L * 60 * 1_000
 
 /** Group cells by calendar day/hour in each cell's own offset, then by hour. */
 fun groupHoursByDay(hours: List<HourCell>): Map<LocalDate, Map<Int, HourCell>> {

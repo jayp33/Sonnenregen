@@ -2,10 +2,11 @@ package de.jayp33.sonnenregen
 
 import de.jayp33.sonnenregen.domain.Daylight
 import de.jayp33.sonnenregen.domain.HourCell
-import de.jayp33.sonnenregen.domain.currentOrFuture
 import de.jayp33.sonnenregen.domain.HourKind
 import de.jayp33.sonnenregen.domain.Slot
 import de.jayp33.sonnenregen.domain.SlotSource
+import de.jayp33.sonnenregen.domain.currentOrFutureHours
+import de.jayp33.sonnenregen.domain.currentOrFutureNowcast
 import de.jayp33.sonnenregen.domain.groupHoursByDay
 import de.jayp33.sonnenregen.domain.hourlyCells
 import de.jayp33.sonnenregen.domain.isRain
@@ -186,7 +187,19 @@ class HourlyTest {
         val future = HourCell(now + 15 * 60_000L, HourKind.SUN)
         val cells = listOf(old, justEnded, current, future)
 
-        assertEquals(listOf(current, future), cells.currentOrFuture(now))
+        assertEquals(listOf(current, future), cells.currentOrFutureNowcast(now))
+    }
+
+    @Test
+    fun elapsed_hourly_cells_are_dropped_but_the_current_one_stays() {
+        val now = at("2026-11-21T10:30:00+01:00").toInstant().toEpochMilli()
+        val old = HourCell(at("2026-11-21T08:00:00+01:00").toInstant().toEpochMilli(), HourKind.SUN)
+        val justEnded = HourCell(at("2026-11-21T09:00:00+01:00").toInstant().toEpochMilli(), HourKind.RAIN)
+        val current = HourCell(at("2026-11-21T10:00:00+01:00").toInstant().toEpochMilli(), HourKind.SUN)
+        val future = HourCell(at("2026-11-21T11:00:00+01:00").toInstant().toEpochMilli(), HourKind.RAIN)
+        val cells = listOf(old, justEnded, current, future)
+
+        assertEquals(listOf(current, future), cells.currentOrFutureHours(now))
     }
 
     @Test

@@ -216,6 +216,92 @@ class CityItemTest {
     }
 
     @Test
+    fun past_hours_are_blank_but_future_hours_keep_their_slots() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val start = OffsetDateTime.parse("2026-11-21T00:00:00+01:00")
+        val hours = (0 until 24).map { hour ->
+            HourCell(
+                startEpochMillis = start.plusHours(hour.toLong()).toInstant().toEpochMilli(),
+                kind = HourKind.SUN,
+                zoneId = "+01:00",
+            )
+        }
+        val forecast = forecastWith(HourKind.CLOUDY).copy(
+            hours = hours,
+            nowcastCells = emptyList(),
+        )
+        val now = start.plusHours(10).plusMinutes(30).toInstant().toEpochMilli()
+        val description = { time: String ->
+            context.getString(
+                R.string.hour_description,
+                "Berlin",
+                time,
+                context.getString(R.string.hour_sun),
+            )
+        }
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                CityItem(
+                    label = "Berlin",
+                    index = 0,
+                    cityCount = 1,
+                    forecast = forecast,
+                    detailsExpanded = false,
+                    hidden = false,
+                    nowMillis = now,
+                    onToggleExpanded = {},
+                    onToggleNotificationVisibility = {},
+                    onMove = {},
+                    onRemove = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithTag(
+            "${WeatherRowTags.HOUR_ROW}0", useUnmergedTree = true,
+        ).assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(description("09:00")).assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription(description("10:00")).assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.hourly_stale)).assertDoesNotExist()
+    }
+
+    @Test
+    fun fully_elapsed_hourly_grid_shows_an_outdated_hint() {
+        val staleLabel = InstrumentationRegistry.getInstrumentation()
+            .targetContext.getString(R.string.hourly_stale)
+        val cellStart = OffsetDateTime.parse("2026-11-21T09:00:00+01:00")
+            .toInstant().toEpochMilli()
+        val forecast = forecastWith(HourKind.CLOUDY).copy(
+            hours = listOf(HourCell(cellStart, HourKind.SUN, "+01:00")),
+            nowcastCells = emptyList(),
+        )
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                CityItem(
+                    label = "Berlin",
+                    index = 0,
+                    cityCount = 1,
+                    forecast = forecast,
+                    detailsExpanded = false,
+                    hidden = false,
+                    nowMillis = cellStart + 60 * 60_000L + 1,
+                    onToggleExpanded = {},
+                    onToggleNotificationVisibility = {},
+                    onMove = {},
+                    onRemove = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(staleLabel).assertIsDisplayed()
+        composeTestRule.onNodeWithTag(
+            "${WeatherRowTags.HOUR_ROW}0", useUnmergedTree = true,
+        ).assertDoesNotExist()
+    }
+
+    @Test
     fun stale_nowcast_row_shows_an_outdated_hint_when_the_forecast_cannot_refresh() {
         val staleLabel = InstrumentationRegistry.getInstrumentation()
             .targetContext.getString(R.string.nowcast_stale)

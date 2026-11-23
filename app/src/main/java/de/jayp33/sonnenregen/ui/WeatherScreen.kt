@@ -49,7 +49,8 @@ import androidx.core.content.ContextCompat
 import de.jayp33.sonnenregen.R
 import de.jayp33.sonnenregen.data.CityForecast
 import de.jayp33.sonnenregen.data.WeatherStore
-import de.jayp33.sonnenregen.domain.currentOrFuture
+import de.jayp33.sonnenregen.domain.currentOrFutureHours
+import de.jayp33.sonnenregen.domain.currentOrFutureNowcast
 import de.jayp33.sonnenregen.domain.displayCity
 import de.jayp33.sonnenregen.domain.isRain
 import de.jayp33.sonnenregen.domain.isSun
@@ -378,9 +379,15 @@ internal fun CityItem(
                 }
             }
             if (forecast != null) {
-                HourlyOverview(label, forecast.hours)
+                val storedHours = forecast.hours
+                val hours = storedHours.currentOrFutureHours(nowMillis)
+                if (hours.isNotEmpty()) {
+                    HourlyOverview(label, hours)
+                } else if (storedHours.isNotEmpty()) {
+                    StaleHourlyOverview()
+                }
                 val storedNowcastCells = forecast.nowcastCells
-                val nowcastCells = storedNowcastCells.currentOrFuture(nowMillis)
+                val nowcastCells = storedNowcastCells.currentOrFutureNowcast(nowMillis)
                 val nowcastModifier = Modifier.padding(top = WeatherRowSpacing.beforeNowcast)
                 when {
                     nowcastCells.any { it.kind.isRain() || it.kind.isSun() } ->

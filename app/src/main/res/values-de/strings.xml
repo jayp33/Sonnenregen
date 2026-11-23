@@ -19,6 +19,7 @@
 
     <string name="nowcast_prefix">90</string>
     <string name="nowcast_stale">veraltet</string>
+    <string name="hourly_stale">48 Std. veraltet</string>
     <string name="weekday_monday">Mo</string>
     <string name="weekday_tuesday">Di</string>
     <string name="weekday_wednesday">Mi</string>
