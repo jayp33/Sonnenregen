@@ -42,6 +42,11 @@ data class AlertState(
     val episodeEnded: Boolean = false,
 )
 
+/** A one-shot job may post only for the exact episode it was enqueued for. */
+internal fun shouldPostAlert(state: AlertState?, eventAtMillis: Long?): Boolean =
+    state?.stage == AlertStage.SCHEDULED &&
+        (eventAtMillis == null || state.eventAtMillis == eventAtMillis)
+
 data class ScheduledAlert(
     val key: AlertKey,
     val alert: WeatherAlert,

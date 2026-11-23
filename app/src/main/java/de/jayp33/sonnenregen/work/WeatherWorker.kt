@@ -17,6 +17,9 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 
+/** Provider-format and input errors are permanent; transport errors can be retried. */
+internal fun isRetryableFailure(exc: Exception): Boolean = exc !is ParseException && exc !is IllegalArgumentException
+
 class WeatherWorker(
     context: Context,
     params: WorkerParameters,
@@ -73,17 +76,17 @@ class WeatherWorker(
         Outcome.Success(store.format(forecast))
     } catch (exc: ParseException) {
         Log.w(TAG, "Parse failed; markup may have changed (${exc.javaClass.simpleName})")
-        Outcome.Failure(retryable = false)
+        Outcome.Failure(retryable = isRetryableFailure(exc))
     } catch (exc: IllegalArgumentException) {
         Log.w(TAG, "Invalid city (${exc.javaClass.simpleName})")
-        Outcome.Failure(retryable = false)
+        Outcome.Failure(retryable = isRetryableFailure(exc))
     } catch (exc: SourceException) {
         // Exception messages carry provider URLs, which contain the city slug.
         Log.w(TAG, "Fetch failed; retrying (${exc.javaClass.simpleName})")
-        Outcome.Failure(retryable = true)
+        Outcome.Failure(retryable = isRetryableFailure(exc))
     } catch (exc: Exception) {
         Log.w(TAG, "Unexpected error; retrying (${exc.javaClass.simpleName})")
-        Outcome.Failure(retryable = true)
+        Outcome.Failure(retryable = isRetryableFailure(exc))
     }
 
     private sealed interface Outcome {
