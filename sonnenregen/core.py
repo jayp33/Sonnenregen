@@ -103,7 +103,6 @@ class Change:
     event: str | None  # "starts" or "ends"
     at: datetime | None
     minutes: int | None
-    label: str
     summary: str
 
     def as_dict(self) -> dict:
@@ -474,11 +473,11 @@ def _change(now: datetime, timeline: Sequence[Slot], condition: Callable[[Slot],
             summary = f"{label} is not expected to end within the forecast horizon."
         else:
             summary = f"No {label.lower()} expected within the forecast horizon."
-        return Change(currently, None, None, None, label, summary)
+        return Change(currently, None, None, None, summary)
 
     minutes = int(round((target.start - now).total_seconds() / 60))
     summary = f"{label} {event} in {format_minutes(minutes)} ({target.start:%Y-%m-%d %H:%M %z})."
-    return Change(currently, event, target.start, minutes, label, summary)
+    return Change(currently, event, target.start, minutes, summary)
 
 
 def format_minutes(minutes: int) -> str:

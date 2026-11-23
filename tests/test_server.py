@@ -14,7 +14,7 @@ from sonnenregen.server import Handler, ThreadingHTTPServer
 
 def fake_answer() -> Answer:
     now = datetime.fromisoformat("2026-01-01T10:00:00+01:00")
-    change = Change(False, "starts", now, 60, "Sunshine", "Sunshine starts in 1 h.")
+    change = Change(False, "starts", now, 60, "Sunshine starts in 1 h.")
     return Answer("berlin", now, "Europe/Berlin", change, change, ("url",), now)
 
 
