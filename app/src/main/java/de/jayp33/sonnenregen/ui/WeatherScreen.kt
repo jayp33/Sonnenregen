@@ -1,6 +1,7 @@
 package de.jayp33.sonnenregen.ui
 
 import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -66,6 +67,7 @@ import de.jayp33.sonnenregen.domain.isValidCitySlug
 import de.jayp33.sonnenregen.domain.normalizeCity
 import de.jayp33.sonnenregen.notification.AlertKey
 import de.jayp33.sonnenregen.notification.AlertKind
+import de.jayp33.sonnenregen.notification.BatteryOptimizations
 import de.jayp33.sonnenregen.notification.WeatherNotifier
 import de.jayp33.sonnenregen.text.AgeUnit
 import de.jayp33.sonnenregen.text.relativeAge
@@ -119,6 +121,15 @@ fun WeatherScreen() {
                 }
             }
         }
+    }
+    var ignoringBatteryOptimizations by remember {
+        mutableStateOf(BatteryOptimizations.isIgnoring(context))
+    }
+    val batteryOptimizationLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) {
+        // The system dialog runs outside the app, so read the state on return.
+        ignoringBatteryOptimizations = BatteryOptimizations.isIgnoring(context)
     }
 
     LaunchedEffect(Unit) {
@@ -366,6 +377,19 @@ fun WeatherScreen() {
                         Text(stringResource(R.string.allow_notifications))
                     }
                 }
+
+                BatteryOptimizationControl(
+                    ignoring = ignoringBatteryOptimizations,
+                    onRequest = {
+                        try {
+                            batteryOptimizationLauncher
+                                .launch(BatteryOptimizations.requestIntent(context))
+                        } catch (_: ActivityNotFoundException) {
+                            batteryOptimizationLauncher
+                                .launch(BatteryOptimizations.settingsIntent())
+                        }
+                    },
+                )
             }
         }
     }
@@ -392,6 +416,25 @@ fun WeatherScreen() {
                 }
             },
         )
+    }
+}
+
+/** Global Doze setting: the button disappears once the system grants exemption. */
+@Composable
+internal fun BatteryOptimizationControl(
+    ignoring: Boolean,
+    onRequest: () -> Unit,
+) {
+    Text(stringResource(R.string.battery_optimizations_hint))
+    if (ignoring) {
+        Text(stringResource(R.string.battery_optimizations_ignored))
+    } else {
+        Button(
+            onClick = onRequest,
+            modifier = Modifier.testTag(WeatherControlTags.BATTERY_OPTIMIZATIONS),
+        ) {
+            Text(stringResource(R.string.ignore_battery_optimizations))
+        }
     }
 }
 
@@ -457,6 +500,7 @@ internal object WeatherControlTags {
     const val RAIN_LEAD = "rain_lead_selector"
     const val SNOW_LEAD = "snow_lead_selector"
     const val OPEN_WEBSITE = "open_website_button"
+    const val BATTERY_OPTIMIZATIONS = "battery_optimizations_button"
 }
 
 /** Dropdown with the supported lead times; each condition uses its own setting. */

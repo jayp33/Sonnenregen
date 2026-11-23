@@ -83,6 +83,10 @@ and German, selected by device locale.
   There is no foreground service and no exact unlock-event detection; Doze
   defers work and pending jobs catch up after unlock. The notification's
   chronometer shows the age of the last successful fetch.
+- **Optional Doze exemption**: a button on the main screen opens the Android
+  dialog to exempt Sonnenregen from battery optimization, for devices where
+  alerts or the ongoing notification get delayed. It turns into a status line
+  once the exemption is active.
 - **Localized**: English/German UI, including `Std.`/`Min.` durations in German.
 
 Example notifications:

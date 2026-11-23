@@ -259,6 +259,19 @@ fetch. We accept an occasional background refresh in that state rather than
 risking stale data. Strictly forbidding it would require a foreground service
 with screen-state receivers.
 
+### Optional battery-optimization exemption
+
+Aggressive OEM battery management can delay or remove an ongoing notification
+even when WorkManager is well behaved (issue #4). The main screen therefore
+offers a global **Exempt from battery optimization** button. It launches
+`Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` with a `package:` URI for
+this app; the `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` manifest permission makes
+the direct dialog available. Devices without that dialog fall back to
+`ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS`. The button is replaced by a status
+line when `PowerManager.isIgnoringBatteryOptimizations()` reports an active
+exemption, and the state is re-read through an Activity Result launcher when the
+user returns from the system dialog.
+
 A "Refresh" notification action enqueues a one-off `OneTimeWorkRequest` for
 manual refreshes.
 

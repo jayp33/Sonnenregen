@@ -50,6 +50,9 @@
     <string name="disable_notification">Disable ongoing notification</string>
     <string name="enable_notification">Enable ongoing notification</string>
     <string name="allow_notifications">Allow notifications</string>
+    <string name="ignore_battery_optimizations">Exempt from battery optimization</string>
+    <string name="battery_optimizations_hint">Keeps alerts and the ongoing notification from being delayed by Doze.</string>
+    <string name="battery_optimizations_ignored">Battery optimization exemption active</string>
 
     <string name="cities">Cities</string>
     <string name="city_hint">City slug, e.g. hamburg or region/city</string>

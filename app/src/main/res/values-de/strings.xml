@@ -50,6 +50,9 @@
     <string name="disable_notification">Laufende Benachrichtigung deaktivieren</string>
     <string name="enable_notification">Laufende Benachrichtigung aktivieren</string>
     <string name="allow_notifications">Benachrichtigungen erlauben</string>
+    <string name="ignore_battery_optimizations">Von Akku-Optimierung ausnehmen</string>
+    <string name="battery_optimizations_hint">Damit Alarme und die Dauerbenachrichtigung nicht durch den Doze-Modus verzögert werden.</string>
+    <string name="battery_optimizations_ignored">Ausnahme von Akku-Optimierung aktiv</string>
 
     <string name="cities">Orte</string>
     <string name="city_hint">Ort-Slug, z. B. hamburg oder region/ort</string>
