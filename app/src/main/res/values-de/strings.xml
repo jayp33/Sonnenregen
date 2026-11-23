@@ -16,6 +16,7 @@
 
     <string name="sun">Sonne: %1$s</string>
     <string name="rain">Regen: %1$s</string>
+    <string name="snow">Schnee: %1$s</string>
     <string name="sunrise">Sonnenaufgang: %1$s</string>
     <string name="sunset">Sonnenuntergang: %1$s</string>
 
@@ -41,6 +42,9 @@
     <string name="hour_light_rain">leichter Regen</string>
     <string name="hour_rain">Regen</string>
     <string name="hour_heavy_rain">starker Regen</string>
+    <string name="hour_light_snow">leichter Schnee</string>
+    <string name="hour_snow">Schnee</string>
+    <string name="hour_heavy_snow">starker Schnee</string>
     <string name="no_forecast">Noch keine Vorhersage – tippe auf „Jetzt aktualisieren“.</string>
     <string name="refresh_now">Jetzt aktualisieren</string>
     <string name="disable_notification">Laufende Benachrichtigung deaktivieren</string>
@@ -87,6 +91,10 @@
     <string name="rain_again">%1$s (wieder in %2$s)</string>
     <string name="no_sun">keine Sonne</string>
     <string name="no_rain">kein Regen</string>
+    <string name="snow_in">Schnee in %1$s</string>
+    <string name="snow_for">Schnee noch %1$s</string>
+    <string name="snow_now">Schnee jetzt</string>
+    <string name="no_snow">kein Schnee</string>
 
     <string name="summary_sun_starts">Sonne scheint in %1$s (%2$s).</string>
     <string name="summary_sun_ends">Sonne scheint noch %1$s (%2$s).</string>
@@ -97,4 +105,8 @@
     <string name="summary_rain_ongoing">Der Regen endet innerhalb des Vorhersagezeitraums nicht.</string>
     <string name="summary_no_sun">Innerhalb des Vorhersagezeitraums ist keine Sonne zu erwarten.</string>
     <string name="summary_no_rain">Innerhalb des Vorhersagezeitraums ist kein Regen zu erwarten.</string>
+    <string name="summary_snow_starts">Schnee beginnt in %1$s (%2$s).</string>
+    <string name="summary_snow_ends">Schnee dauert noch %1$s (%2$s).</string>
+    <string name="summary_snow_ongoing">Der Schnee endet innerhalb des Vorhersagezeitraums nicht.</string>
+    <string name="summary_no_snow">Innerhalb des Vorhersagezeitraums ist kein Schnee zu erwarten.</string>
 </resources>

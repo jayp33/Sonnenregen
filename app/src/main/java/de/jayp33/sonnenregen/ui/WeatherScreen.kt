@@ -60,6 +60,7 @@ import de.jayp33.sonnenregen.domain.currentOrFutureHours
 import de.jayp33.sonnenregen.domain.currentOrFutureNowcast
 import de.jayp33.sonnenregen.domain.displayCity
 import de.jayp33.sonnenregen.domain.isRain
+import de.jayp33.sonnenregen.domain.isSnow
 import de.jayp33.sonnenregen.domain.isSun
 import de.jayp33.sonnenregen.domain.isValidCitySlug
 import de.jayp33.sonnenregen.domain.normalizeCity
@@ -509,7 +510,7 @@ internal fun CityItem(
                 val nowcastCells = storedNowcastCells.currentOrFutureNowcast(nowMillis)
                 val nowcastModifier = Modifier.padding(top = WeatherRowSpacing.beforeNowcast)
                 when {
-                    nowcastCells.any { it.kind.isRain() || it.kind.isSun() } ->
+                    nowcastCells.any { it.kind.isRain() || it.kind.isSun() || it.kind.isSnow() } ->
                         NowcastOverview(label, nowcastCells, modifier = nowcastModifier)
 
                     storedNowcastCells.isNotEmpty() && nowcastCells.isEmpty() ->
@@ -527,6 +528,9 @@ internal fun CityItem(
                 UpdatedText(forecast.fetchedAtMillis, nowMillis)
                 Text(stringResource(R.string.sun, forecast.sunSummary))
                 Text(stringResource(R.string.rain, forecast.rainSummary))
+                if (forecast.snowSummary.isNotEmpty()) {
+                    Text(stringResource(R.string.snow, forecast.snowSummary))
+                }
                 val sunrise = forecast.sunriseLabel?.let {
                     stringResource(R.string.sunrise, it)
                 }

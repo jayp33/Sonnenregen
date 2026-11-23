@@ -279,6 +279,12 @@ class WeatherStore(context: Context) {
         compactSummary = ForecastFormatter.compact(forecast, phrases),
         sunSummary = ForecastFormatter.verbose(forecast.sun, phrases),
         rainSummary = ForecastFormatter.verboseRain(forecast, phrases),
+        // Only surface a snow line when snow is actually expected, so the common
+        // snow-free case does not add a permanent "no snow" row to every city.
+        snowSummary = forecast.snow
+            ?.takeIf { it.currently || it.minutes != null }
+            ?.let { ForecastFormatter.verbose(it, phrases) }
+            .orEmpty(),
         fetchedAtMillis = forecast.fetchedAt.toInstant().toEpochMilli(),
         displayName = forecast.displayName,
         timezone = forecast.timezone,
@@ -332,7 +338,15 @@ class WeatherStore(context: Context) {
         val rain = prefs[LEGACY_RAIN] ?: return emptyMap()
         val fetchedAt = prefs[LEGACY_FETCHED_AT] ?: return emptyMap()
         val compact = prefs[LEGACY_COMPACT] ?: sun
-        return mapOf(city to CityForecast(city, compact, sun, rain, fetchedAt))
+        return mapOf(
+            city to CityForecast(
+                city = city,
+                compactSummary = compact,
+                sunSummary = sun,
+                rainSummary = rain,
+                fetchedAtMillis = fetchedAt,
+            ),
+        )
     }
 
     private companion object {

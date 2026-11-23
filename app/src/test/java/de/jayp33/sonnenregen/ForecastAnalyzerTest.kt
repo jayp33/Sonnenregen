@@ -7,6 +7,7 @@ import de.jayp33.sonnenregen.domain.SunEvent
 import de.jayp33.sonnenregen.domain.SunEventKind
 import de.jayp33.sonnenregen.domain.isRain
 import de.jayp33.sonnenregen.domain.isRainSymbol
+import de.jayp33.sonnenregen.domain.isSnowSymbol
 import de.jayp33.sonnenregen.domain.isSunSymbol
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -182,6 +183,37 @@ class ForecastAnalyzerTest {
         assertTrue(isRainSymbol("bdr2__"))
         assertFalse(isRainSymbol("mdsn1_"))
         assertFalse(isRainSymbol("so____"))
+
+        assertTrue(isSnowSymbol("mdsn1_"))
+        assertTrue(isSnowSymbol("bdsn2_"))
+        assertFalse(isSnowSymbol("mdr1__"))
+        assertFalse(isSnowSymbol("so____"))
+    }
+
+    @Test
+    fun snow_onset_is_tracked_separately_from_rain() {
+        val snowShortcast = """
+            {
+              "current": {"date":"2026-11-21T10:00:00+01:00","symbol":"md____"},
+              "nowcast_trend": {"items":[]},
+              "hours": [
+                {"date":"2026-11-21T10:00:00+01:00","symbol":"md____"},
+                {"date":"2026-11-21T11:00:00+01:00","symbol":"mdsn2_"},
+                {"date":"2026-11-21T12:00:00+01:00","symbol":"mdsn2_"},
+                {"date":"2026-11-21T13:00:00+01:00","symbol":"md____"}
+              ]
+            }
+        """.trimIndent()
+        val page = TestData.pageWith(snowShortcast, TestData.astroJson)
+
+        val forecast = ForecastAnalyzer.analyze("berlin", page, page)
+        val snow = forecast.snow!!
+
+        assertEquals(false, snow.currently)
+        assertEquals(60L, snow.minutes!!)
+        // Snow must not leak into the rain summary.
+        assertEquals(null, forecast.rain.minutes)
+        assertEquals(false, forecast.rain.currently)
     }
 
     @Test

@@ -189,6 +189,32 @@ class CityItemTest {
     }
 
     @Test
+    fun nowcast_row_appears_when_it_snows_in_the_90_minutes() {
+        val prefix = InstrumentationRegistry.getInstrumentation()
+            .targetContext.getString(R.string.nowcast_prefix)
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                CityItem(
+                    label = "Berlin",
+                    index = 0,
+                    cityCount = 1,
+                    forecast = forecastWith(HourKind.SNOW),
+                    detailsExpanded = false,
+                    hidden = false,
+                    nowMillis = 0L,
+                    onToggleExpanded = {},
+                    onToggleNotificationVisibility = {},
+                    onMove = {},
+                    onRemove = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(prefix).assertIsDisplayed()
+    }
+
+    @Test
     fun nowcast_row_is_hidden_without_sun_or_rain_in_the_90_minutes() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val prefix = context.getString(R.string.nowcast_prefix)
@@ -555,6 +581,64 @@ class CityItemTest {
             .onNodeWithText(context.getString(R.string.open_on_wetteronline))
             .performClick()
         assertTrue(opened)
+    }
+
+    @Test
+    fun expanded_details_show_a_snow_line_when_snow_is_expected() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val snowSummary = "Snow starts in 1 h."
+        val forecast = forecastWith(HourKind.SNOW).copy(snowSummary = snowSummary)
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                CityItem(
+                    label = "Berlin",
+                    index = 0,
+                    cityCount = 1,
+                    forecast = forecast,
+                    detailsExpanded = true,
+                    hidden = false,
+                    nowMillis = 0L,
+                    onToggleExpanded = {},
+                    onToggleNotificationVisibility = {},
+                    onMove = {},
+                    onRemove = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(context.getString(R.string.snow, snowSummary))
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun expanded_details_hide_the_snow_line_when_no_snow_is_expected() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        // forecastWith leaves snowSummary blank, so no snow line should render.
+        val forecast = forecastWith(HourKind.CLOUDY)
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                CityItem(
+                    label = "Berlin",
+                    index = 0,
+                    cityCount = 1,
+                    forecast = forecast,
+                    detailsExpanded = true,
+                    hidden = false,
+                    nowMillis = 0L,
+                    onToggleExpanded = {},
+                    onToggleNotificationVisibility = {},
+                    onMove = {},
+                    onRemove = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(context.getString(R.string.rain, forecast.rainSummary))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.snow, ""))
+            .assertDoesNotExist()
     }
 
     private fun forecastWith(nowcastKind: HourKind) = CityForecast(

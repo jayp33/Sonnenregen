@@ -125,7 +125,8 @@ Below the day rows, an optional `90` row shows the 90-minute nowcast as six
 15-minute cells with the same colours and a fixed-width prefix matching the
 weekday column. These cells are taller than the hourly ones and print their
 start time (`21:15`, `21:30`, …) inside, in black on pale shades and white on
-the darker rain blues. It is rendered only when at least one of those cells is rain.
+the darker rain blues and pinks. It is rendered only when at least one of those
+cells is sun, rain or snow.
 Day rows use a tight 2 dp vertical gap, while the `90` row is separated by 10 dp
 in total (6 dp of extra padding on top of the card's 4 dp) so it reads as a
 distinct block; the values live in `WeatherRowSpacing`.
@@ -147,7 +148,12 @@ day symbol for such boundary hours, so it agrees with the sun text — e.g. an
 
 - bright/pale yellow — sunny (`so`) / partly sunny (`wb`), day symbols only;
 - very light gray — all clouds and night symbols outside those boundary hours;
-- light/medium/dark blue — light rain / rain / heavy rain.
+- light/medium/dark blue — light rain / rain / heavy rain;
+- light/medium/dark pink — light snow / snow / heavy snow (`sn1`/`sn2`/`sn3`).
+
+The pink shades come from WetterOnline's own radar precipitation legend
+(`#ffc2ff`, `#f969bf`, `#ea39a1` for light/medium/heavy), so the grid matches
+the website rather than inventing a snow colour.
 
 For example, `so` is bright yellow, `wb` is pale yellow, and the four night
 symbols are very light gray unless their hour straddles sunrise/sunset. Sunrise
@@ -193,7 +199,11 @@ Then:
    - **sunshine**: symbol starts with `so` or `wb`, and for the current
      observation `solarElevation > 0`;
    - **rain**: symbol contains `r`, `s` or `g` after the first two characters,
-     but not snow (`n`).
+     but not snow (`n`);
+   - **snow**: symbol contains `n` after the first two characters, with its
+     digit (`sn1`/`sn2`/`sn3`) selecting light/medium/heavy. Both grids use
+     WetterOnline's radar pink shades (`#ffc2ff`, `#f969bf`, `#ea39a1`), and a
+     snow summary line appears in the city details when snow is expected.
 6. Split the timeline at sunrise/sunset and mark the parts that are in daylight.
    WetterOnline labels the whole hour containing sunrise with a night symbol
    (e.g. `mo` = *klar*); on the daylight side of the cut we use the matching day

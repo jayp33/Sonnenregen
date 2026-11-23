@@ -15,7 +15,7 @@ data class SunEvent(val kind: SunEventKind, val atMillis: Long)
 
 enum class Event { STARTS, ENDS }
 
-enum class Condition { SUN, RAIN }
+enum class Condition { SUN, RAIN, SNOW }
 
 data class Slot(
     val start: OffsetDateTime,
@@ -37,6 +37,8 @@ data class Slot(
         }
 
     val raining: Boolean get() = isRainSymbol(symbol)
+
+    val snowing: Boolean get() = isSnowSymbol(symbol)
 }
 
 fun isSunSymbol(symbol: String): Boolean =
@@ -47,6 +49,9 @@ fun isRainSymbol(symbol: String): Boolean {
     if ('n' in detail) return false // snow
     return detail.any { it == 'r' || it == 's' || it == 'g' }
 }
+
+/** Snow is precipitation too, but gets its own colour instead of a rain blue. */
+fun isSnowSymbol(symbol: String): Boolean = 'n' in symbol.drop(2)
 
 data class Change(
     val currently: Boolean,
@@ -75,6 +80,8 @@ data class Forecast(
     val timezone: String,
     val sun: Change,
     val rain: Change,
+    /** Snow onset/end, mirroring [rain]; null in forecasts built without it. */
+    val snow: Change? = null,
     val rainOutlook: RainOutlook = RainOutlook(),
     val horizon: OffsetDateTime?,
     val sources: List<String>,

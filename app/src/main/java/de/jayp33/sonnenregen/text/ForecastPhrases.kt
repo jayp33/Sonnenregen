@@ -18,6 +18,10 @@ data class ForecastPhrases(
     val rainAgain: String,
     val noSun: String,
     val noRain: String,
+    val snowIn: String,
+    val snowFor: String,
+    val snowNow: String,
+    val noSnow: String,
     val summarySunStarts: String,
     val summarySunEnds: String,
     val summaryRainStarts: String,
@@ -27,6 +31,10 @@ data class ForecastPhrases(
     val summaryRainOngoing: String,
     val summaryNoSun: String,
     val summaryNoRain: String,
+    val summarySnowStarts: String,
+    val summarySnowEnds: String,
+    val summarySnowOngoing: String,
+    val summaryNoSnow: String,
 ) {
     companion object {
         fun from(context: Context) = ForecastPhrases(
@@ -44,6 +52,10 @@ data class ForecastPhrases(
             rainAgain = context.getString(R.string.rain_again),
             noSun = context.getString(R.string.no_sun),
             noRain = context.getString(R.string.no_rain),
+            snowIn = context.getString(R.string.snow_in),
+            snowFor = context.getString(R.string.snow_for),
+            snowNow = context.getString(R.string.snow_now),
+            noSnow = context.getString(R.string.no_snow),
             summarySunStarts = context.getString(R.string.summary_sun_starts),
             summarySunEnds = context.getString(R.string.summary_sun_ends),
             summaryRainStarts = context.getString(R.string.summary_rain_starts),
@@ -53,6 +65,10 @@ data class ForecastPhrases(
             summaryRainOngoing = context.getString(R.string.summary_rain_ongoing),
             summaryNoSun = context.getString(R.string.summary_no_sun),
             summaryNoRain = context.getString(R.string.summary_no_rain),
+            summarySnowStarts = context.getString(R.string.summary_snow_starts),
+            summarySnowEnds = context.getString(R.string.summary_snow_ends),
+            summarySnowOngoing = context.getString(R.string.summary_snow_ongoing),
+            summaryNoSnow = context.getString(R.string.summary_no_snow),
         )
     }
 }

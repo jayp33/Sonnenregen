@@ -10,6 +10,8 @@ import de.jayp33.sonnenregen.domain.currentOrFutureNowcast
 import de.jayp33.sonnenregen.domain.groupHoursByDay
 import de.jayp33.sonnenregen.domain.hourlyCells
 import de.jayp33.sonnenregen.domain.isRain
+import de.jayp33.sonnenregen.domain.isSnow
+import de.jayp33.sonnenregen.domain.isSnowSymbol
 import de.jayp33.sonnenregen.domain.isSun
 import de.jayp33.sonnenregen.domain.nowcastCells
 import org.junit.Assert.assertEquals
@@ -126,6 +128,40 @@ class HourlyTest {
             listOf(HourKind.LIGHT_RAIN, HourKind.RAIN, HourKind.HEAVY_RAIN),
             cells.map { it.kind },
         )
+    }
+
+    @Test
+    fun snow_gets_its_own_shades_in_both_grids() {
+        val now = at("2026-11-21T10:00:00+01:00")
+        val hourly = hourlyCells(
+            now = now,
+            hours = listOf(
+                hour("2026-11-21T10:00:00+01:00", "mdsn1_"),
+                hour("2026-11-21T11:00:00+01:00", "bdsn2_"),
+                hour("2026-11-21T12:00:00+01:00", "bdsn3_"),
+            ),
+        )
+        val nowcast = nowcastCells(
+            now = now,
+            slots = listOf(
+                Slot(now, Duration.ofMinutes(15), "bwsn1_", SlotSource.NOWCAST),
+                Slot(now.plusMinutes(15), Duration.ofMinutes(15), "bwsn3_", SlotSource.NOWCAST),
+                Slot(now.plusMinutes(30), Duration.ofMinutes(15), "mo____", SlotSource.NOWCAST),
+            ),
+        )
+
+        assertTrue(isSnowSymbol("mdsn1_"))
+        assertTrue(isSnowSymbol("bdsn2_"))
+        assertEquals(
+            listOf(HourKind.LIGHT_SNOW, HourKind.SNOW, HourKind.HEAVY_SNOW),
+            hourly.map { it.kind },
+        )
+        assertEquals(
+            listOf(HourKind.LIGHT_SNOW, HourKind.HEAVY_SNOW, HourKind.CLOUDY),
+            nowcast.map { it.kind },
+        )
+        assertTrue(nowcast.first().kind.isSnow())
+        assertFalse(nowcast.first().kind.isRain())
     }
 
     @Test

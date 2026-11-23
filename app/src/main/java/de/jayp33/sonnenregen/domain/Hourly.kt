@@ -22,6 +22,9 @@ enum class HourKind {
     LIGHT_RAIN,
     RAIN,
     HEAVY_RAIN,
+    LIGHT_SNOW,
+    SNOW,
+    HEAVY_SNOW,
 }
 
 @Serializable
@@ -123,9 +126,13 @@ internal fun HourKind.isRain(): Boolean =
 internal fun HourKind.isSun(): Boolean =
     this == HourKind.SUN || this == HourKind.PARTLY_SUN
 
+internal fun HourKind.isSnow(): Boolean =
+    this == HourKind.LIGHT_SNOW || this == HourKind.SNOW || this == HourKind.HEAVY_SNOW
+
 private fun classify(slot: Slot): HourKind {
     // Night symbols (m*) never get a sun colour: no sun before sunrise or after
     // sunset. Only WetterOnline's actual day sun symbols are yellow.
+    if (isSnowSymbol(slot.symbol)) return snowKind(slot.symbol)
     if (isRainSymbol(slot.symbol)) return rainKind(slot.symbol)
 
     return when (slot.symbol.take(2)) {
@@ -142,5 +149,15 @@ private fun rainKind(symbol: String): HourKind {
         'g' in detail || (level ?: 0) >= 3 -> HourKind.HEAVY_RAIN
         level == 2 -> HourKind.RAIN
         else -> HourKind.LIGHT_RAIN
+    }
+}
+
+/** Snow intensity from the symbol's digit (`sn1`/`sn2`/`sn3`), like [rainKind]. */
+private fun snowKind(symbol: String): HourKind {
+    val level = symbol.drop(2).firstOrNull { it.isDigit() }?.digitToInt()
+    return when {
+        (level ?: 0) >= 3 -> HourKind.HEAVY_SNOW
+        level == 2 -> HourKind.SNOW
+        else -> HourKind.LIGHT_SNOW
     }
 }

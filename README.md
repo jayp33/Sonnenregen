@@ -48,18 +48,19 @@ and German, selected by device locale.
   the order used by the UI and the notification.
 - **48-hour colour overview**: one row per day, prefixed with its short weekday
   (`Mo`/`Di`/…), split into four six-hour blocks in the city's own local time.
-  Yellow means sun, blue means rain, and one very light gray covers clouds and
-  all night hours — so sun and rain pop out at a glance without scrolling or
-  icons. Sunrise and sunset get a small ↑ or ↓ in their hour cell, with the exact
+  Yellow means sun, blue means rain, pink shades mean snow, and one very light
+  gray covers clouds and all night hours — so sun, rain and snow pop out at a
+  glance without scrolling or icons. Sunrise and sunset get a small ↑ or ↓ in
+  their hour cell, with the exact
   time in the cell's accessibility description. The grid sits right under the
   city name. Past hours are blanked out as
   the clock advances when a refresh fails; their slots stay in place, and a fully
   stale grid shows a `48 h outdated` hint. Tap the city line or grid to
-  reveal the detailed Sun/Rain, sunrise/sunset and Remove controls; tap again to
+  reveal the detailed Sun/Rain/Snow, sunrise/sunset and Remove controls; tap again to
   hide them. The controls also work for cities without a forecast, so broken
   places can be removed. Adding a city happens in a dialog behind a small + button;
   its input field takes focus right away so typing can start immediately.
-  When sun or rain is expected in the next 90 minutes, an extra six-cell row
+  When sun, rain or snow is expected in the next 90 minutes, an extra six-cell row
   prefixed `90` appears underneath with 15-minute detail in the same colours; each cell
   carries its start time (`21:15`, `21:30`, …). Elapsed cells drop out as the clock
   advances, even when the last refresh failed; once none remain, the row stays
@@ -144,6 +145,10 @@ Definitions used:
 - **Rain**: symbol containing a rain/shower marker (`r`, `s` or `g`) after the
   base condition, e.g. `mdr1__` (light rain) or `mds1__` (shower). Snow (`n`) is
   not counted as rain.
+- **Snow**: symbol containing `n` after the base condition, e.g. `mdsn1_`
+  (light snow), `mdsn2_` (snow) or `bdsn3_` (heavy snow). It gets its own pink
+  grid cells and, when expected, a `Snow:` line in the city details; it does not
+  count as rain for the rain line or notifications.
 
 When no astro data is available (e.g. polar day/night), the symbol and solar
 elevation rules are used unchanged.

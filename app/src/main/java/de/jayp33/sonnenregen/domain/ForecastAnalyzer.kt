@@ -61,6 +61,7 @@ object ForecastAnalyzer {
             timezone = hours.firstOrNull()?.start?.offset?.id ?: TIMEZONE,
             sun = change(reference, sunTimeline, { it.sunny }, Condition.SUN),
             rain = change(reference, timeline, { it.raining }, Condition.RAIN),
+            snow = change(reference, timeline, { it.snowing }, Condition.SNOW),
             rainOutlook = rainOutlook,
             horizon = timeline.last().end,
             sources = listOf(

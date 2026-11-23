@@ -112,6 +112,36 @@ class HourlyOverviewTest {
         ).assertIsDisplayed()
     }
 
+    @Test
+    fun snow_cells_are_described_by_their_intensity() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val start = OffsetDateTime.parse("2026-11-21T10:00:00+01:00")
+        val cells = listOf(HourKind.LIGHT_SNOW, HourKind.SNOW, HourKind.HEAVY_SNOW)
+            .mapIndexed { index, kind ->
+                HourCell(
+                    startEpochMillis = start.plusHours(index.toLong()).toInstant().toEpochMilli(),
+                    kind = kind,
+                    zoneId = "+01:00",
+                )
+            }
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                HourlyOverview("Berlin", cells)
+            }
+        }
+
+        composeTestRule.onNodeWithContentDescription(
+            context.getString(R.string.hour_description, "Berlin", "10:00", context.getString(R.string.hour_light_snow)),
+        ).assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(
+            context.getString(R.string.hour_description, "Berlin", "11:00", context.getString(R.string.hour_snow)),
+        ).assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(
+            context.getString(R.string.hour_description, "Berlin", "12:00", context.getString(R.string.hour_heavy_snow)),
+        ).assertIsDisplayed()
+    }
+
     private fun eventTime(time: String): Long = OffsetDateTime.parse(time).toInstant().toEpochMilli()
 
     private fun cellsFrom(start: String, count: Int): List<HourCell> {

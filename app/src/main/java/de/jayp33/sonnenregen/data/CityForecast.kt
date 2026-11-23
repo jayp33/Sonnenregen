@@ -12,6 +12,8 @@ data class CityForecast(
     val compactSummary: String,
     val sunSummary: String,
     val rainSummary: String,
+    /** Snow line for the city details; blank when no snow is expected. */
+    val snowSummary: String = "",
     val fetchedAtMillis: Long,
     val sunriseLabel: String? = null,
     val sunsetLabel: String? = null,

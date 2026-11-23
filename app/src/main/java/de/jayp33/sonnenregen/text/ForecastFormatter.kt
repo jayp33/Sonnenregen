@@ -49,6 +49,7 @@ object ForecastFormatter {
         val minutes = change.minutes ?: return when (change.condition) {
             Condition.SUN -> if (change.currently) phrases.summarySunOngoing else phrases.summaryNoSun
             Condition.RAIN -> if (change.currently) phrases.summaryRainOngoing else phrases.summaryNoRain
+            Condition.SNOW -> if (change.currently) phrases.summarySnowOngoing else phrases.summaryNoSnow
         }
 
         val duration = duration(minutes, phrases)
@@ -63,6 +64,11 @@ object ForecastFormatter {
                 format(phrases.summaryRainEnds, duration, at)
             } else {
                 format(phrases.summaryRainStarts, duration, at)
+            }
+            Condition.SNOW -> if (change.currently) {
+                format(phrases.summarySnowEnds, duration, at)
+            } else {
+                format(phrases.summarySnowStarts, duration, at)
             }
         }
     }
@@ -98,6 +104,7 @@ object ForecastFormatter {
             when (change.condition) {
                 Condition.SUN -> if (change.currently) phrases.sunNow else phrases.noSun
                 Condition.RAIN -> if (change.currently) phrases.rainNow else phrases.noRain
+                Condition.SNOW -> if (change.currently) phrases.snowNow else phrases.noSnow
             }
         } else {
             val duration = duration(minutes, phrases)
@@ -111,6 +118,11 @@ object ForecastFormatter {
                     format(phrases.rainFor, duration)
                 } else {
                     format(phrases.rainIn, duration)
+                }
+                Condition.SNOW -> if (change.currently) {
+                    format(phrases.snowFor, duration)
+                } else {
+                    format(phrases.snowIn, duration)
                 }
             }
         }

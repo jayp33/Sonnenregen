@@ -132,6 +132,30 @@ class ForecastFormatterTest {
     }
 
     @Test
+    fun verbose_snow_is_localized() {
+        assertEquals(
+            "Snow starts in 30 min (2026-11-21 08:00 +0100).",
+            ForecastFormatter.verbose(change(Condition.SNOW, minutes = 30), english),
+        )
+        assertEquals(
+            "Schnee beginnt in 30 Min. (2026-11-21 08:00 +0100).",
+            ForecastFormatter.verbose(change(Condition.SNOW, minutes = 30), german),
+        )
+        assertEquals(
+            "Snow ends in 45 min (2026-11-21 08:00 +0100).",
+            ForecastFormatter.verbose(change(Condition.SNOW, currently = true, minutes = 45), english),
+        )
+        assertEquals(
+            "No snow expected within the forecast horizon.",
+            ForecastFormatter.verbose(change(Condition.SNOW), english),
+        )
+        assertEquals(
+            "Innerhalb des Vorhersagezeitraums ist kein Schnee zu erwarten.",
+            ForecastFormatter.verbose(change(Condition.SNOW), german),
+        )
+    }
+
+    @Test
     fun real_forecast_is_compact_in_both_languages() {
         val page = TestData.page()
         val forecast = ForecastAnalyzer.analyze("berlin", page, page)
@@ -208,6 +232,10 @@ class ForecastFormatterTest {
         rainAgain = "%1\$s (again in %2\$s)",
         noSun = "no sun",
         noRain = "no rain",
+        snowIn = "Snow in %1\$s",
+        snowFor = "Snow for %1\$s",
+        snowNow = "Snow now",
+        noSnow = "no snow",
         summarySunStarts = "Sunshine starts in %1\$s (%2\$s).",
         summarySunEnds = "Sunshine ends in %1\$s (%2\$s).",
         summaryRainStarts = "Rain starts in %1\$s (%2\$s).",
@@ -217,6 +245,10 @@ class ForecastFormatterTest {
         summaryRainOngoing = "Rain is not expected to end within the forecast horizon.",
         summaryNoSun = "No sunshine expected within the forecast horizon.",
         summaryNoRain = "No rain expected within the forecast horizon.",
+        summarySnowStarts = "Snow starts in %1\$s (%2\$s).",
+        summarySnowEnds = "Snow ends in %1\$s (%2\$s).",
+        summarySnowOngoing = "Snow is not expected to end within the forecast horizon.",
+        summaryNoSnow = "No snow expected within the forecast horizon.",
     )
 
     private val german = english.copy(
@@ -236,5 +268,13 @@ class ForecastFormatterTest {
         summarySunStarts = "Sonne scheint in %1\$s (%2\$s).",
         summaryNoRain = "Innerhalb des Vorhersagezeitraums ist kein Regen zu erwarten.",
         summaryRainAgain = "%1\$s Danach wieder Regen in %2\$s.",
+        snowIn = "Schnee in %1\$s",
+        snowFor = "Schnee noch %1\$s",
+        snowNow = "Schnee jetzt",
+        noSnow = "kein Schnee",
+        summarySnowStarts = "Schnee beginnt in %1\$s (%2\$s).",
+        summarySnowEnds = "Schnee dauert noch %1\$s (%2\$s).",
+        summarySnowOngoing = "Der Schnee endet innerhalb des Vorhersagezeitraums nicht.",
+        summaryNoSnow = "Innerhalb des Vorhersagezeitraums ist kein Schnee zu erwarten.",
     )
 }

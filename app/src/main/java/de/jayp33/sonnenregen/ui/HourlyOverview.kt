@@ -105,7 +105,7 @@ fun HourlyOverview(
 }
 
 /**
- * The finer 90-minute window, shown when it contains sun or rain. Its six
+ * The finer 90-minute window, shown when it contains sun, rain or snow. Its six
  * quarter-hour cells use the same colours as the hourly grid and a short
  * `90` prefix in the same fixed-width column.
  */
@@ -296,6 +296,10 @@ private fun HourKind.color(): Color = when (this) {
     HourKind.LIGHT_RAIN -> Color(0xFFA9D2F2)
     HourKind.RAIN -> Color(0xFF4C9BD6)
     HourKind.HEAVY_RAIN -> Color(0xFF1F5C99)
+    // Pink scale from WetterOnline's radar precipitation legend (light → heavy).
+    HourKind.LIGHT_SNOW -> Color(0xFFFFC2FF)
+    HourKind.SNOW -> Color(0xFFF969BF)
+    HourKind.HEAVY_SNOW -> Color(0xFFEA39A1)
 }
 
 @Suppress("DEPRECATION")
@@ -307,4 +311,7 @@ private fun HourKind.label(): Int = when (this) {
     HourKind.LIGHT_RAIN -> R.string.hour_light_rain
     HourKind.RAIN -> R.string.hour_rain
     HourKind.HEAVY_RAIN -> R.string.hour_heavy_rain
+    HourKind.LIGHT_SNOW -> R.string.hour_light_snow
+    HourKind.SNOW -> R.string.hour_snow
+    HourKind.HEAVY_SNOW -> R.string.hour_heavy_snow
 }
