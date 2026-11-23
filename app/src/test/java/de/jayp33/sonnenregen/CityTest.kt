@@ -9,12 +9,25 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Locale
 
 class CityTest {
     @Test
     fun normalizes_user_input() {
         assertEquals("berlin", normalizeCity("  Berlin  "))
         assertEquals("frankfurt-am-main", normalizeCity("Frankfurt-Am-Main"))
+    }
+
+    @Test
+    fun case_conversion_is_independent_of_the_default_locale() {
+        val original = Locale.getDefault()
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"))
+            assertEquals("istanbul", normalizeCity("ISTANBUL"))
+            assertEquals("Istanbul", displayCity("istanbul"))
+        } finally {
+            Locale.setDefault(original)
+        }
     }
 
     @Test

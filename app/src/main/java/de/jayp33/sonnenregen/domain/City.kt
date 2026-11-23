@@ -1,5 +1,7 @@
 package de.jayp33.sonnenregen.domain
 
+import java.util.Locale
+
 const val DEFAULT_CITY = "berlin"
 
 private const val SEGMENT = "[a-z0-9]+(?:-[a-z0-9]+)*"
@@ -12,7 +14,7 @@ private const val SEGMENT = "[a-z0-9]+(?:-[a-z0-9]+)*"
 private val CITY_REGEX = Regex("^$SEGMENT(?:/$SEGMENT)*$")
 
 /** Accept user input such as " Berlin " and return the WetterOnline slug. */
-fun normalizeCity(input: String): String = input.trim().lowercase()
+fun normalizeCity(input: String): String = input.trim().lowercase(Locale.ROOT)
 
 /** Guard URL construction against unexpected characters. */
 fun isValidCitySlug(value: String): Boolean = CITY_REGEX.matches(value)
@@ -20,7 +22,7 @@ fun isValidCitySlug(value: String): Boolean = CITY_REGEX.matches(value)
 /** Slugs stay lowercase for URLs; capitalise every path segment for display. */
 fun displayCity(slug: String): String = slug
     .split('/')
-    .joinToString("/") { it.replaceFirstChar { char -> char.uppercase() } }
+    .joinToString("/") { it.replaceFirstChar { char -> char.uppercase(Locale.ROOT) } }
 
 /**
  * WetterOnline occasionally serves umlauts as double-encoded replacement
@@ -37,13 +39,13 @@ private fun nameFromSlug(slug: String): String = slug
         segment.split('-').joinToString(" ") { word ->
             umlautDigraphs.fold(word) { text, (digraph, letter) ->
                 text.replace(digraph, letter)
-            }.replaceFirstChar { char -> char.uppercase() }
+            }.replaceFirstChar { char -> char.uppercase(Locale.ROOT) }
         }
     }
 
 /** The slug's spelling with digraphs expanded, reduced to comparable letters. */
 private fun expectedSkeleton(slug: String): String {
-    val expanded = umlautDigraphs.fold(slug.lowercase()) { text, (digraph, letter) ->
+    val expanded = umlautDigraphs.fold(slug.lowercase(Locale.ROOT)) { text, (digraph, letter) ->
         text.replace(digraph, letter)
     }
     return expanded.filter { it.isLetter() }
@@ -60,7 +62,7 @@ private fun actualSkeleton(name: String): String = buildString {
     append(name.substring(cursor).filterLetters())
 }
 
-private fun String.filterLetters(): String = lowercase().filter { it.isLetter() }
+private fun String.filterLetters(): String = lowercase(Locale.ROOT).filter { it.isLetter() }
 
 /**
  * Replace only the broken characters, keeping the page's punctuation and casing:
