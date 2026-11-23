@@ -12,10 +12,12 @@ from __future__ import annotations
 import json
 import re
 import time
+from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
 from typing import Callable, Sequence
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
 
@@ -27,7 +29,10 @@ LOCAL_TZ = ZoneInfo("Europe/Berlin")
 
 REQUEST_TIMEOUT = 15.0
 CACHE_TTL = 300.0
+CACHE_MAX_ENTRIES = 64
+MAX_RESPONSE_BYTES = 2 * 1024 * 1024
 USER_AGENT = "sonnenregen/0.1 (weather forecast reader)"
+ALLOWED_HOST = "www.wetteronline.de"
 
 CITY_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*(?:/[a-z0-9]+(?:-[a-z0-9]+)*)*$")
 NG_STATE_RE = re.compile(
@@ -160,30 +165,62 @@ def _parse_timestamp(value: str) -> datetime:
     return parsed
 
 
-def _decode(response) -> str:
+def _decode(response, max_bytes: int = MAX_RESPONSE_BYTES) -> str:
     charset = response.headers.get_content_charset() or "utf-8"
-    return response.read().decode(charset, errors="replace")
+    raw = response.read(max_bytes + 1)
+    if len(raw) > max_bytes:
+        raise SourceError(f"Response exceeds {max_bytes} bytes")
+    return raw.decode(charset, errors="replace")
 
 
-_CACHE: dict[str, tuple[float, str]] = {}
+def _is_allowed_url(url: str) -> bool:
+    try:
+        parsed = urlparse(url)
+        port = parsed.port
+    except ValueError:  # malformed port
+        return False
+    return parsed.scheme == "https" and parsed.hostname == ALLOWED_HOST and port in (None, 443)
+
+
+_CACHE: OrderedDict[str, tuple[float, str]] = OrderedDict()
 
 
 def fetch_page(url: str, *, timeout: float = REQUEST_TIMEOUT, cache_ttl: float = CACHE_TTL) -> str:
-    """Fetch a page with a small in-process TTL cache."""
+    """Fetch a page with a bounded, in-process TTL cache."""
+    if not _is_allowed_url(url):
+        raise SourceError(f"Refusing to fetch unexpected URL: {url!r}")
+
+    now = time.monotonic()
     cached = _CACHE.get(url)
-    if cached and cached[0] > time.monotonic():
-        return cached[1]
+    if cached is not None:
+        if cached[0] > now:
+            _CACHE.move_to_end(url)
+            return cached[1]
+        del _CACHE[url]
+
     request = Request(
         url,
         headers={"User-Agent": USER_AGENT, "Accept-Language": "de-DE,de;q=0.9"},
     )
     try:
         with urlopen(request, timeout=timeout) as response:
+            final_url = response.geturl()
+            if not _is_allowed_url(final_url):
+                raise SourceError(f"Redirected to unexpected URL: {final_url!r}")
             body = _decode(response)
+    except SourceError:
+        raise
     except Exception as exc:  # network, timeout, HTTP errors
         raise SourceError(f"Could not fetch {url}: {exc}") from exc
+
     if cache_ttl > 0:
         _CACHE[url] = (time.monotonic() + cache_ttl, body)
+        _CACHE.move_to_end(url)
+        now = time.monotonic()
+        for key in [key for key, (expires, _) in _CACHE.items() if expires <= now]:
+            del _CACHE[key]
+        while len(_CACHE) > CACHE_MAX_ENTRIES:
+            _CACHE.popitem(last=False)
     return body
 
 

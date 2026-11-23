@@ -4,7 +4,10 @@ import json
 import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
+import sonnenregen.core as core
 from sonnenregen.core import (
     BASE_URL,
     CITY_RE,
@@ -20,6 +23,7 @@ from sonnenregen.core import (
     extract_state,
     is_rain_symbol,
     is_sun_symbol,
+    SourceError,
     Slot,
 )
 
@@ -250,6 +254,79 @@ class AnalyzeTests(unittest.TestCase):
         self.assertIsNotNone(
             CITY_RE.fullmatch("michelbach-an-der-bilz/gschlachtenbretzingen")
         )
+
+
+class FakeResponse:
+    def __init__(self, body: str, url: str = "https://www.wetteronline.de/page") -> None:
+        self.body = body.encode("utf-8")
+        self.url = url
+        self.headers = SimpleNamespace(get_content_charset=lambda: "utf-8")
+
+    def __enter__(self) -> FakeResponse:
+        return self
+
+    def __exit__(self, *args) -> bool:
+        return False
+
+    def geturl(self) -> str:
+        return self.url
+
+    def read(self, size: int = -1) -> bytes:
+        if size < 0:
+            return self.body
+        chunk, self.body = self.body[:size], self.body[size:]
+        return chunk
+
+
+class FetchTests(unittest.TestCase):
+    def setUp(self) -> None:
+        core.clear_cache()
+
+    def tearDown(self) -> None:
+        core.clear_cache()
+
+    def test_only_https_wetteronline_urls_are_allowed(self) -> None:
+        self.assertTrue(core._is_allowed_url("https://www.wetteronline.de/wettertrend/berlin"))
+        self.assertFalse(core._is_allowed_url("http://www.wetteronline.de/wettertrend/berlin"))
+        self.assertFalse(core._is_allowed_url("https://evil.example/wettertrend/berlin"))
+        self.assertFalse(core._is_allowed_url("https://www.wetteronline.de:8443/page"))
+        self.assertFalse(core._is_allowed_url("https://www.wetteronline.de:bad/page"))
+
+        with patch.object(core, "urlopen") as urlopen:
+            with self.assertRaises(SourceError):
+                core.fetch_page("http://www.wetteronline.de/wettertrend/berlin")
+            urlopen.assert_not_called()
+
+    def test_cross_host_redirect_is_rejected(self) -> None:
+        response = FakeResponse("body", "https://evil.example/")
+        with patch.object(core, "urlopen", return_value=response):
+            with self.assertRaises(SourceError):
+                core.fetch_page("https://www.wetteronline.de/page")
+        self.assertEqual(len(core._CACHE), 0)
+
+    def test_response_body_is_capped(self) -> None:
+        oversized = "x" * (core.MAX_RESPONSE_BYTES + 1)
+        with patch.object(core, "urlopen", return_value=FakeResponse(oversized)):
+            with self.assertRaises(SourceError):
+                core.fetch_page("https://www.wetteronline.de/large")
+        self.assertEqual(len(core._CACHE), 0)
+
+    def test_cached_page_is_not_fetched_twice(self) -> None:
+        url = "https://www.wetteronline.de/wettertrend/berlin"
+        with patch.object(core, "urlopen", return_value=FakeResponse("body")) as urlopen:
+            self.assertEqual(core.fetch_page(url), "body")
+            self.assertEqual(core.fetch_page(url), "body")
+            self.assertEqual(urlopen.call_count, 1)
+
+    def test_cache_is_bounded(self) -> None:
+        with patch.object(core, "CACHE_MAX_ENTRIES", 2):
+            with patch.object(core, "urlopen", return_value=FakeResponse("body")):
+                for index in range(4):
+                    core.fetch_page(f"https://www.wetteronline.de/page-{index}")
+            self.assertEqual(
+                list(core._CACHE),
+                ["https://www.wetteronline.de/page-2", "https://www.wetteronline.de/page-3"],
+            )
 
 
 if __name__ == "__main__":
