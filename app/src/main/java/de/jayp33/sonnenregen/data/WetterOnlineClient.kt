@@ -13,9 +13,7 @@ import okhttp3.Request
 class SourceException(message: String, cause: Throwable? = null) : Exception(message, cause)
 
 class WetterOnlineClient {
-    private val client = OkHttpClient.Builder()
-        .followRedirects(true)
-        .build()
+    private val client = OkHttpClient()
 
     suspend fun fetch(city: String = DEFAULT_CITY): Pair<String, String> = withContext(Dispatchers.IO) {
         val normalizedCity = normalizeCity(city)
