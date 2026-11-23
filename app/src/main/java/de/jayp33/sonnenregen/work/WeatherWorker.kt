@@ -36,8 +36,9 @@ class WeatherWorker(
         val successful = outcomes.values.filterIsInstance<Outcome.Success>().map { it.forecast }
         store.saveForecasts(successful)
 
+        val alertStates = store.alertStates()
         val plan = AlertPlanner.plan(
-            states = store.alertStates(),
+            states = alertStates,
             forecasts = successful,
             sunAlertCities = store.sunAlertCities(),
             rainAlertCities = store.rainAlertCities(),
@@ -49,7 +50,7 @@ class WeatherWorker(
         plan.cancelled.forEach { WeatherScheduler.cancelAlert(applicationContext, it) }
         plan.scheduled.forEach { WeatherScheduler.scheduleAlert(applicationContext, it) }
         notifier.showAlerts(applicationContext, plan.alerts)
-        store.saveAlertStates(plan.states)
+        store.saveAlertStates(alertStates, plan.states)
 
         // Failed cities keep their last good forecast, shown as stale.
         val staleCities = outcomes.filterValues { it is Outcome.Failure }.keys

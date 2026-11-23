@@ -25,6 +25,16 @@ class AlertWorker(
         val store = WeatherStore(applicationContext)
         if (!store.isEnabled()) return Result.success()
 
+        // A stale job can survive a refresh or a settings change. Only the
+        // scheduled episode it was enqueued for may actually be posted.
+        val key = AlertKey(city, kind)
+        val state = store.alertStates()[key.id] ?: return Result.success()
+        if (state.stage != AlertStage.SCHEDULED ||
+            (eventAtMillis != null && state.eventAtMillis != eventAtMillis)
+        ) {
+            return Result.success()
+        }
+
         WeatherNotifier.showAlerts(
             applicationContext,
             listOf(
@@ -38,7 +48,7 @@ class AlertWorker(
                 ),
             ),
         )
-        store.markAlertNotified(AlertKey(city, kind), eventAtMillis ?: -1L)
+        store.markAlertNotified(key, eventAtMillis ?: -1L)
         return Result.success()
     }
 

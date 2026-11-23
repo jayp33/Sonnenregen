@@ -117,6 +117,24 @@ internal fun decodeAlertStates(value: String?, json: Json = cityJson): Map<Strin
     }
 }
 
+/**
+ * Apply a planned state update only to keys that have not changed since the
+ * planner read them. A scheduled alert can fire while a refresh is running and
+ * mark itself NOTIFIED; writing the planner's stale SCHEDULED state over that
+ * would re-enqueue the same alert and post it twice.
+ */
+internal fun mergeAlertStates(
+    current: Map<String, AlertState>,
+    previous: Map<String, AlertState>,
+    next: Map<String, AlertState>,
+): Map<String, AlertState> {
+    val merged = current.toMutableMap()
+    for ((id, state) in next) {
+        if (current[id] == previous[id]) merged[id] = state
+    }
+    return merged
+}
+
 /** Decode each city independently so one corrupt entry cannot erase the rest. */
 internal fun decodeForecasts(value: String, json: Json = cityJson): Map<String, CityForecast> = try {
     json.decodeFromString<JsonObject>(value)
@@ -219,6 +237,13 @@ class WeatherStore(context: Context) {
         dataStore.edit { prefs ->
             val next = updateCityInSet(citySetFrom(prefs, key), city, enabled)
             prefs[key] = json.encodeToString(next.toList())
+            if (!enabled) {
+                // Invalidate any queued job immediately; the next refresh would
+                // reset this anyway, but a job can fire before it gets there.
+                val states = statesFrom(prefs).toMutableMap()
+                states[AlertKey(city, kind).id] = AlertState()
+                prefs[ALERT_STATES] = json.encodeToString(states.toMap())
+            }
         }
     }
 
@@ -253,8 +278,15 @@ class WeatherStore(context: Context) {
     suspend fun alertStates(): Map<String, AlertState> =
         dataStore.data.first().let { statesFrom(it) }
 
-    suspend fun saveAlertStates(states: Map<String, AlertState>) {
-        dataStore.edit { prefs -> prefs[ALERT_STATES] = json.encodeToString(states) }
+    /** Save a plan only where its baseline still matches the stored state. */
+    suspend fun saveAlertStates(
+        previous: Map<String, AlertState>,
+        next: Map<String, AlertState>,
+    ) {
+        dataStore.edit { prefs ->
+            val merged = mergeAlertStates(statesFrom(prefs), previous, next)
+            prefs[ALERT_STATES] = json.encodeToString(merged)
+        }
     }
 
     suspend fun forecasts(): Map<String, CityForecast> = dataStore.data.first().let(::forecastsFrom)

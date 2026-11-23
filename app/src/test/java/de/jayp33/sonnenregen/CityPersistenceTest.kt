@@ -7,6 +7,9 @@ import de.jayp33.sonnenregen.data.decodeCitySet
 import de.jayp33.sonnenregen.data.decodeLeadMinutes
 import de.jayp33.sonnenregen.data.decodeForecasts
 import de.jayp33.sonnenregen.data.decodeHiddenCities
+import de.jayp33.sonnenregen.data.mergeAlertStates
+import de.jayp33.sonnenregen.notification.AlertKey
+import de.jayp33.sonnenregen.notification.AlertKind
 import de.jayp33.sonnenregen.notification.AlertStage
 import de.jayp33.sonnenregen.notification.AlertState
 import kotlinx.serialization.encodeToString
@@ -104,6 +107,48 @@ class CityPersistenceTest {
         val stored = """["Berlin", "hamburg", "", "BERLIN"]"""
 
         assertEquals(setOf("berlin", "hamburg"), decodeHiddenCities(stored, json))
+    }
+
+    @Test
+    fun planned_alert_states_do_not_overwrite_a_concurrent_notification() {
+        val id = AlertKey("berlin", AlertKind.RAIN).id
+        val previous = mapOf(id to AlertState(AlertStage.SCHEDULED, 1_000L))
+        val current = mapOf(id to AlertState(AlertStage.NOTIFIED, 1_000L))
+        val planned = mapOf(id to AlertState(AlertStage.SCHEDULED, 1_000L))
+
+        assertEquals(current, mergeAlertStates(current, previous, planned))
+    }
+
+    @Test
+    fun planned_alert_states_are_applied_when_the_baseline_still_matches() {
+        val id = AlertKey("berlin", AlertKind.SUN).id
+        val previous = mapOf(id to AlertState(AlertStage.ARMED))
+        val planned = mapOf(id to AlertState(AlertStage.SCHEDULED, 2_000L))
+
+        assertEquals(planned, mergeAlertStates(previous, previous, planned))
+    }
+
+    @Test
+    fun concurrent_changes_to_other_alerts_survive_a_plan() {
+        val sun = AlertKey("berlin", AlertKind.SUN).id
+        val rain = AlertKey("berlin", AlertKind.RAIN).id
+        val previous = mapOf(
+            sun to AlertState(AlertStage.ARMED),
+            rain to AlertState(AlertStage.SCHEDULED, 1_000L),
+        )
+        val current = previous + (rain to AlertState(AlertStage.NOTIFIED, 1_000L))
+        val planned = mapOf(
+            sun to AlertState(AlertStage.SCHEDULED, 2_000L),
+            rain to AlertState(AlertStage.SCHEDULED, 1_000L),
+        )
+
+        assertEquals(
+            mapOf(
+                sun to AlertState(AlertStage.SCHEDULED, 2_000L),
+                rain to AlertState(AlertStage.NOTIFIED, 1_000L),
+            ),
+            mergeAlertStates(current, previous, planned),
+        )
     }
 
     private fun forecast(city: String) = CityForecast(
