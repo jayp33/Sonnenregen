@@ -72,7 +72,7 @@ object WeatherNotifier {
                 manager.notify(alertNotificationId(alert), buildAlertNotification(context, alert))
             } catch (exc: SecurityException) {
                 allPosted = false
-                Log.w(TAG, "Cannot post alert for ${alert.city}", exc)
+                Log.w(TAG, "Cannot post alert (${alert.kind})", exc)
             }
         }
         return allPosted

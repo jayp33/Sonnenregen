@@ -72,16 +72,17 @@ class WeatherWorker(
         val forecast = ForecastAnalyzer.analyze(city, hourlyHtml, nowcastHtml)
         Outcome.Success(store.format(forecast))
     } catch (exc: ParseException) {
-        Log.w(TAG, "Parse failed for $city; markup may have changed", exc)
+        Log.w(TAG, "Parse failed; markup may have changed (${exc.javaClass.simpleName})")
         Outcome.Failure(retryable = false)
     } catch (exc: IllegalArgumentException) {
-        Log.w(TAG, "Invalid city: $city", exc)
+        Log.w(TAG, "Invalid city (${exc.javaClass.simpleName})")
         Outcome.Failure(retryable = false)
     } catch (exc: SourceException) {
-        Log.w(TAG, "Fetch failed for $city; retrying", exc)
+        // Exception messages carry provider URLs, which contain the city slug.
+        Log.w(TAG, "Fetch failed; retrying (${exc.javaClass.simpleName})")
         Outcome.Failure(retryable = true)
     } catch (exc: Exception) {
-        Log.w(TAG, "Unexpected error for $city; retrying", exc)
+        Log.w(TAG, "Unexpected error; retrying (${exc.javaClass.simpleName})")
         Outcome.Failure(retryable = true)
     }
 
