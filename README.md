@@ -50,7 +50,9 @@ and German, selected by device locale.
   (`Mo`/`Di`/…), split into four six-hour blocks in the city's own local time.
   Yellow means sun, blue means rain, and one very light gray covers clouds and
   all night hours — so sun and rain pop out at a glance without scrolling or
-  icons. The grid sits right under the city name. Past hours are blanked out as
+  icons. Sunrise and sunset get a small ↑ or ↓ in their hour cell, with the exact
+  time in the cell's accessibility description. The grid sits right under the
+  city name. Past hours are blanked out as
   the clock advances when a refresh fails; their slots stay in place, and a fully
   stale grid shows a `48 h outdated` hint. Tap the city line or grid to
   reveal the detailed Sun/Rain, sunrise/sunset and Remove controls; tap again to

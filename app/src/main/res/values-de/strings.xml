@@ -31,6 +31,7 @@
     <string name="weekday_sunday">So</string>
 
     <string name="hour_description">%1$s, %2$s, %3$s</string>
+    <string name="hour_description_with_sun_events">%1$s, %2$s, %3$s, %4$s</string>
     <string name="hour_sun">sonnig</string>
     <string name="hour_partly_sun">teilweise sonnig</string>
     <string name="hour_cloudy">wolkig</string>

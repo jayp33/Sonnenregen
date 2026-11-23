@@ -71,6 +71,7 @@ object ForecastAnalyzer {
             sunset = windows.map { it.set }.firstOrNull { !it.isBefore(reference) },
             hours = hourlyCells(reference, hours, current, windows),
             nowcastCells = nowcastCells(reference, nowcast),
+            sunEvents = sunEventsFrom(windows),
         )
     }
 

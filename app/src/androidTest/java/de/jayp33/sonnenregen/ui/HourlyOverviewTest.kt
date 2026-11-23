@@ -10,6 +10,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import de.jayp33.sonnenregen.R
 import de.jayp33.sonnenregen.domain.HourCell
 import de.jayp33.sonnenregen.domain.HourKind
+import de.jayp33.sonnenregen.domain.SunEvent
+import de.jayp33.sonnenregen.domain.SunEventKind
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -67,6 +69,50 @@ class HourlyOverviewTest {
             context.getString(R.string.hour_description, "Berlin", "22:30", context.getString(R.string.hour_cloudy)),
         ).assertIsDisplayed()
     }
+
+    @Test
+    fun sun_events_mark_the_matching_hour_cell() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val cells = cellsFrom("2026-11-21T07:00:00+01:00", 1) +
+            cellsFrom("2026-11-21T08:00:00+01:00", 1) +
+            cellsFrom("2026-11-21T16:00:00+01:00", 1)
+        val events = listOf(
+            SunEvent(SunEventKind.SUNRISE, eventTime("2026-11-21T07:38:00+01:00")),
+            SunEvent(SunEventKind.SUNSET, eventTime("2026-11-21T16:05:00+01:00")),
+        )
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                HourlyOverview("Berlin", cells, events)
+            }
+        }
+
+        composeTestRule.onNodeWithText("↑", useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("↓", useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(
+            context.getString(
+                R.string.hour_description_with_sun_events,
+                "Berlin",
+                "07:00",
+                context.getString(R.string.hour_sun),
+                context.getString(R.string.sunrise, "07:38"),
+            ),
+        ).assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(
+            context.getString(
+                R.string.hour_description_with_sun_events,
+                "Berlin",
+                "16:00",
+                context.getString(R.string.hour_sun),
+                context.getString(R.string.sunset, "16:05"),
+            ),
+        ).assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(
+            context.getString(R.string.hour_description, "Berlin", "08:00", context.getString(R.string.hour_sun)),
+        ).assertIsDisplayed()
+    }
+
+    private fun eventTime(time: String): Long = OffsetDateTime.parse(time).toInstant().toEpochMilli()
 
     private fun cellsFrom(start: String, count: Int): List<HourCell> {
         val first = OffsetDateTime.parse(start)

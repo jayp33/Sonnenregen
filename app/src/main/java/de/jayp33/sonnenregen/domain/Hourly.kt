@@ -32,6 +32,13 @@ data class HourCell(
     val zoneId: String = TIMEZONE,
 )
 
+/** The cell's own zone, falling back to the provider's default for malformed data. */
+internal fun HourCell.zone(): ZoneId = try {
+    ZoneId.of(zoneId)
+} catch (_: Exception) {
+    ZoneId.of(TIMEZONE)
+}
+
 /**
  * Build 48 one-hour cells starting at the current hour. The provider usually
  * starts its hourly grid at the next full hour, so the current hour is taken
@@ -102,15 +109,9 @@ private const val HOUR_CELL_MILLIS = 60L * 60 * 1_000
 
 /** Group cells by calendar day/hour in each cell's own offset, then by hour. */
 fun groupHoursByDay(hours: List<HourCell>): Map<LocalDate, Map<Int, HourCell>> {
-    val fallback = ZoneId.of(TIMEZONE)
     val result = LinkedHashMap<LocalDate, MutableMap<Int, HourCell>>()
     hours.forEach { cell ->
-        val zone = try {
-            ZoneId.of(cell.zoneId)
-        } catch (_: Exception) {
-            fallback
-        }
-        val time = Instant.ofEpochMilli(cell.startEpochMillis).atZone(zone)
+        val time = Instant.ofEpochMilli(cell.startEpochMillis).atZone(cell.zone())
         result.getOrPut(time.toLocalDate()) { LinkedHashMap() }[time.hour] = cell
     }
     return result

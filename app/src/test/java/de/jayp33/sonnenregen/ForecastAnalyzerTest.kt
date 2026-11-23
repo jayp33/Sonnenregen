@@ -3,6 +3,8 @@ package de.jayp33.sonnenregen
 import de.jayp33.sonnenregen.data.ForecastParser
 import de.jayp33.sonnenregen.domain.ForecastAnalyzer
 import de.jayp33.sonnenregen.domain.HourKind
+import de.jayp33.sonnenregen.domain.SunEvent
+import de.jayp33.sonnenregen.domain.SunEventKind
 import de.jayp33.sonnenregen.domain.isRain
 import de.jayp33.sonnenregen.domain.isRainSymbol
 import de.jayp33.sonnenregen.domain.isSunSymbol
@@ -74,6 +76,23 @@ class ForecastAnalyzerTest {
         assertEquals(OffsetDateTime.parse("2026-11-21T07:38:00+01:00"), forecast.sun.at)
         assertEquals(OffsetDateTime.parse("2026-11-21T07:38:00+01:00"), forecast.sunrise)
         assertEquals(OffsetDateTime.parse("2026-11-21T16:05:00+01:00"), forecast.sunset)
+    }
+
+    @Test
+    fun exposes_every_sunrise_and_sunset_for_the_grid() {
+        val page = TestData.pageWith(TestData.shortcastJson, TestData.astroJson)
+
+        val forecast = ForecastAnalyzer.analyze("berlin", page, page)
+
+        assertEquals(
+            listOf(
+                event(SunEventKind.SUNRISE, "2026-11-20T07:35:00+01:00"),
+                event(SunEventKind.SUNSET, "2026-11-20T16:07:00+01:00"),
+                event(SunEventKind.SUNRISE, "2026-11-21T07:38:00+01:00"),
+                event(SunEventKind.SUNSET, "2026-11-21T16:05:00+01:00"),
+            ),
+            forecast.sunEvents,
+        )
     }
 
     @Test
@@ -253,6 +272,11 @@ class ForecastAnalyzerTest {
         assertEquals(2, forecast.nowcastCells.size)
         assertTrue(forecast.nowcastCells.first().kind.isRain())
     }
+
+    private fun event(kind: SunEventKind, time: String) = SunEvent(
+        kind = kind,
+        atMillis = OffsetDateTime.parse(time).toInstant().toEpochMilli(),
+    )
 
     private fun nowcastShortcast(withSecondRain: Boolean): String {
         val secondRain = if (withSecondRain) {

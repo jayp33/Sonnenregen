@@ -501,7 +501,7 @@ internal fun CityItem(
                 val storedHours = forecast.hours
                 val hours = storedHours.currentOrFutureHours(nowMillis)
                 if (hours.isNotEmpty()) {
-                    HourlyOverview(label, hours)
+                    HourlyOverview(label, hours, forecast.sunEvents)
                 } else if (storedHours.isNotEmpty()) {
                     StaleHourlyOverview()
                 }

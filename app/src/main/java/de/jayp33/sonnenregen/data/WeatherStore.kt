@@ -286,6 +286,7 @@ class WeatherStore(context: Context) {
         sunsetLabel = forecast.sunset?.format(CLOCK_TIME),
         hours = forecast.hours,
         nowcastCells = forecast.nowcastCells,
+        sunEvents = forecast.sunEvents,
         sunCurrently = forecast.sun.currently,
         rainCurrently = forecast.rain.currently,
         // `at` is the next onset only while the condition is inactive; when it

@@ -20,14 +20,19 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import de.jayp33.sonnenregen.R
 import de.jayp33.sonnenregen.domain.CLOCK_TIME
 import de.jayp33.sonnenregen.domain.HourCell
 import de.jayp33.sonnenregen.domain.HourKind
+import de.jayp33.sonnenregen.domain.SunEvent
+import de.jayp33.sonnenregen.domain.SunEventKind
 import de.jayp33.sonnenregen.domain.TIMEZONE
 import de.jayp33.sonnenregen.domain.groupHoursByDay
+import de.jayp33.sonnenregen.domain.zone
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.ZoneId
@@ -53,7 +58,12 @@ internal object WeatherRowTags {
  * hours render as empty placeholders so the remaining hours keep their slots.
  */
 @Composable
-fun HourlyOverview(city: String, hours: List<HourCell>, modifier: Modifier = Modifier) {
+fun HourlyOverview(
+    city: String,
+    hours: List<HourCell>,
+    sunEvents: List<SunEvent> = emptyList(),
+    modifier: Modifier = Modifier,
+) {
     if (hours.isEmpty()) return
 
     val byDay = groupHoursByDay(hours)
@@ -79,7 +89,13 @@ fun HourlyOverview(city: String, hours: List<HourCell>, modifier: Modifier = Mod
                         horizontalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
                         (firstHour until firstHour + 6).forEach { hour ->
-                            Cell(byHour[hour], hourLabel(hour), city)
+                            val cell = byHour[hour]
+                            Cell(
+                                cell = cell,
+                                time = hourLabel(hour),
+                                city = city,
+                                sunEvents = cell?.let { sunEventsFor(it, sunEvents) }.orEmpty(),
+                            )
                         }
                     }
                 }
@@ -161,15 +177,24 @@ private fun RowScope.Cell(
     cell: HourCell?,
     time: String,
     city: String,
+    sunEvents: List<SunEvent> = emptyList(),
     showTime: Boolean = false,
 ) {
-    val description = cell?.let {
-        stringResource(
-            R.string.hour_description,
-            city,
-            time,
-            stringResource(it.kind.label()),
-        )
+    val eventLabels = mutableListOf<String>()
+    if (cell != null && sunEvents.isNotEmpty()) {
+        val zone = cell.zone()
+        for (event in sunEvents) {
+            eventLabels.add(stringResource(event.descriptionLabel(), event.timeLabel(zone)))
+        }
+    }
+    val eventDetails = eventLabels.joinToString(", ")
+    val description = cell?.let { current ->
+        val weather = stringResource(current.kind.label())
+        if (sunEvents.isEmpty()) {
+            stringResource(R.string.hour_description, city, time, weather)
+        } else {
+            stringResource(R.string.hour_description_with_sun_events, city, time, weather, eventDetails)
+        }
     }
     val base = Modifier.weight(1f).height(if (showTime) 24.dp else 12.dp)
     Box(
@@ -190,9 +215,46 @@ private fun RowScope.Cell(
                 textAlign = TextAlign.Center,
                 maxLines = 1,
             )
+        } else if (cell != null && sunEvents.isNotEmpty()) {
+            Text(
+                text = sunEvents.joinToString("") { it.marker() },
+                modifier = Modifier.align(Alignment.Center),
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold,
+                ),
+                color = cell.kind.onColor(),
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
         }
     }
 }
+
+/** Sunrise/sunset belonging to the same one-hour cell as a forecast slot. */
+private fun sunEventsFor(cell: HourCell, events: List<SunEvent>): List<SunEvent> {
+    if (events.isEmpty()) return emptyList()
+    val zone = cell.zone()
+    val start = Instant.ofEpochMilli(cell.startEpochMillis).atZone(zone)
+    val end = start.plusHours(1)
+    return events.filter { event ->
+        val time = Instant.ofEpochMilli(event.atMillis).atZone(zone)
+        !time.isBefore(start) && time.isBefore(end)
+    }
+}
+
+private fun SunEvent.marker(): String = when (kind) {
+    SunEventKind.SUNRISE -> "↑"
+    SunEventKind.SUNSET -> "↓"
+}
+
+private fun SunEvent.descriptionLabel(): Int = when (kind) {
+    SunEventKind.SUNRISE -> R.string.sunrise
+    SunEventKind.SUNSET -> R.string.sunset
+}
+
+private fun SunEvent.timeLabel(zone: ZoneId): String =
+    Instant.ofEpochMilli(atMillis).atZone(zone).toLocalTime().format(CLOCK_TIME)
 
 /** White on the darker rain blues, black on the pale sun/cloud shades. */
 private fun HourKind.onColor(): Color {

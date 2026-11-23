@@ -26,6 +26,14 @@ internal fun Daylight.crosses(slot: Slot): Boolean =
     (rise.isAfter(slot.start) && rise.isBefore(slot.end)) ||
         (set.isAfter(slot.start) && set.isBefore(slot.end))
 
+/** Events for every daylight window, used to mark sunrise/sunset in the grid. */
+fun sunEventsFrom(windows: List<Daylight>): List<SunEvent> = windows.flatMap { window ->
+    listOf(
+        SunEvent(SunEventKind.SUNRISE, window.rise.toInstant().toEpochMilli()),
+        SunEvent(SunEventKind.SUNSET, window.set.toInstant().toEpochMilli()),
+    )
+}
+
 /** Only days with both rise and set times (polar day/night has neither). */
 fun daylightWindows(astro: AstroDto?): List<Daylight> =
     astro?.days.orEmpty().mapNotNull { day ->

@@ -1,6 +1,7 @@
 package de.jayp33.sonnenregen.data
 
 import de.jayp33.sonnenregen.domain.HourCell
+import de.jayp33.sonnenregen.domain.SunEvent
 import de.jayp33.sonnenregen.domain.TIMEZONE
 import kotlinx.serialization.Serializable
 
@@ -20,6 +21,8 @@ data class CityForecast(
     val nowcastCells: List<HourCell> = emptyList(),
     /** Real place name from WetterOnline; blank in pre-name installs. */
     val displayName: String = "",
+    /** Sunrise/sunset markers for the hourly grid; empty in old installs. */
+    val sunEvents: List<SunEvent> = emptyList(),
     /** Structured onset state, used to detect sun/rain alerts. Defaults for old installs. */
     val sunCurrently: Boolean = false,
     val rainCurrently: Boolean = false,

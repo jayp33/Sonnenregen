@@ -1,9 +1,17 @@
 package de.jayp33.sonnenregen.domain
 
+import kotlinx.serialization.Serializable
 import java.time.Duration
 import java.time.OffsetDateTime
 
 enum class SlotSource { CURRENT, NOWCAST, HOURLY, INTERPOLATED }
+
+/** Sunrise/sunset markers shown on the matching cell of the 48-hour grid. */
+@Serializable
+enum class SunEventKind { SUNRISE, SUNSET }
+
+@Serializable
+data class SunEvent(val kind: SunEventKind, val atMillis: Long)
 
 enum class Event { STARTS, ENDS }
 
@@ -76,4 +84,6 @@ data class Forecast(
     val hours: List<HourCell> = emptyList(),
     /** Quarter-hour cells for the 90-minute window, used by the extra grid row. */
     val nowcastCells: List<HourCell> = emptyList(),
+    /** Sunrise/sunset times inside the 48-hour grid; old forecasts have none. */
+    val sunEvents: List<SunEvent> = emptyList(),
 )
