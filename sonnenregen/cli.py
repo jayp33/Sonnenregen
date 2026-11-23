@@ -5,11 +5,12 @@ from __future__ import annotations
 import argparse
 import json
 
-from .core import DEFAULT_CITY, analyze
+from .core import DEFAULT_CITY, __version__, analyze
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument("city", nargs="?", default=DEFAULT_CITY, help="WetterOnline city slug")
     parser.add_argument("--human", action="store_true", help="print one line per question")
     args = parser.parse_args(argv)

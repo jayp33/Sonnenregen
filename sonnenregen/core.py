@@ -21,6 +21,8 @@ from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
 
+__version__ = "0.1"
+
 BASE_URL = "https://www.wetteronline.de"
 HOURLY_PATH = "/wettertrend/{city}"
 NOWCAST_PATH = "/90-minuten-wetter/{city}"
@@ -31,7 +33,7 @@ REQUEST_TIMEOUT = 15.0
 CACHE_TTL = 300.0
 CACHE_MAX_ENTRIES = 64
 MAX_RESPONSE_BYTES = 2 * 1024 * 1024
-USER_AGENT = "sonnenregen/0.1 (weather forecast reader)"
+USER_AGENT = f"sonnenregen/{__version__} (weather forecast reader)"
 ALLOWED_HOST = "www.wetteronline.de"
 
 CITY_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*(?:/[a-z0-9]+(?:-[a-z0-9]+)*)*$")
