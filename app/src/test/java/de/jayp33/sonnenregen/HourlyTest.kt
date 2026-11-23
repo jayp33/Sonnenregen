@@ -8,6 +8,7 @@ import de.jayp33.sonnenregen.domain.SlotSource
 import de.jayp33.sonnenregen.domain.groupHoursByDay
 import de.jayp33.sonnenregen.domain.hourlyCells
 import de.jayp33.sonnenregen.domain.isRain
+import de.jayp33.sonnenregen.domain.isSun
 import de.jayp33.sonnenregen.domain.nowcastCells
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -98,6 +99,14 @@ class HourlyTest {
         assertEquals(HourKind.CLOUDY, cells[1].kind) // bw stays cloudy
         assertEquals(HourKind.SUN, cells[2].kind) // so stays bright at sunset
         assertEquals(HourKind.CLOUDY, cells[3].kind) // md stays gray after sunset
+    }
+
+    @Test
+    fun only_day_sun_symbols_count_as_sun() {
+        assertTrue(HourKind.SUN.isSun())
+        assertTrue(HourKind.PARTLY_SUN.isSun())
+        assertFalse(HourKind.CLOUDY.isSun())
+        assertFalse(HourKind.RAIN.isSun())
     }
 
     @Test

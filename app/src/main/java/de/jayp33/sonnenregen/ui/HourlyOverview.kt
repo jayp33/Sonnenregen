@@ -87,7 +87,7 @@ fun HourlyOverview(city: String, hours: List<HourCell>, modifier: Modifier = Mod
 }
 
 /**
- * The finer 90-minute window, shown only when it contains rain. Its six
+ * The finer 90-minute window, shown when it contains sun or rain. Its six
  * quarter-hour cells use the same colours as the hourly grid and a short
  * `90` prefix in the same fixed-width column.
  */

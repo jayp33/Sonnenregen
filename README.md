@@ -42,8 +42,8 @@ and German, selected by device locale.
   hide them. The controls also work for cities without a forecast, so broken
   places can be removed. Adding a city happens in a dialog behind a small + button;
   its input field takes focus right away so typing can start immediately.
-  When rain is expected in the next 90 minutes, an extra six-cell row prefixed
-  `90` appears underneath with 15-minute detail in the same colours; each cell
+  When sun or rain is expected in the next 90 minutes, an extra six-cell row
+  prefixed `90` appears underneath with 15-minute detail in the same colours; each cell
   carries its start time (`21:15`, `21:30`, …).
 - **Exact sunrise/sunset** from WetterOnline's own astro data, shown in the app
   UI. Sunshine never starts before sunrise or continues past sunset.

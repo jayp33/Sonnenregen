@@ -51,6 +51,7 @@ import de.jayp33.sonnenregen.data.CityForecast
 import de.jayp33.sonnenregen.data.WeatherStore
 import de.jayp33.sonnenregen.domain.displayCity
 import de.jayp33.sonnenregen.domain.isRain
+import de.jayp33.sonnenregen.domain.isSun
 import de.jayp33.sonnenregen.domain.isValidCitySlug
 import de.jayp33.sonnenregen.domain.normalizeCity
 import de.jayp33.sonnenregen.notification.WeatherNotifier
@@ -377,7 +378,7 @@ internal fun CityItem(
             }
             if (forecast != null) {
                 HourlyOverview(label, forecast.hours)
-                if (forecast.nowcastCells.any { it.kind.isRain() }) {
+                if (forecast.nowcastCells.any { it.kind.isRain() || it.kind.isSun() }) {
                     NowcastOverview(
                         label,
                         forecast.nowcastCells,

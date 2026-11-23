@@ -105,6 +105,9 @@ fun groupHoursByDay(hours: List<HourCell>): Map<LocalDate, Map<Int, HourCell>> {
 internal fun HourKind.isRain(): Boolean =
     this == HourKind.LIGHT_RAIN || this == HourKind.RAIN || this == HourKind.HEAVY_RAIN
 
+internal fun HourKind.isSun(): Boolean =
+    this == HourKind.SUN || this == HourKind.PARTLY_SUN
+
 private fun classify(slot: Slot): HourKind {
     // Night symbols (m*) never get a sun colour: no sun before sunrise or after
     // sunset. Only WetterOnline's actual day sun symbols are yellow.

@@ -136,7 +136,59 @@ class CityItemTest {
     }
 
     @Test
-    fun nowcast_row_is_hidden_without_rain_in_the_90_minutes() {
+    fun nowcast_row_appears_when_the_sun_shines_in_the_90_minutes() {
+        val prefix = InstrumentationRegistry.getInstrumentation()
+            .targetContext.getString(R.string.nowcast_prefix)
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                CityItem(
+                    label = "Berlin",
+                    index = 0,
+                    cityCount = 1,
+                    forecast = forecastWith(HourKind.SUN),
+                    detailsExpanded = false,
+                    hidden = false,
+                    nowMillis = 0L,
+                    onToggleExpanded = {},
+                    onToggleNotificationVisibility = {},
+                    onMove = {},
+                    onRemove = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(prefix).assertIsDisplayed()
+    }
+
+    @Test
+    fun nowcast_row_appears_when_partly_sunny_in_the_90_minutes() {
+        val prefix = InstrumentationRegistry.getInstrumentation()
+            .targetContext.getString(R.string.nowcast_prefix)
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                CityItem(
+                    label = "Berlin",
+                    index = 0,
+                    cityCount = 1,
+                    forecast = forecastWith(HourKind.PARTLY_SUN),
+                    detailsExpanded = false,
+                    hidden = false,
+                    nowMillis = 0L,
+                    onToggleExpanded = {},
+                    onToggleNotificationVisibility = {},
+                    onMove = {},
+                    onRemove = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(prefix).assertIsDisplayed()
+    }
+
+    @Test
+    fun nowcast_row_is_hidden_without_sun_or_rain_in_the_90_minutes() {
         val prefix = InstrumentationRegistry.getInstrumentation()
             .targetContext.getString(R.string.nowcast_prefix)
 
