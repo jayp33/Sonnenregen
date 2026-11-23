@@ -13,6 +13,7 @@ from sonnenregen.core import (
     CITY_RE,
     HOURLY_PATH,
     NOWCAST_PATH,
+    _round_minutes,
     _slots_from_shortcast,
     analyze,
     apply_daylight,
@@ -295,6 +296,14 @@ class FakeResponse:
             return self.body
         chunk, self.body = self.body[:size], self.body[size:]
         return chunk
+
+
+class RoundingTests(unittest.TestCase):
+    def test_halves_round_away_from_zero_like_kotlin(self) -> None:
+        self.assertEqual(3, _round_minutes(2.5))
+        self.assertEqual(2, _round_minutes(2.4))
+        self.assertEqual(-3, _round_minutes(-2.5))
+        self.assertEqual(-2, _round_minutes(-2.4))
 
 
 class FetchTests(unittest.TestCase):

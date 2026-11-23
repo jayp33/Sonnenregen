@@ -10,6 +10,7 @@ weather-symbol codes instead of having to match translated CSS classes.
 from __future__ import annotations
 
 import json
+import math
 import re
 import time
 from collections import OrderedDict
@@ -477,9 +478,14 @@ def _change(now: datetime, timeline: Sequence[Slot], condition: Callable[[Slot],
             summary = f"No {label.lower()} expected within the forecast horizon."
         return Change(currently, None, None, None, summary)
 
-    minutes = int(round((target.start - now).total_seconds() / 60))
+    minutes = _round_minutes((target.start - now).total_seconds() / 60)
     summary = f"{label} {event} in {format_minutes(minutes)} ({target.start:%Y-%m-%d %H:%M %z})."
     return Change(currently, event, target.start, minutes, summary)
+
+
+def _round_minutes(value: float) -> int:
+    """Round halves away from zero, like Kotlin's roundToLong()."""
+    return math.floor(value + 0.5) if value >= 0 else math.ceil(value - 0.5)
 
 
 def format_minutes(minutes: int) -> str:
