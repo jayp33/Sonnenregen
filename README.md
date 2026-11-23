@@ -26,6 +26,11 @@ and German, selected by device locale.
   stays concise. If rain resumes inside the 90-minute window, the rain phrase
   gains `(again in 45 min)`. Tapping the notification opens the app directly;
   the only action is **Refresh**.
+- **Per-city sun/rain alerts**: each city's details offer optional **Notify when
+  sun starts** and **Notify when rain starts** switches, both off by default.
+  They post separate, auto-cancelling notifications on a dedicated channel when
+  a fresh forecast changes from no sun/rain to sun/rain; ongoing conditions never
+  re-alert. Detection happens on the 15-minute refresh cycle.
 - **Multiple cities**: add or remove WetterOnline slugs (`berlin`, `hamburg`, …)
   in the app. Slugs stay lowercase for URLs; the app shows the real place name
   from WetterOnline (`frankfurt-oder` → `Frankfurt (Oder)`,

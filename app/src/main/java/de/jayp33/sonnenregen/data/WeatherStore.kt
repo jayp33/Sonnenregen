@@ -11,6 +11,7 @@ import de.jayp33.sonnenregen.domain.DEFAULT_CITY
 import de.jayp33.sonnenregen.domain.Forecast
 import de.jayp33.sonnenregen.domain.CLOCK_TIME
 import de.jayp33.sonnenregen.domain.isValidCitySlug
+import de.jayp33.sonnenregen.notification.AlertKind
 import de.jayp33.sonnenregen.domain.normalizeCity
 import de.jayp33.sonnenregen.text.ForecastFormatter
 import de.jayp33.sonnenregen.text.ForecastPhrases
@@ -29,12 +30,19 @@ internal fun reorderCity(cities: List<String>, city: String, offset: Int): List<
     return cities.toMutableList().apply { add(to, removeAt(from)) }
 }
 
+/** Add/remove one city from a per-city preference set. */
+internal fun updateCityInSet(
+    cities: Set<String>,
+    city: String,
+    enabled: Boolean,
+): Set<String> = if (enabled) cities + city else cities - city
+
 /** Add/remove one city from the notification-only hide list. */
 internal fun updateNotificationVisibility(
     hidden: Set<String>,
     city: String,
     visible: Boolean,
-): Set<String> = if (visible) hidden - city else hidden + city
+): Set<String> = updateCityInSet(hidden, city, !visible)
 
 private val Context.weatherDataStore by preferencesDataStore(name = "weather")
 
@@ -56,7 +64,7 @@ internal fun decodeCities(value: String, json: Json = cityJson): List<String> = 
     emptyList()
 }
 
-internal fun decodeHiddenCities(value: String, json: Json = cityJson): Set<String> = try {
+internal fun decodeCitySet(value: String, json: Json = cityJson): Set<String> = try {
     json.decodeFromString<List<String>>(value)
         .map(::normalizeCity)
         .filter(String::isNotBlank)
@@ -66,6 +74,9 @@ internal fun decodeHiddenCities(value: String, json: Json = cityJson): Set<Strin
 } catch (_: IllegalArgumentException) {
     emptySet()
 }
+
+internal fun decodeHiddenCities(value: String, json: Json = cityJson): Set<String> =
+    decodeCitySet(value, json)
 
 /** Decode each city independently so one corrupt entry cannot erase the rest. */
 internal fun decodeForecasts(value: String, json: Json = cityJson): Map<String, CityForecast> = try {
@@ -96,6 +107,8 @@ class WeatherStore(context: Context) {
     val citiesFlow: Flow<List<String>> = dataStore.data.map(::citiesFrom)
     val forecastsFlow: Flow<Map<String, CityForecast>> = dataStore.data.map(::forecastsFrom)
     val hiddenCitiesFlow: Flow<Set<String>> = dataStore.data.map(::hiddenCitiesFrom)
+    val sunAlertCitiesFlow: Flow<Set<String>> = dataStore.data.map { citySetFrom(it, SUN_ALERTS) }
+    val rainAlertCitiesFlow: Flow<Set<String>> = dataStore.data.map { citySetFrom(it, RAIN_ALERTS) }
 
     /** Cities in the order the user added them. */
     suspend fun cities(): List<String> = dataStore.data.first().let(::citiesFrom)
@@ -118,6 +131,8 @@ class WeatherStore(context: Context) {
             prefs[CITIES] = json.encodeToString(citiesFrom(prefs).filterNot { it == city })
             prefs[FORECASTS] = json.encodeToString(forecastsFrom(prefs).filterKeys { it != city })
             prefs[HIDDEN_CITIES] = json.encodeToString(hiddenCitiesFrom(prefs) - city)
+            prefs[SUN_ALERTS] = json.encodeToString(citySetFrom(prefs, SUN_ALERTS) - city)
+            prefs[RAIN_ALERTS] = json.encodeToString(citySetFrom(prefs, RAIN_ALERTS) - city)
         }
     }
 
@@ -138,9 +153,25 @@ class WeatherStore(context: Context) {
         }
     }
 
+    /** Enable or disable one per-city sun/rain alert. Off by default for every city. */
+    suspend fun setCityAlert(city: String, kind: AlertKind, enabled: Boolean) {
+        val key = when (kind) {
+            AlertKind.SUN -> SUN_ALERTS
+            AlertKind.RAIN -> RAIN_ALERTS
+        }
+        dataStore.edit { prefs ->
+            val next = updateCityInSet(citySetFrom(prefs, key), city, enabled)
+            prefs[key] = json.encodeToString(next.toList())
+        }
+    }
+
     suspend fun forecasts(): Map<String, CityForecast> = dataStore.data.first().let(::forecastsFrom)
 
     suspend fun hiddenCities(): Set<String> = dataStore.data.first().let(::hiddenCitiesFrom)
+
+    suspend fun sunAlertCities(): Set<String> = dataStore.data.first().let { citySetFrom(it, SUN_ALERTS) }
+
+    suspend fun rainAlertCities(): Set<String> = dataStore.data.first().let { citySetFrom(it, RAIN_ALERTS) }
 
     /** Replace only the supplied cities; failed cities keep their last good forecast. */
     suspend fun saveForecasts(updates: List<CityForecast>) {
@@ -164,6 +195,8 @@ class WeatherStore(context: Context) {
         sunsetLabel = forecast.sunset?.format(CLOCK_TIME),
         hours = forecast.hours,
         nowcastCells = forecast.nowcastCells,
+        sunCurrently = forecast.sun.currently,
+        rainCurrently = forecast.rain.currently,
     )
 
     suspend fun isEnabled(): Boolean = dataStore.data.first()[ENABLED] ?: true
@@ -185,6 +218,9 @@ class WeatherStore(context: Context) {
     private fun hiddenCitiesFrom(prefs: Preferences): Set<String> =
         prefs[HIDDEN_CITIES]?.let(::decodeHiddenCities) ?: emptySet()
 
+    private fun citySetFrom(prefs: Preferences, key: Preferences.Key<String>): Set<String> =
+        prefs[key]?.let(::decodeCitySet) ?: emptySet()
+
     private fun legacyCity(prefs: Preferences): String? =
         prefs[LEGACY_CITY]?.takeIf(::isValidCitySlug)
 
@@ -202,6 +238,8 @@ class WeatherStore(context: Context) {
         val CITIES = stringPreferencesKey("cities")
         val FORECASTS = stringPreferencesKey("forecasts_by_city")
         val HIDDEN_CITIES = stringPreferencesKey("hidden_from_notification")
+        val SUN_ALERTS = stringPreferencesKey("sun_alert_cities")
+        val RAIN_ALERTS = stringPreferencesKey("rain_alert_cities")
         val ENABLED = booleanPreferencesKey("enabled")
 
         // Original single-city schema, read once for migration.

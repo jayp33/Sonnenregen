@@ -40,6 +40,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -56,6 +57,7 @@ import de.jayp33.sonnenregen.domain.isRain
 import de.jayp33.sonnenregen.domain.isSun
 import de.jayp33.sonnenregen.domain.isValidCitySlug
 import de.jayp33.sonnenregen.domain.normalizeCity
+import de.jayp33.sonnenregen.notification.AlertKind
 import de.jayp33.sonnenregen.notification.WeatherNotifier
 import de.jayp33.sonnenregen.text.AgeUnit
 import de.jayp33.sonnenregen.text.relativeAge
@@ -72,6 +74,8 @@ fun WeatherScreen() {
     var cities by remember { mutableStateOf<List<String>>(emptyList()) }
     var forecasts by remember { mutableStateOf<Map<String, CityForecast>>(emptyMap()) }
     var hiddenCities by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var sunAlertCities by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var rainAlertCities by remember { mutableStateOf<Set<String>>(emptySet()) }
     var expandedCities by remember { mutableStateOf<Set<String>>(emptySet()) }
     var nowMillis by remember { mutableStateOf(System.currentTimeMillis()) }
     var showAddCityDialog by remember { mutableStateOf(false) }
@@ -113,6 +117,8 @@ fun WeatherScreen() {
         launch { store.citiesFlow.collect { cities = it } }
         launch { store.forecastsFlow.collect { forecasts = it } }
         launch { store.hiddenCitiesFlow.collect { hiddenCities = it } }
+        launch { store.sunAlertCitiesFlow.collect { sunAlertCities = it } }
+        launch { store.rainAlertCitiesFlow.collect { rainAlertCities = it } }
     }
 
     LaunchedEffect(Unit) {
@@ -185,6 +191,8 @@ fun WeatherScreen() {
                             forecast = forecast,
                             detailsExpanded = city in expandedCities,
                             hidden = city in hiddenCities,
+                            sunAlert = city in sunAlertCities,
+                            rainAlert = city in rainAlertCities,
                             nowMillis = nowMillis,
                             onToggleExpanded = {
                                 expandedCities = if (city in expandedCities) {
@@ -200,6 +208,12 @@ fun WeatherScreen() {
                                         WeatherNotifier.show(context, store.statuses())
                                     }
                                 }
+                            },
+                            onToggleSunAlert = { enabled ->
+                                scope.launch { store.setCityAlert(city, AlertKind.SUN, enabled) }
+                            },
+                            onToggleRainAlert = { enabled ->
+                                scope.launch { store.setCityAlert(city, AlertKind.RAIN, enabled) }
                             },
                             onMove = { offset ->
                                 scope.launch {
@@ -338,6 +352,11 @@ internal fun AddCityDialog(
     )
 }
 
+internal object WeatherControlTags {
+    const val SUN_ALERT = "sun_alert_switch"
+    const val RAIN_ALERT = "rain_alert_switch"
+}
+
 @Composable
 internal fun CityItem(
     label: String,
@@ -346,9 +365,13 @@ internal fun CityItem(
     forecast: CityForecast?,
     detailsExpanded: Boolean,
     hidden: Boolean,
-    nowMillis: Long,
+    sunAlert: Boolean = false,
+    rainAlert: Boolean = false,
+    nowMillis: Long = 0L,
     onToggleExpanded: () -> Unit,
     onToggleNotificationVisibility: (Boolean) -> Unit,
+    onToggleSunAlert: (Boolean) -> Unit = {},
+    onToggleRainAlert: (Boolean) -> Unit = {},
     onMove: (Int) -> Unit,
     onRemove: () -> Unit,
 ) {
@@ -428,6 +451,33 @@ internal fun CityItem(
                     onCheckedChange = onToggleNotificationVisibility,
                 )
                 Text(stringResource(R.string.show_in_notification))
+            }
+
+            Text(
+                stringResource(R.string.additional_notifications),
+                style = MaterialTheme.typography.labelMedium,
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Switch(
+                    checked = sunAlert,
+                    onCheckedChange = onToggleSunAlert,
+                    modifier = Modifier.testTag(WeatherControlTags.SUN_ALERT),
+                )
+                Text(stringResource(R.string.sun_alert))
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Switch(
+                    checked = rainAlert,
+                    onCheckedChange = onToggleRainAlert,
+                    modifier = Modifier.testTag(WeatherControlTags.RAIN_ALERT),
+                )
+                Text(stringResource(R.string.rain_alert))
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

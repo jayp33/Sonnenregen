@@ -10,6 +10,7 @@ import de.jayp33.sonnenregen.data.SourceException
 import de.jayp33.sonnenregen.data.WeatherStore
 import de.jayp33.sonnenregen.data.WetterOnlineClient
 import de.jayp33.sonnenregen.domain.ForecastAnalyzer
+import de.jayp33.sonnenregen.notification.AlertBuilder
 import de.jayp33.sonnenregen.notification.WeatherNotifier
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -33,7 +34,16 @@ class WeatherWorker(
         }
 
         val successful = outcomes.values.filterIsInstance<Outcome.Success>().map { it.forecast }
+        val previous = store.forecasts()
         store.saveForecasts(successful)
+
+        val alerts = AlertBuilder.onsetAlerts(
+            previous = previous,
+            updates = successful,
+            sunAlertCities = store.sunAlertCities(),
+            rainAlertCities = store.rainAlertCities(),
+        )
+        notifier.showAlerts(applicationContext, alerts)
 
         // Failed cities keep their last good forecast, shown as stale.
         val staleCities = outcomes.filterValues { it is Outcome.Failure }.keys

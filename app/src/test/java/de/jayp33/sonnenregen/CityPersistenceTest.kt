@@ -2,6 +2,7 @@ package de.jayp33.sonnenregen
 
 import de.jayp33.sonnenregen.data.CityForecast
 import de.jayp33.sonnenregen.data.decodeCities
+import de.jayp33.sonnenregen.data.decodeCitySet
 import de.jayp33.sonnenregen.data.decodeForecasts
 import de.jayp33.sonnenregen.data.decodeHiddenCities
 import kotlinx.serialization.encodeToString
@@ -48,6 +49,15 @@ class CityPersistenceTest {
         val stored = """{" BERLIN ": ${json.encodeToString(forecast("berlin"))}}"""
 
         assertEquals(setOf("berlin"), decodeForecasts(stored, json).keys)
+    }
+
+    @Test
+    fun alert_city_sets_reuse_the_hidden_city_decoder() {
+        assertEquals(
+            setOf("berlin", "hamburg"),
+            decodeCitySet("""["BERLIN", "hamburg", ""]""", json),
+        )
+        assertEquals(emptySet<String>(), decodeCitySet("not json", json))
     }
 
     @Test

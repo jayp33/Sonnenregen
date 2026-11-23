@@ -17,19 +17,34 @@ import de.jayp33.sonnenregen.ui.MainActivity
 
 object WeatherNotifier {
     private const val CHANNEL_ID = "weather"
+    private const val ALERT_CHANNEL_ID = "weather_alerts"
     private const val CATEGORY = "weather"
     private const val NOTIFICATION_ID = 1001
+    private const val ALERT_NOTIFICATION_ID = 2000
 
     fun createChannel(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-            context.getString(R.string.notification_channel_name),
-            NotificationManager.IMPORTANCE_LOW,
-        ).apply {
-            description = context.getString(R.string.notification_channel_description)
-        }
-        context.getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+        val manager = context.getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(
+            NotificationChannel(
+                CHANNEL_ID,
+                context.getString(R.string.notification_channel_name),
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply {
+                description = context.getString(R.string.notification_channel_description)
+            },
+        )
+        // Alerts need their own channel so users can control them independently
+        // of the low-priority persistent summary.
+        manager.createNotificationChannel(
+            NotificationChannel(
+                ALERT_CHANNEL_ID,
+                context.getString(R.string.notification_alert_channel_name),
+                NotificationManager.IMPORTANCE_DEFAULT,
+            ).apply {
+                description = context.getString(R.string.notification_alert_channel_description)
+            },
+        )
     }
 
     /** One ongoing notification; both single and multi-city bodies wrap in big text. */
@@ -41,6 +56,45 @@ object WeatherNotifier {
             // POST_NOTIFICATIONS was denied on Android 13+; keep the app usable.
             Log.w(TAG, "Cannot post notification", exc)
         }
+    }
+
+    /** Post one independent, auto-cancelling alert per city/condition. */
+    fun showAlerts(context: Context, alerts: List<WeatherAlert>) {
+        val manager = NotificationManagerCompat.from(context)
+        alerts.forEach { alert ->
+            try {
+                manager.notify(alertNotificationId(alert), buildAlertNotification(context, alert))
+            } catch (exc: SecurityException) {
+                Log.w(TAG, "Cannot post alert for ${alert.city}", exc)
+            }
+        }
+    }
+
+    internal fun alertNotificationId(alert: WeatherAlert): Int =
+        ALERT_NOTIFICATION_ID + (alert.city + alert.kind.name).hashCode() and 0x7FFF
+
+    /** Separate from posting so alert content and IDs can be tested on a device. */
+    internal fun buildAlertNotification(context: Context, alert: WeatherAlert): Notification {
+        val text = when (alert.kind) {
+            AlertKind.SUN -> context.getString(R.string.alert_sun, alert.displayName)
+            AlertKind.RAIN -> context.getString(R.string.alert_rain, alert.displayName)
+        }
+        val openPendingIntent = PendingIntent.getActivity(
+            context,
+            ALERT_OPEN_REQUEST_CODE,
+            openAppIntent(context),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        return NotificationCompat.Builder(context, ALERT_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_stat_sun)
+            .setContentTitle(context.getString(R.string.app_name))
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setCategory(CATEGORY)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .setContentIntent(openPendingIntent)
+            .build()
     }
 
     /** Also used by tests to verify the notification's content intent. */
@@ -124,5 +178,6 @@ object WeatherNotifier {
     }
 
     internal const val OPEN_REQUEST_CODE = 2
+    internal const val ALERT_OPEN_REQUEST_CODE = 3
     private const val TAG = "WeatherNotifier"
 }

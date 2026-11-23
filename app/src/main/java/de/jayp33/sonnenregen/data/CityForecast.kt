@@ -19,6 +19,9 @@ data class CityForecast(
     val nowcastCells: List<HourCell> = emptyList(),
     /** Real place name from WetterOnline; blank in pre-name installs. */
     val displayName: String = "",
+    /** Structured onset state, used to detect sun/rain alerts. Defaults for old installs. */
+    val sunCurrently: Boolean = false,
+    val rainCurrently: Boolean = false,
 )
 
 /** Keep successful cities and retain the previous value for failed ones. */

@@ -4,6 +4,7 @@ import de.jayp33.sonnenregen.data.CityForecast
 import de.jayp33.sonnenregen.data.buildStatuses
 import de.jayp33.sonnenregen.data.mergeForecasts
 import de.jayp33.sonnenregen.data.reorderCity
+import de.jayp33.sonnenregen.data.updateCityInSet
 import de.jayp33.sonnenregen.data.updateNotificationVisibility
 import de.jayp33.sonnenregen.domain.HourCell
 import de.jayp33.sonnenregen.domain.HourKind
@@ -101,6 +102,18 @@ class CityStateTest {
         assertEquals(
             setOf("hamburg", "berlin"),
             updateNotificationVisibility(hidden, "berlin", false),
+        )
+    }
+
+    @Test
+    fun alert_sets_toggle_one_city_at_a_time() {
+        val enabled = updateCityInSet(emptySet(), "hamburg", enabled = true)
+
+        assertEquals(setOf("hamburg"), enabled)
+        assertEquals(emptySet<String>(), updateCityInSet(enabled, "hamburg", enabled = false))
+        assertEquals(
+            setOf("hamburg", "berlin"),
+            updateCityInSet(enabled, "berlin", enabled = true),
         )
     }
 

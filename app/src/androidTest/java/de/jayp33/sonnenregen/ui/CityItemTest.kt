@@ -2,6 +2,7 @@ package de.jayp33.sonnenregen.ui
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -387,6 +388,40 @@ class CityItemTest {
         }
 
         composeTestRule.onNodeWithText(removeLabel).assertDoesNotExist()
+    }
+
+    @Test
+    fun alert_switches_default_off_and_report_toggles() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        var sunEnabled: Boolean? = null
+        var rainEnabled: Boolean? = null
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                CityItem(
+                    label = "Berlin",
+                    index = 0,
+                    cityCount = 1,
+                    forecast = null,
+                    detailsExpanded = true,
+                    hidden = false,
+                    onToggleExpanded = {},
+                    onToggleNotificationVisibility = {},
+                    onToggleSunAlert = { sunEnabled = it },
+                    onToggleRainAlert = { rainEnabled = it },
+                    onMove = {},
+                    onRemove = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(context.getString(R.string.sun_alert)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.rain_alert)).assertIsDisplayed()
+        composeTestRule.onNodeWithTag(WeatherControlTags.SUN_ALERT).assertIsOff().performClick()
+        composeTestRule.onNodeWithTag(WeatherControlTags.RAIN_ALERT).assertIsOff().performClick()
+
+        assertEquals(true, sunEnabled)
+        assertEquals(true, rainEnabled)
     }
 
     @Test

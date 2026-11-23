@@ -1,5 +1,6 @@
 package de.jayp33.sonnenregen.notification
 
+import android.app.Notification
 import android.app.PendingIntent
 import android.content.Intent
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -40,6 +41,37 @@ class WeatherNotifierTest {
         assertEquals(MainActivity::class.java.name, intent.component?.className)
         assertTrue(intent.flags and Intent.FLAG_ACTIVITY_CLEAR_TOP != 0)
         assertTrue(intent.flags and Intent.FLAG_ACTIVITY_SINGLE_TOP != 0)
+    }
+
+    @Test
+    fun alert_text_uses_the_condition_and_city() {
+        val sun = WeatherNotifier.buildAlertNotification(
+            context,
+            WeatherAlert("berlin", "Berlin", AlertKind.SUN),
+        )
+        val rain = WeatherNotifier.buildAlertNotification(
+            context,
+            WeatherAlert("berlin", "Berlin", AlertKind.RAIN),
+        )
+
+        assertEquals(
+            "The sun is shining in Berlin.",
+            sun.extras.getCharSequence(Notification.EXTRA_TEXT).toString(),
+        )
+        assertEquals(
+            "It's raining in Berlin.",
+            rain.extras.getCharSequence(Notification.EXTRA_TEXT).toString(),
+        )
+        assertTrue(sun.flags and Notification.FLAG_AUTO_CANCEL != 0)
+    }
+
+    @Test
+    fun sun_and_rain_alerts_get_distinct_ids() {
+        val sun = WeatherAlert("berlin", "Berlin", AlertKind.SUN)
+        val rain = WeatherAlert("berlin", "Berlin", AlertKind.RAIN)
+
+        assertEquals(false, WeatherNotifier.alertNotificationId(sun) == WeatherNotifier.alertNotificationId(rain))
+        assertEquals(true, WeatherNotifier.alertNotificationId(sun) > 0)
     }
 
     @Test
