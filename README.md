@@ -116,7 +116,8 @@ The APK is written to `app/build/outputs/apk/debug/app-debug.apk`. See
 checksums are pinned in `gradle/verification-metadata.xml`; after changing a
 dependency, regenerate it with
 `./gradlew --write-verification-metadata sha256 :app:testDebugUnitTest :app:assembleDebug`
-and commit the result.
+and commit the result. The configuration cache is enabled in `gradle.properties`;
+if a plugin or task misbehaves under it, rerun with `--no-configuration-cache`.
 
 To share a debug build via GitHub, use the upload script:
 
