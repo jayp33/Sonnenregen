@@ -5,7 +5,9 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ANDROID = "{http://schemas.android.com/apk/res/android}"
-MANIFEST = Path(__file__).resolve().parents[1] / "app/src/main/AndroidManifest.xml"
+ROOT = Path(__file__).resolve().parents[1]
+MANIFEST = ROOT / "app/src/main/AndroidManifest.xml"
+WIDGET_INFO = ROOT / "app/src/main/res/xml/weather_widget_info.xml"
 
 
 class ManifestTests(unittest.TestCase):
@@ -43,8 +45,19 @@ class ManifestTests(unittest.TestCase):
                 ".ui.MainActivity": "true",
                 ".receiver.BootReceiver": "true",
                 ".receiver.RefreshReceiver": "false",
+                ".widget.WeatherWidgetReceiver": "false",
             },
             exported,
+        )
+
+    def test_widget_target_size_and_update_period(self) -> None:
+        provider = ET.parse(WIDGET_INFO).getroot()
+        self.assertEqual("4", provider.attrib[f"{ANDROID}targetCellWidth"])
+        self.assertEqual("2", provider.attrib[f"{ANDROID}targetCellHeight"])
+        self.assertEqual("1800000", provider.attrib[f"{ANDROID}updatePeriodMillis"])
+        self.assertEqual(
+            "@layout/glance_default_loading_layout",
+            provider.attrib[f"{ANDROID}initialLayout"],
         )
 
 

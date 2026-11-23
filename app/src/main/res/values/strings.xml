@@ -14,6 +14,11 @@
     <string name="updated_days_ago">Updated %1$d days ago</string>
     <string name="weather_unavailable">Weather unavailable</string>
 
+    <string name="widget_name">Forecast grid</string>
+    <string name="widget_description">48-hour colour grid and 90-minute row for one city.</string>
+    <string name="widget_updated">Updated %1$s</string>
+    <string name="widget_no_forecast">No forecast yet</string>
+
     <string name="sun">Sun: %1$s</string>
     <string name="rain">Rain: %1$s</string>
     <string name="snow">Snow: %1$s</string>
