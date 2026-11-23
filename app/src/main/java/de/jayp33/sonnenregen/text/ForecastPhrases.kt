@@ -18,6 +18,9 @@ data class ForecastPhrases(
     val rainFor: String,
     val rainNow: String,
     val rainAgain: String,
+    /** Replaces the second onset when it begins exactly as the first precipitation ends. */
+    val thenRain: String,
+    val thenSnow: String,
     val noSun: String,
     val noRain: String,
     val snowIn: String,
@@ -53,6 +56,8 @@ data class ForecastPhrases(
             rainFor = context.getString(R.string.rain_for),
             rainNow = context.getString(R.string.rain_now),
             rainAgain = context.getString(R.string.rain_again),
+            thenRain = context.getString(R.string.then_rain),
+            thenSnow = context.getString(R.string.then_snow),
             noSun = context.getString(R.string.no_sun),
             noRain = context.getString(R.string.no_rain),
             snowIn = context.getString(R.string.snow_in),

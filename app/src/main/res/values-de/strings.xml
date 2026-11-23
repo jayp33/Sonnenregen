@@ -94,6 +94,8 @@
     <string name="rain_for">Regen noch %1$s</string>
     <string name="rain_now">Regen jetzt</string>
     <string name="rain_again">%1$s (wieder in %2$s)</string>
+    <string name="then_rain">dann Regen</string>
+    <string name="then_snow">dann Schnee</string>
     <string name="no_sun">keine Sonne</string>
     <string name="no_rain">kein Regen</string>
     <string name="snow_in">Schnee in %1$s</string>

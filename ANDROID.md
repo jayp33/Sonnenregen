@@ -294,9 +294,14 @@ manual refreshes.
     `Schnee in 30 Min., Sonne in 10 Std. 33 Min.` (without rain)
   - `Snow in 5 min, rain in 30 min, sun in 10 h 33 min` /
     `Schnee in 5 Min., Regen in 30 Min., Sonne in 10 Std. 33 Min.` (with both)
+  - `Snow for 1 h 19 min, then rain, no sun` /
+    `Schnee noch 1 Std. 19 Min., dann Regen, keine Sonne` (direct handoff)
   Sun is always one of the phrases. Rain and snow each get a phrase whenever they
   have an onset/end in the horizon, so both can appear together in a three-part
   line. If neither has one, the plain `no rain` phrase fills the second slot.
+  When the active precipitation ends at exactly the instant the other begins,
+  its onset phrase becomes `then rain`/`then snow` (`dann Regen`/`dann Schnee`)
+  instead of repeating the same time. A gap between the two keeps both full phrases.
   Ordering uses the event's minutes from the provider's observation time:
   ongoing conditions sort first, events with no change sort last, and ties go
   sun > rain > snow. Every phrase after the first is lowercased so the line reads

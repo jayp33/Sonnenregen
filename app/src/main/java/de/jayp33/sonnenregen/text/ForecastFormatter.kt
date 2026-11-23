@@ -2,6 +2,7 @@ package de.jayp33.sonnenregen.text
 
 import de.jayp33.sonnenregen.domain.Change
 import de.jayp33.sonnenregen.domain.Condition
+import de.jayp33.sonnenregen.domain.Event
 import de.jayp33.sonnenregen.domain.Forecast
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -21,13 +22,20 @@ object ForecastFormatter {
         val hasRain = rain.currently || rain.minutes != null
         // Snow is optional: forecasts stored before snow support have none.
         val snow = forecast.snow?.takeIf { it.currently || it.minutes != null }
+        // Snow ending exactly when rain begins (or vice versa) is one handoff,
+        // not two separate onsets: "Snow for 1 h, then rain, no sun".
+        val handoffTo = when {
+            snow != null && followsDirectly(snow, rain) -> Condition.RAIN
+            snow != null && followsDirectly(rain, snow) -> Condition.SNOW
+            else -> null
+        }
         val changes = buildList {
             add(forecast.sun)
             if (hasRain) add(rain)
             if (snow != null) add(snow)
             if (!hasRain && snow == null) add(rain) // renders as "no rain"
         }
-        return compact(changes, phrases, forecast.rainOutlook.againInMinutes)
+        return compact(changes, phrases, forecast.rainOutlook.againInMinutes, handoffTo)
     }
 
     /** Two-condition form for callers without a whole forecast. */
@@ -42,16 +50,21 @@ object ForecastFormatter {
         changes: List<Change>,
         phrases: ForecastPhrases,
         rainAgainInMinutes: Long?,
+        handoffTo: Condition? = null,
     ): String {
         val ordered = changes.sortedWith(
             compareBy<Change> { orderKey(it) }.thenBy { tieBreak(it.condition) },
         )
         val texts = ordered.mapIndexed { index, change ->
-            val text = phrase(
-                change,
-                phrases,
-                rainAgainInMinutes.takeIf { change.condition == Condition.RAIN },
-            )
+            val text = when {
+                change.condition == handoffTo && change.condition == Condition.RAIN -> phrases.thenRain
+                change.condition == handoffTo && change.condition == Condition.SNOW -> phrases.thenSnow
+                else -> phrase(
+                    change,
+                    phrases,
+                    rainAgainInMinutes.takeIf { change.condition == Condition.RAIN },
+                )
+            }
             if (index > 0 && phrases.lowerCaseTrailing) {
                 text.replaceFirstChar { it.lowercase() }
             } else {
@@ -150,6 +163,14 @@ object ForecastFormatter {
             return text
         }
         return format(phrases.rainAgain, text, duration(againInMinutes, phrases))
+    }
+
+    /** True when [ending]'s end time is exactly [starting]'s onset. */
+    private fun followsDirectly(ending: Change, starting: Change): Boolean {
+        val end = ending.at ?: return false
+        return ending.currently && !starting.currently &&
+            ending.event == Event.ENDS && starting.event == Event.STARTS &&
+            end.toInstant() == starting.at?.toInstant()
     }
 
     /** On equal onset times, keep the old sun-first rule and let rain beat snow. */

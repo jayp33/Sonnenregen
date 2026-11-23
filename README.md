@@ -21,7 +21,9 @@ and German, selected by device locale.
   Sun is always present. Rain and snow each get their own phrase when forecast in
   the 48-hour window, so a mixed forecast reads
   `Snow in 42 min, rain in 1 h 42 min, sun in 5 h`; if neither is expected, the
-  plain `no rain` phrase fills the second slot. With one city the place name is the notification
+  plain `no rain` phrase fills the second slot. When snow ends exactly as rain
+  starts, the repeated time is replaced with
+  `Snow for 1 h 19 min, then rain, no sun`. With one city the place name is the notification
   header; with two or more cities a wrapping text block shows `City: summary`
   lines in your chosen city order. The body always wraps, so long city names or
   summaries don't hide the forecast on narrow screens. Per-city **Show in

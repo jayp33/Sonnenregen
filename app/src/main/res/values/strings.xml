@@ -94,6 +94,8 @@
     <string name="rain_for">Rain for %1$s</string>
     <string name="rain_now">Rain now</string>
     <string name="rain_again">%1$s (again in %2$s)</string>
+    <string name="then_rain">then rain</string>
+    <string name="then_snow">then snow</string>
     <string name="no_sun">no sun</string>
     <string name="no_rain">no rain</string>
     <string name="snow_in">Snow in %1$s</string>

@@ -168,6 +168,76 @@ class ForecastFormatterTest {
     }
 
     @Test
+    fun compact_joins_a_direct_snow_to_rain_handoff() {
+        val reference = OffsetDateTime.parse("2026-11-21T08:00:00+01:00")
+        val handoff = reference.plusMinutes(79)
+        val forecast = ForecastAnalyzer.analyze("berlin", TestData.page(), TestData.page()).copy(
+            sun = change(Condition.SUN),
+            rain = changeAt(Condition.RAIN, at = handoff, minutes = 79),
+            snow = changeAt(Condition.SNOW, at = handoff, currently = true, minutes = 79),
+        )
+
+        assertEquals(
+            "Snow for 1 h 19 min, then rain, no sun",
+            ForecastFormatter.compact(forecast, english),
+        )
+        assertEquals(
+            "Schnee noch 1 Std. 19 Min., dann Regen, keine Sonne",
+            ForecastFormatter.compact(forecast, german),
+        )
+    }
+
+    @Test
+    fun compact_joins_a_direct_rain_to_snow_handoff() {
+        val reference = OffsetDateTime.parse("2026-11-21T08:00:00+01:00")
+        val handoff = reference.plusMinutes(15)
+        val forecast = ForecastAnalyzer.analyze("berlin", TestData.page(), TestData.page()).copy(
+            sun = change(Condition.SUN),
+            rain = changeAt(Condition.RAIN, at = handoff, currently = true, minutes = 15),
+            snow = changeAt(Condition.SNOW, at = handoff, minutes = 15),
+        )
+
+        assertEquals(
+            "Rain for 15 min, then snow, no sun",
+            ForecastFormatter.compact(forecast, english),
+        )
+        assertEquals(
+            "Regen noch 15 Min., dann Schnee, keine Sonne",
+            ForecastFormatter.compact(forecast, german),
+        )
+    }
+
+    @Test
+    fun compact_keeps_separate_onsets_without_a_handoff() {
+        val base = ForecastAnalyzer.analyze("berlin", TestData.page(), TestData.page())
+        val reference = OffsetDateTime.parse("2026-11-21T08:00:00+01:00")
+        val gap = base.copy(
+            sun = change(Condition.SUN),
+            rain = changeAt(Condition.RAIN, at = reference.plusMinutes(95), minutes = 95),
+            snow = changeAt(
+                Condition.SNOW,
+                at = reference.plusMinutes(79),
+                currently = true,
+                minutes = 79,
+            ),
+        )
+        assertEquals(
+            "Snow for 1 h 19 min, rain in 1 h 35 min, no sun",
+            ForecastFormatter.compact(gap, english),
+        )
+        // Two upcoming onsets at the same instant are not a handoff either.
+        val simultaneous = base.copy(
+            sun = change(Condition.SUN),
+            rain = changeAt(Condition.RAIN, at = reference.plusMinutes(30), minutes = 30),
+            snow = changeAt(Condition.SNOW, at = reference.plusMinutes(30), minutes = 30),
+        )
+        assertEquals(
+            "Rain in 30 min, snow in 30 min, no sun",
+            ForecastFormatter.compact(simultaneous, english),
+        )
+    }
+
+    @Test
     fun verbose_summaries_are_localized() {
         val page = TestData.page()
         val forecast = ForecastAnalyzer.analyze("berlin", page, page)
@@ -272,6 +342,20 @@ class ForecastFormatterTest {
         condition = condition,
     )
 
+    /** Explicit onset times let tests model a direct precipitation handoff. */
+    private fun changeAt(
+        condition: Condition,
+        at: OffsetDateTime,
+        currently: Boolean = false,
+        minutes: Long? = null,
+    ) = Change(
+        currently = currently,
+        event = if (currently) Event.ENDS else Event.STARTS,
+        at = at,
+        minutes = minutes,
+        condition = condition,
+    )
+
     private val english = ForecastPhrases(
         lowerCaseTrailing = true,
         pair = "%1\$s, %2\$s",
@@ -286,6 +370,8 @@ class ForecastFormatterTest {
         rainFor = "Rain for %1\$s",
         rainNow = "Rain now",
         rainAgain = "%1\$s (again in %2\$s)",
+        thenRain = "then rain",
+        thenSnow = "then snow",
         noSun = "no sun",
         noRain = "no rain",
         snowIn = "Snow in %1\$s",
@@ -319,6 +405,8 @@ class ForecastFormatterTest {
         rainFor = "Regen noch %1\$s",
         rainNow = "Regen jetzt",
         rainAgain = "%1\$s (wieder in %2\$s)",
+        thenRain = "dann Regen",
+        thenSnow = "dann Schnee",
         noSun = "keine Sonne",
         noRain = "kein Regen",
         summarySunStarts = "Sonne scheint in %1\$s (%2\$s).",
