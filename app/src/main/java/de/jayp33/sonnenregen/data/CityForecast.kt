@@ -1,5 +1,6 @@
 package de.jayp33.sonnenregen.data
 
+import de.jayp33.sonnenregen.domain.ChangeSnapshot
 import de.jayp33.sonnenregen.domain.HourCell
 import de.jayp33.sonnenregen.domain.SunEvent
 import de.jayp33.sonnenregen.domain.TIMEZONE
@@ -35,7 +36,20 @@ data class CityForecast(
     val snowEventAtMillis: Long? = null,
     /** Zone of the forecast's clock times, used to render alert event times. */
     val timezone: String = TIMEZONE,
-)
+    /**
+     * Observation time the stored durations were computed from. Zero means an
+     * old install, where [fetchedAtMillis] is the best available approximation.
+     */
+    val forecastReferenceMillis: Long = 0L,
+    /** Structured condition changes; missing values fall back to the stored strings. */
+    val sunChange: ChangeSnapshot? = null,
+    val rainChange: ChangeSnapshot? = null,
+    val snowChange: ChangeSnapshot? = null,
+    /** Absolute time of the second nowcast shower, for an ageing "again in" hint. */
+    val rainAgainAtMillis: Long? = null,
+) {
+    val referenceMillis: Long get() = forecastReferenceMillis.takeIf { it > 0L } ?: fetchedAtMillis
+}
 
 /** Keep successful cities and retain the previous value for failed ones. */
 fun mergeForecasts(

@@ -4,9 +4,12 @@ import de.jayp33.sonnenregen.domain.Change
 import de.jayp33.sonnenregen.domain.Condition
 import de.jayp33.sonnenregen.domain.Event
 import de.jayp33.sonnenregen.domain.Forecast
+import java.time.Duration
+import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.abs
+import kotlin.math.roundToLong
 
 object ForecastFormatter {
     private val SUMMARY_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm xx")
@@ -16,8 +19,11 @@ object ForecastFormatter {
      * each get a slot when they are forecast in the horizon, so both can appear
      * together. When neither is forecast, the plain "no rain" phrase is used so
      * the line never loses the sun information. Ties go sun > rain > snow.
+     *
+     * With [now], remaining times are rebased on the current clock instead of the
+     * forecast's own observation time.
      */
-    fun compact(forecast: Forecast, phrases: ForecastPhrases): String {
+    fun compact(forecast: Forecast, phrases: ForecastPhrases, now: OffsetDateTime? = null): String {
         val rain = forecast.rain
         val hasRain = rain.currently || rain.minutes != null
         // Snow is optional: forecasts stored before snow support have none.
@@ -35,7 +41,10 @@ object ForecastFormatter {
             if (snow != null) add(snow)
             if (!hasRain && snow == null) add(rain) // renders as "no rain"
         }
-        return compact(changes, phrases, forecast.rainOutlook.againInMinutes, handoffTo)
+        val again = forecast.rainOutlook.againInMinutes?.let { minutes ->
+            if (now == null) minutes else minutesBetween(now, forecast.now.plusMinutes(minutes))
+        }
+        return compact(changes, phrases, again, handoffTo, now)
     }
 
     /** Two-condition form for callers without a whole forecast. */
@@ -44,21 +53,32 @@ object ForecastFormatter {
         rain: Change,
         phrases: ForecastPhrases,
         rainAgainInMinutes: Long? = null,
-    ): String = compact(listOf(sun, rain), phrases, rainAgainInMinutes)
+        now: OffsetDateTime? = null,
+    ): String = compact(listOf(sun, rain), phrases, rainAgainInMinutes, null, now)
 
-    private fun compact(
+    /**
+     * Compact line from an explicit change list. Stored forecasts use this after
+     * restoring their condition changes, so the line can age without a refresh.
+     */
+    fun compact(
         changes: List<Change>,
         phrases: ForecastPhrases,
-        rainAgainInMinutes: Long?,
+        rainAgainInMinutes: Long? = null,
         handoffTo: Condition? = null,
+        now: OffsetDateTime? = null,
     ): String {
-        val ordered = changes.sortedWith(
+        val rendered = if (now == null) changes else changes.map { aged(it, now) }
+        val ordered = rendered.sortedWith(
             compareBy<Change> { orderKey(it) }.thenBy { tieBreak(it.condition) },
         )
         val texts = ordered.mapIndexed { index, change ->
             val text = when {
-                change.condition == handoffTo && change.condition == Condition.RAIN -> phrases.thenRain
-                change.condition == handoffTo && change.condition == Condition.SNOW -> phrases.thenSnow
+                // Once the handoff time has passed the event is terminal; do not
+                // keep calling it "then rain" after rain has actually begun.
+                change.condition == handoffTo && change.event != null &&
+                    change.condition == Condition.RAIN -> phrases.thenRain
+                change.condition == handoffTo && change.event != null &&
+                    change.condition == Condition.SNOW -> phrases.thenSnow
                 else -> phrase(
                     change,
                     phrases,
@@ -75,28 +95,47 @@ object ForecastFormatter {
         return format(template, *texts.toTypedArray())
     }
 
+    /**
+     * Rebase a change on [now]. A still-future event keeps its absolute time and
+     * gets a new remaining duration. Once it has passed, its opposite state is
+     * known but no following event is stored, so the line ends there.
+     */
+    fun aged(change: Change, now: OffsetDateTime): Change {
+        val at = change.at ?: return change
+        val minutes = minutesBetween(now, at)
+        if (minutes > 0L) return change.copy(minutes = minutes)
+        return Change(
+            currently = change.event == Event.STARTS,
+            event = null,
+            at = null,
+            minutes = null,
+            condition = change.condition,
+        )
+    }
+
     /** Verbose single-condition text for the app UI. */
-    fun verbose(change: Change, phrases: ForecastPhrases): String {
-        val minutes = change.minutes ?: return when (change.condition) {
-            Condition.SUN -> if (change.currently) phrases.summarySunOngoing else phrases.summaryNoSun
-            Condition.RAIN -> if (change.currently) phrases.summaryRainOngoing else phrases.summaryNoRain
-            Condition.SNOW -> if (change.currently) phrases.summarySnowOngoing else phrases.summaryNoSnow
+    fun verbose(change: Change, phrases: ForecastPhrases, now: OffsetDateTime? = null): String {
+        val current = if (now == null) change else aged(change, now)
+        val minutes = current.minutes ?: return when (current.condition) {
+            Condition.SUN -> if (current.currently) phrases.summarySunOngoing else phrases.summaryNoSun
+            Condition.RAIN -> if (current.currently) phrases.summaryRainOngoing else phrases.summaryNoRain
+            Condition.SNOW -> if (current.currently) phrases.summarySnowOngoing else phrases.summaryNoSnow
         }
 
         val duration = duration(minutes, phrases)
-        val at = change.at?.format(SUMMARY_TIME).orEmpty()
-        return when (change.condition) {
-            Condition.SUN -> if (change.currently) {
+        val at = current.at?.format(SUMMARY_TIME).orEmpty()
+        return when (current.condition) {
+            Condition.SUN -> if (current.currently) {
                 format(phrases.summarySunEnds, duration, at)
             } else {
                 format(phrases.summarySunStarts, duration, at)
             }
-            Condition.RAIN -> if (change.currently) {
+            Condition.RAIN -> if (current.currently) {
                 format(phrases.summaryRainEnds, duration, at)
             } else {
                 format(phrases.summaryRainStarts, duration, at)
             }
-            Condition.SNOW -> if (change.currently) {
+            Condition.SNOW -> if (current.currently) {
                 format(phrases.summarySnowEnds, duration, at)
             } else {
                 format(phrases.summarySnowStarts, duration, at)
@@ -105,10 +144,24 @@ object ForecastFormatter {
     }
 
     /** Verbose rain text, including a later shower inside the nowcast window. */
-    fun verboseRain(forecast: Forecast, phrases: ForecastPhrases): String {
-        val base = verbose(forecast.rain, phrases)
-        val again = forecast.rainOutlook.againInMinutes ?: return base
-        if (forecast.rain.minutes == null || again <= 0) return base
+    fun verboseRain(forecast: Forecast, phrases: ForecastPhrases, now: OffsetDateTime? = null): String {
+        val again = forecast.rainOutlook.againInMinutes?.let { minutes ->
+            if (now == null) minutes else minutesBetween(now, forecast.now.plusMinutes(minutes))
+        }
+        return verboseRain(forecast.rain, phrases, again, now)
+    }
+
+    /** Verbose rain text from an explicit change and a possibly aged onset. */
+    fun verboseRain(
+        change: Change,
+        phrases: ForecastPhrases,
+        againInMinutes: Long? = null,
+        now: OffsetDateTime? = null,
+    ): String {
+        val base = verbose(change, phrases, now)
+        val again = againInMinutes ?: return base
+        val current = if (now == null) change else aged(change, now)
+        if (current.minutes == null || again <= 0) return base
         return format(phrases.summaryRainAgain, base, duration(again, phrases))
     }
 
@@ -184,6 +237,9 @@ object ForecastFormatter {
         change.currently -> Long.MIN_VALUE
         else -> change.minutes ?: Long.MAX_VALUE
     }
+
+    private fun minutesBetween(from: OffsetDateTime, to: OffsetDateTime): Long =
+        Duration.between(from, to).seconds.toDouble().div(60).roundToLong()
 
     private fun format(template: String, vararg args: Any): String =
         String.format(Locale.getDefault(), template, *args)

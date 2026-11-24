@@ -224,17 +224,22 @@ both `/wettertrend/<slug>` and `/90-minuten-wetter/<slug>` keep the parent.
 ## Refresh behaviour
 
 `WeatherWorker` is enqueued as a `PeriodicWorkRequest` with a 15-minute interval
-and constraints `NetworkType.CONNECTED`, not requiring charging or idle.
+and **no** constraints. An offline run must still repost the notification, so the
+worker checks `ConnectivityManager` itself: without a network it skips the fetch
+and alert planning, reposts the aged summary and returns `Result.success()`.
+Retrying offline would only cause 30 s/1 min/2 min backoff attempts that all fail.
 
-On each run:
+On each connected run:
 
 1. Fetch and parse both pages for **each** configured city, concurrently. Do
    **not** skip the run based on `PowerManager.isInteractive()`; see the note
    below.
 2. On success, persist that city's result plus timestamp in DataStore and include
    it in the notification.
-3. On failure, keep that city's last good result, show `Weather unavailable` for
-   it, and let WorkManager retry with backoff. Other cities are unaffected.
+3. On failure, keep that city's last good result and re-render its compact and
+   verbose summaries against the current clock (see below). Only a city that has
+   never had a forecast shows `Weather unavailable`. Retryable failures still
+   use WorkManager backoff. Other cities are unaffected.
 
 ### Why the worker must not skip while the screen is off
 
@@ -338,6 +343,16 @@ manual refreshes.
   Do **not** put a literal `"Updated 25 min ago"` string in the notification
   text — it is a snapshot and would freeze until the next WorkManager run, and
   WorkManager cannot tick more often than every 15 minutes.
+- Ageing: each city also stores the forecast's observation time and the next
+  condition change with an absolute event time (`ChangeSnapshot`). At render
+  time `ForecastText` rebases durations on `now`, so `Sun in 6 h` becomes
+  `Sun in 5 h` an hour later without a fetch. Once the stored event has passed,
+  the line falls back to the terminal state (`Sun now`, `no sun`) — no next
+  event is invented. Forecasts saved without snapshots keep their old strings.
+  Notification and in-app details share this renderer.
+- Staleness: 30 minutes after the last successful fetch the notification subtext
+  becomes `Outdated`, and the app's `Updated x ago` gains `· outdated`. A city
+  with no forecast at all still shows `Weather unavailable`.
 - Tapping the notification body opens `MainActivity` directly via a
   `PendingIntent` with `CLEAR_TOP | SINGLE_TOP`, reusing an existing task.
   Actions: **Refresh** only.

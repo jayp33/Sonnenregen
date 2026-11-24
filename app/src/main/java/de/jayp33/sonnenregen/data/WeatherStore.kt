@@ -16,8 +16,10 @@ import de.jayp33.sonnenregen.notification.AlertKind
 import de.jayp33.sonnenregen.notification.AlertStage
 import de.jayp33.sonnenregen.notification.AlertState
 import de.jayp33.sonnenregen.domain.normalizeCity
+import de.jayp33.sonnenregen.domain.toSnapshot
 import de.jayp33.sonnenregen.text.ForecastFormatter
 import de.jayp33.sonnenregen.text.ForecastPhrases
+import de.jayp33.sonnenregen.text.ForecastText
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -321,8 +323,17 @@ class WeatherStore(context: Context) {
         }
     }
 
-    suspend fun statuses(staleCities: Set<String> = emptySet()): List<CityStatus> =
-        buildStatuses(cities(), forecasts(), staleCities, hiddenCities())
+    suspend fun statuses(
+        staleCities: Set<String> = emptySet(),
+        nowMillis: Long = System.currentTimeMillis(),
+    ): List<CityStatus> = buildStatuses(
+        cities = cities(),
+        forecasts = forecasts(),
+        staleCities = staleCities,
+        hiddenCities = hiddenCities(),
+        nowMillis = nowMillis,
+        compactFor = { ForecastText.compact(it, nowMillis, phrases) },
+    )
 
     fun format(forecast: Forecast): CityForecast = CityForecast(
         city = forecast.city,
@@ -355,6 +366,13 @@ class WeatherStore(context: Context) {
             ?.toInstant()?.toEpochMilli(),
         snowEventAtMillis = forecast.snow?.at?.takeIf { !forecast.snow.currently }
             ?.toInstant()?.toEpochMilli(),
+        forecastReferenceMillis = forecast.now.toInstant().toEpochMilli(),
+        sunChange = forecast.sun.toSnapshot(),
+        rainChange = forecast.rain.toSnapshot(),
+        snowChange = forecast.snow?.toSnapshot(),
+        rainAgainAtMillis = forecast.rainOutlook.againInMinutes?.let {
+            forecast.now.plusMinutes(it).toInstant().toEpochMilli()
+        },
     )
 
     suspend fun isEnabled(): Boolean = dataStore.data.first()[ENABLED] ?: true

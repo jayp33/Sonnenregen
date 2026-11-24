@@ -76,7 +76,9 @@ and German, selected by device locale.
 - **Exact sunrise/sunset** from WetterOnline's own astro data, shown in the app
   UI. Sunshine never starts before sunrise or continues past sunset.
 - **Offline-friendly**: each city keeps its last good forecast. A failed refresh
-  marks only that city `Weather unavailable` instead of wiping the others.
+  re-renders its countdown against the current clock instead of wiping it; the
+  notification and app text become `Outdated` after 30 minutes. Only a city that
+  has never had a forecast shows `Weather unavailable`.
 - **Freshness at a glance**: a global `Updated x min ago` under the title, plus a
   per-city one inside each collapsed details block. Both tick live.
 - **Battery-friendly**: WorkManager refreshes every 15 minutes while connected.

@@ -1,10 +1,8 @@
 package de.jayp33.sonnenregen.work
 
 import android.content.Context
-import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
-import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
@@ -18,13 +16,9 @@ object WeatherScheduler {
     private const val PERIODIC_NAME = "weather_periodic"
     private const val ONCE_NAME = "weather_once"
 
-    private fun constraints() = Constraints.Builder()
-        .setRequiredNetworkType(NetworkType.CONNECTED)
-        .build()
-
     fun schedule(context: Context) {
+        // Unconstrained on purpose: an offline run still reposts the aged text.
         val request = PeriodicWorkRequestBuilder<WeatherWorker>(15, TimeUnit.MINUTES)
-            .setConstraints(constraints())
             .build()
 
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
@@ -36,7 +30,6 @@ object WeatherScheduler {
 
     fun refreshNow(context: Context) {
         val request = OneTimeWorkRequestBuilder<WeatherWorker>()
-            .setConstraints(constraints())
             .build()
 
         WorkManager.getInstance(context).enqueueUniqueWork(

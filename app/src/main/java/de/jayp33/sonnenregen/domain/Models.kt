@@ -2,7 +2,9 @@ package de.jayp33.sonnenregen.domain
 
 import kotlinx.serialization.Serializable
 import java.time.Duration
+import java.time.Instant
 import java.time.OffsetDateTime
+import java.time.ZoneId
 
 enum class SlotSource { CURRENT, NOWCAST, HOURLY, INTERPOLATED }
 
@@ -13,9 +15,40 @@ enum class SunEventKind { SUNRISE, SUNSET }
 @Serializable
 data class SunEvent(val kind: SunEventKind, val atMillis: Long)
 
+@Serializable
 enum class Event { STARTS, ENDS }
 
+@Serializable
 enum class Condition { SUN, RAIN, SNOW }
+
+/**
+ * The next known change of one condition, stored with absolute event time so
+ * its remaining time can be re-rendered later (e.g. while offline).
+ */
+@Serializable
+data class ChangeSnapshot(
+    val condition: Condition,
+    val currently: Boolean,
+    val event: Event? = null,
+    val atEpochMillis: Long? = null,
+)
+
+/** Convert a live change into its persistable form. */
+fun Change.toSnapshot(): ChangeSnapshot = ChangeSnapshot(
+    condition = condition,
+    currently = currently,
+    event = event,
+    atEpochMillis = at?.toInstant()?.toEpochMilli(),
+)
+
+/** Restore a stored change; the zone only affects verbose absolute-time text. */
+fun ChangeSnapshot.toChange(zone: ZoneId): Change = Change(
+    currently = currently,
+    event = event,
+    at = atEpochMillis?.let { Instant.ofEpochMilli(it).atZone(zone).toOffsetDateTime() },
+    minutes = null,
+    condition = condition,
+)
 
 data class Slot(
     val start: OffsetDateTime,

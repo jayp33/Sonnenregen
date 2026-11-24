@@ -116,6 +116,29 @@ class WeatherNotifierTest {
     }
 
     @Test
+    fun an_aged_forecast_is_marked_outdated_but_still_shows_its_text() {
+        val now = System.currentTimeMillis()
+        val status = CityStatus(
+            city = "berlin",
+            displayName = "Berlin",
+            compactSummary = "Sun in 5 h, no rain",
+            fetchedAtMillis = now - 60 * 60_000L,
+            stale = false,
+            outdated = true,
+        )
+        val notification = WeatherNotifier.buildNotification(context, listOf(status))
+
+        assertEquals(
+            "Sun in 5 h, no rain",
+            notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString(),
+        )
+        assertEquals(
+            context.getString(R.string.outdated),
+            notification.extras.getCharSequence(Notification.EXTRA_SUB_TEXT).toString(),
+        )
+    }
+
+    @Test
     fun umlauts_in_city_names_reach_the_notification_unchanged() {
         val sun = WeatherNotifier.buildAlertNotification(
             context,

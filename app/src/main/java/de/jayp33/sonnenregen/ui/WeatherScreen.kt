@@ -55,6 +55,7 @@ import androidx.core.content.ContextCompat
 import de.jayp33.sonnenregen.R
 import de.jayp33.sonnenregen.data.ALERT_LEAD_OPTIONS
 import de.jayp33.sonnenregen.data.CityForecast
+import de.jayp33.sonnenregen.data.STALE_AGE_MILLIS
 import de.jayp33.sonnenregen.data.WeatherStore
 import de.jayp33.sonnenregen.domain.cityWebsiteUrl
 import de.jayp33.sonnenregen.domain.currentOrFutureHours
@@ -70,6 +71,8 @@ import de.jayp33.sonnenregen.notification.AlertKind
 import de.jayp33.sonnenregen.notification.BatteryOptimizations
 import de.jayp33.sonnenregen.notification.WeatherNotifier
 import de.jayp33.sonnenregen.text.AgeUnit
+import de.jayp33.sonnenregen.text.ForecastPhrases
+import de.jayp33.sonnenregen.text.ForecastText
 import de.jayp33.sonnenregen.text.relativeAge
 import de.jayp33.sonnenregen.work.WeatherScheduler
 import kotlinx.coroutines.delay
@@ -556,6 +559,8 @@ internal fun CityItem(
     onMove: (Int) -> Unit,
     onRemove: () -> Unit,
 ) {
+    val context = LocalContext.current
+    val phrases = remember(context) { ForecastPhrases.from(context) }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         // The city line and colour grid are one tappable summary;
         // no separate show/hide button is needed.
@@ -610,11 +615,10 @@ internal fun CityItem(
         if (detailsExpanded) {
             if (forecast != null) {
                 UpdatedText(forecast.fetchedAtMillis, nowMillis)
-                Text(stringResource(R.string.sun, forecast.sunSummary))
-                Text(stringResource(R.string.rain, forecast.rainSummary))
-                if (forecast.snowSummary.isNotEmpty()) {
-                    Text(stringResource(R.string.snow, forecast.snowSummary))
-                }
+                Text(stringResource(R.string.sun, ForecastText.sunSummary(forecast, nowMillis, phrases)))
+                Text(stringResource(R.string.rain, ForecastText.rainSummary(forecast, nowMillis, phrases)))
+                ForecastText.snowSummary(forecast, nowMillis, phrases).takeIf { it.isNotEmpty() }
+                    ?.let { Text(stringResource(R.string.snow, it)) }
                 val sunrise = forecast.sunriseLabel?.let {
                     stringResource(R.string.sunrise, it)
                 }
@@ -737,5 +741,11 @@ private fun UpdatedText(fetchedAtMillis: Long, nowMillis: Long) {
             stringResource(R.string.updated_days_ago, age.value)
         }
     }
-    Text(text, style = MaterialTheme.typography.labelSmall)
+    val outdatedLabel = stringResource(R.string.outdated)
+    val dated = if (nowMillis - fetchedAtMillis >= STALE_AGE_MILLIS) {
+        "$text · $outdatedLabel"
+    } else {
+        text
+    }
+    Text(dated, style = MaterialTheme.typography.labelSmall)
 }

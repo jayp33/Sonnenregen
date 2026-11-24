@@ -1,6 +1,8 @@
 package de.jayp33.sonnenregen.work
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
@@ -20,6 +22,23 @@ import kotlinx.coroutines.sync.withPermit
 /** Provider-format and input errors are permanent; transport errors can be retried. */
 internal fun isRetryableFailure(exc: Exception): Boolean = exc !is ParseException && exc !is IllegalArgumentException
 
+/** An offline run skips the fetch entirely and only reposts the aged forecast. */
+internal fun isDeviceOnline(context: Context): Boolean {
+    val manager = context.getSystemService(ConnectivityManager::class.java) ?: return false
+    val network = manager.activeNetwork ?: return false
+    val capabilities = manager.getNetworkCapabilities(network) ?: return false
+    return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+}
+
+/**
+ * A failed city with a stored forecast keeps its aged text; only a city that
+ * has never had a forecast gets the "unavailable" placeholder.
+ */
+internal fun staleCitiesAfterFetch(
+    failedCities: Set<String>,
+    forecasts: Map<String, CityForecast>,
+): Set<String> = failedCities.filterTo(LinkedHashSet()) { forecasts[it] == null }
+
 class WeatherWorker(
     context: Context,
     params: WorkerParameters,
@@ -32,6 +51,13 @@ class WeatherWorker(
 
     override suspend fun doWork(): Result {
         if (!store.isEnabled()) return Result.success()
+
+        // WorkManager is deliberately unconstrained so this run happens offline.
+        // Return success: retrying a fetch without a network only wastes wakeups.
+        if (!isDeviceOnline(applicationContext)) {
+            notifier.show(applicationContext, store.statuses())
+            return Result.success()
+        }
 
         val cities = store.cities()
         val outcomes = coroutineScope {
@@ -58,8 +84,9 @@ class WeatherWorker(
         notifier.showAlerts(applicationContext, plan.alerts)
         store.saveAlertStates(alertStates, plan.states)
 
-        // Failed cities keep their last good forecast, shown as stale.
-        val staleCities = outcomes.filterValues { it is Outcome.Failure }.keys
+        // Failed cities keep their last good forecast with an aged summary.
+        val failedCities = outcomes.filterValues { it is Outcome.Failure }.keys
+        val staleCities = staleCitiesAfterFetch(failedCities, store.forecasts())
         notifier.show(applicationContext, store.statuses(staleCities))
 
         return when {

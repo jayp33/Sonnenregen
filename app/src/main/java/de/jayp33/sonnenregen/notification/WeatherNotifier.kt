@@ -192,16 +192,18 @@ object WeatherNotifier {
         val fetchedAt = statuses.filter { it.fetchedAtMillis > 0 }
             .minOfOrNull { it.fetchedAtMillis } ?: System.currentTimeMillis()
         val anyFresh = statuses.any { !it.stale }
+        val anyOutdated = statuses.any { it.outdated && !it.stale }
+        val subtext = when {
+            !anyFresh -> R.string.weather_unavailable
+            anyOutdated -> R.string.outdated
+            else -> R.string.updated
+        }
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_sun)
             .setContentTitle(view.title)
             .setContentText(view.text)
-            .setSubText(
-                context.getString(
-                    if (anyFresh) R.string.updated else R.string.weather_unavailable,
-                ),
-            )
+            .setSubText(context.getString(subtext))
             .setWhen(fetchedAt)
             .setShowWhen(true)
             .setUsesChronometer(true)

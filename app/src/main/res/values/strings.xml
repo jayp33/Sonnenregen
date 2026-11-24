@@ -13,6 +13,7 @@
     <string name="updated_day_ago">Updated 1 day ago</string>
     <string name="updated_days_ago">Updated %1$d days ago</string>
     <string name="weather_unavailable">Weather unavailable</string>
+    <string name="outdated">Outdated</string>
 
     <string name="sun">Sun: %1$s</string>
     <string name="rain">Rain: %1$s</string>
